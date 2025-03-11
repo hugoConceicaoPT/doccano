@@ -6,7 +6,7 @@ function toModel(item: { [key: string]: any }): UserItem {
 }
 
 export class APIUserRepository {
-  constructor(private readonly request = ApiService) {}
+  constructor(private readonly baseUrl = 'user', private readonly request = ApiService) {}
 
   async getProfile(): Promise<UserItem> {
     const url = '/me'
@@ -14,8 +14,8 @@ export class APIUserRepository {
     return toModel(response.data)
   }
 
-  async list(query: string): Promise<UserItem[]> {
-    const url = `/users?q=${query}`
+  async list(projectId: string): Promise<UserItem[]> {
+    const url = `/projects/${projectId}/${this.baseUrl}s`
     const response = await this.request.get(url)
     return response.data.map((item: { [key: string]: any }) => toModel(item))
   }

@@ -30,6 +30,7 @@
 <script>
 import {
   mdiAccount,
+  mdiAccountGroup,
   mdiBookOpenOutline,
   mdiChartBar,
   mdiCog,
@@ -97,6 +98,12 @@ export default {
           icon: mdiAccount,
           text: this.$t('members.members'),
           link: 'members',
+          isVisible: this.isProjectAdmin
+        },
+        {
+          icon: mdiAccountGroup,
+          text: this.$t('Users'),
+          link: 'users',
           isVisible: this.isProjectAdmin
         },
         {

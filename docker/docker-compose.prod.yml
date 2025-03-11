@@ -1,9 +1,9 @@
-version: "3.7"
 services:
 
   backend:
     image: doccano/doccano:backend
     volumes:
+      - /c/Users/Hugo/Documents/Uni_trabalhos/3_ano/2_semestre/LES/Projeto/doccano/backend:/backend
       - static_volume:/backend/staticfiles
       - media:/backend/media
       - tmp_file:/backend/filepond-temp-uploads
@@ -80,6 +80,7 @@ services:
       GOOGLE_TRACKING_ID: ""
       WORKER_PROCESSES: "auto"
     volumes:
+      - /c/Users/Hugo/Documents/Uni_trabalhos/3_ano/2_semestre/LES/Projeto/doccano/frontend:/frontend
       - static_volume:/static
       - media:/media
     ports:
