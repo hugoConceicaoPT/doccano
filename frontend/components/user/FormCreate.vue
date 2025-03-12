@@ -84,7 +84,6 @@
 </template>
 
 <script lang="ts">
-
 import { mdiReload, mdiEye, mdiEyeOff } from '@mdi/js'
 import type { PropType } from 'vue'
 import Vue from 'vue'
@@ -132,8 +131,9 @@ export default Vue.extend({
       selectedColorIndex: 0,
       valid: false,
       rules: {
-        passwordsMatch: (v: string // @ts-ignore
-        )  => this.isEqual(v) || 'Passwords must match',
+        passwordsMatch: (
+          v: string // @ts-ignore
+        ) => this.isEqual(v) || 'Passwords must match',
         required: (v: string) => !!v || 'Required',
         counter: (
           v: string // @ts-ignore
@@ -152,10 +152,10 @@ export default Vue.extend({
 
   watch: {
     password(newVal) {
-      this.localPassword = newVal;
+      this.localPassword = newVal
     },
     passwordConfirmation(newVal) {
-      this.localPasswordConfirmation = newVal;
+      this.localPasswordConfirmation = newVal
     }
   },
 
@@ -165,9 +165,8 @@ export default Vue.extend({
         this.items.filter((item) => item.id !== this.id && item.username === username).length > 0
       )
     },
-    isEqual(v : string) : boolean {
-      return ( v === this.localPassword 
-      )
+    isEqual(v: string): boolean {
+      return v === this.localPassword
     }
   }
 })
