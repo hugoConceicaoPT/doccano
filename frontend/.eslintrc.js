@@ -12,9 +12,8 @@ module.exports = {
     camelcase: 'off',
     'max-len': [
       'error',
-      100,
-      2,
       {
+        code: 160,
         ignoreUrls: true,
         ignoreComments: false,
         ignoreRegExpLiterals: true,

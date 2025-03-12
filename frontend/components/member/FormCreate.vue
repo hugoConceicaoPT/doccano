@@ -104,6 +104,8 @@ export default Vue.extend({
         return {
           id: this.value.user,
           username: this.value.username,
+          password: '',
+          passwordConfirmation: '',
           isStaff: false,
           isSuperuser: false
         }

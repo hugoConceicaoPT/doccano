@@ -2,7 +2,25 @@ import { UserItem } from '@/domain/models/user/user'
 import ApiService from '@/services/api.service'
 
 function toModel(item: { [key: string]: any }): UserItem {
-  return new UserItem(item.id, item.username, item.is_superuser, item.is_staff)
+  return new UserItem(
+    item.id,
+    item.username,
+    item.password,
+    item.password_confirmation,
+    item.is_super_user,
+    item.is_staff
+  )
+}
+
+function toPayload(item: UserItem): { [key: string]: any } {
+  return {
+    id: item.id,
+    username: item.username,
+    password1: item.password,
+    password2: item.passwordConfirmation,
+    is_superuser: item.isSuperuser,
+    is_staff: item.isStaff
+  }
 }
 
 export class APIUserRepository {
@@ -18,5 +36,12 @@ export class APIUserRepository {
     const url = `/projects/${projectId}/${this.baseUrl}s`
     const response = await this.request.get(url)
     return response.data.map((item: { [key: string]: any }) => toModel(item))
+  }
+
+  async create(projectId: string, item: UserItem): Promise<UserItem> {
+    const url = `/projects/${projectId}/${this.baseUrl}s/create`
+    const payload = toPayload(item)
+    const response = await this.request.post(url, payload)
+    return toModel(response.data)
   }
 }

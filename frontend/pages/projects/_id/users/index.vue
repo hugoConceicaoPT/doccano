@@ -11,12 +11,7 @@
       </template>
     </v-tabs>
     <v-card-title>
-      <action-menu
-        :add-only="canOnlyAdd"
-        @create="$router.push('labels/add?type=' + labelType)"
-        @upload="$router.push('labels/import?type=' + labelType)"
-        @download="download"
-      />
+      <action-menu @create="$router.push('users/add')" />
       <v-btn
         v-if="!canOnlyAdd"
         class="text-capitalize ms-2"
@@ -46,7 +41,7 @@ import Vue from 'vue'
 import ActionMenu from '@/components/user/ActionMenu.vue'
 import FormDelete from '@/components/label/FormDelete.vue'
 import LabelList from '@/components/label/LabelList.vue'
-import { LabelDTO } from '~/services/application/label/labelData'
+import { UserDTO } from '~/services/application/user/userData'
 import { MemberItem } from '~/domain/models/member/member'
 
 export default Vue.extend({
@@ -79,8 +74,8 @@ export default Vue.extend({
   data() {
     return {
       dialogDelete: false,
-      items: [] as LabelDTO[],
-      selected: [] as LabelDTO[],
+      items: [] as UserDTO[],
+      selected: [] as UserDTO[],
       isLoading: false,
       tab: 0,
       member: {} as MemberItem
@@ -178,7 +173,7 @@ export default Vue.extend({
       await this.service.export(this.projectId)
     },
 
-    editItem(item: LabelDTO) {
+    editItem(item: UserDTO) {
       this.$router.push(`labels/${item.id}/edit?type=${this.labelType}`)
     }
   }

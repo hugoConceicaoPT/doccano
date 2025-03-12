@@ -3,5 +3,6 @@ export default {
   signOut: 'Ausloggen',
   username: 'Benutzername',
   password: 'Passwort',
+  passwordConfirmation: 'Passwortbestätigung',
   socialLogin: 'Anmeldung über {provider}'
 }
