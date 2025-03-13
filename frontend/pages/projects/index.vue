@@ -69,7 +69,6 @@ export default Vue.extend({
       this.$route.query as unknown as SearchQueryData
     )
     this.isLoading = false
-    console.log(isStaff)
   },
 
   computed: {
