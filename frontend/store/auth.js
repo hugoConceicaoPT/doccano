@@ -2,7 +2,8 @@ export const state = () => ({
   username: null,
   id: null,
   isAuthenticated: false,
-  isStaff: false
+  isStaff: false,
+  isSuperUser: false
 })
 
 export const mutations = {
@@ -20,6 +21,9 @@ export const mutations = {
   },
   setIsStaff(state, isStaff) {
     state.isStaff = isStaff
+  },
+  setIsSuperUser(state, isSuperUser) {
+    state.isSuperUser = isSuperUser
   }
 }
 
@@ -35,6 +39,9 @@ export const getters = {
   },
   isStaff(state) {
     return state.isStaff
+  },
+  isSuperUser(state) {
+    return state.isSuperUser
   }
 }
 
@@ -57,15 +64,18 @@ export const actions = {
       commit('setUsername', user.username)
       commit('setUserId', user.id)
       commit('setIsStaff', user.isStaff)
+      commit('setIsSuperUser', user.isSuperUser)
     } catch {
       commit('setAuthenticated', false)
       commit('setIsStaff', false)
+      commit('setIsSuperUser', false)
     }
   },
   async logout({ commit }) {
     await this.$repositories.auth.logout()
     commit('setAuthenticated', false)
     commit('setIsStaff', false)
+    commit('setIsSuperUser', false)
     commit('clearUsername')
   }
 }

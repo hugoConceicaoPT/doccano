@@ -31,6 +31,13 @@
               @click:append="show2 = !show2"
               @input="$emit('update:password', localPassword)"
             />
+            <div
+              v-for="(hint, index) in passwordHints"
+              :key="index"
+              class="text-caption text--secondary"
+            >
+              {{ hint }}
+            </div>
           </v-col>
         </v-row>
 
@@ -42,6 +49,8 @@
               :append-icon="show1 ? mdiEye : mdiEyeOff"
               :counter="30"
               name="passwordConfirmation"
+              hint="Enter the same password as before, for verification."
+              persistent-hint
               :rules="[rules.required, rules.counter, rules.passwordsMatch]"
               :type="show1 ? 'text' : 'password'"
               :label="$t('user.passwordConfirmation')"
@@ -146,7 +155,12 @@ export default Vue.extend({
       show2: false,
       mdiEye,
       mdiEyeOff,
-      show1: false
+      show1: false,
+      passwordHints: [
+        'Your password must contain at least 8 characters.',
+        'It should include numbers and special characters.',
+        'Avoid using common words or sequences.'
+      ]
     }
   },
 

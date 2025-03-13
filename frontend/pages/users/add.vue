@@ -26,8 +26,6 @@ export default Vue.extend({
     FormCreate
   },
 
-  layout: 'project',
-
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
 
   data() {
@@ -62,12 +60,12 @@ export default Vue.extend({
 
   methods: {
     async save() {
-      await this.service.create(this.projectId, this.editedItem)
-      this.$router.push(`/projects/${this.projectId}/users`)
+      await this.service.create(this.editedItem)
+      this.$router.push(`/users`)
     },
 
     async saveAndAnother() {
-      await this.service.create(this.projectId, this.editedItem)
+      await this.service.create(this.editedItem)
       this.editedItem = Object.assign({}, this.defaultItem)
       this.items = await this.service.list(this.projectId)
     }

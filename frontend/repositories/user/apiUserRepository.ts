@@ -29,6 +29,7 @@ export class APIUserRepository {
   async getProfile(): Promise<UserItem> {
     const url = '/me'
     const response = await this.request.get(url)
+    console.log(response.data)
     return toModel(response.data)
   }
 
@@ -38,8 +39,8 @@ export class APIUserRepository {
     return response.data.map((item: { [key: string]: any }) => toModel(item))
   }
 
-  async create(projectId: string, item: UserItem): Promise<UserItem> {
-    const url = `/projects/${projectId}/${this.baseUrl}s/create`
+  async create(item: UserItem): Promise<UserItem> {
+    const url = `/${this.baseUrl}s/create`
     const payload = toPayload(item)
     const response = await this.request.post(url, payload)
     return toModel(response.data)
