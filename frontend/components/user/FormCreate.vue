@@ -64,10 +64,10 @@
         <v-row>
           <v-col cols="12" sm="6">
             <v-switch
-              v-model="localIsSuperUser"
-              label="isSuperuser"
+              v-model="localisSuperUser"
+              label="isSuperUser"
               outlined
-              @change="$emit('update:isSuperUser', localIsSuperUser)"
+              @change="$emit('update:isSuperUser', localisSuperUser)"
             >
             </v-switch>
           </v-col>
@@ -136,7 +136,7 @@ export default Vue.extend({
       localPassword: this.password,
       localPasswordConfirmation: this.passwordConfirmation,
       localIsStaff: this.isStaff,
-      localIsSuperUser: this.isSuperUser,
+      localisSuperUser: this.isSuperUser,
       selectedColorIndex: 0,
       valid: false,
       rules: {
