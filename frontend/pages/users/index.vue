@@ -18,7 +18,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import ActionMenu from '@/components/user/ActionMenu.vue'
-import FormDelete from '@/components/user/FormDelete.vue'
+import FormDelete from '@/components/label/FormDelete.vue'
 import LabelList from '@/components/label/LabelList.vue'
 import { UserDTO } from '~/services/application/user/userData'
 

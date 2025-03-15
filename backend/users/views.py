@@ -47,16 +47,3 @@ class UserCreation(generics.CreateAPIView):
         user.is_staff = is_staff
         user.save()
         return user
-
-class UserDelete(generics.DestroyAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated & IsAdminUser]
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            self.perform_destroy(instance)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Exception:
-            return Response({"detail": "Utilizador não encontrado."}, status=status.HTTP_404_NOT_FOUND)

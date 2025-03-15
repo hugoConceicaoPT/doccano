@@ -17,9 +17,4 @@ export class UserApplicationService {
     const created = await this.repository.create(user)
     return new UserDTO(created)
   }
-
-  public bulkDelete(items: UserDTO[]): Promise<void> {
-      const ids = items.map((item) => item.id)
-      return this.repository.delete(ids)
-    }
 }

@@ -45,9 +45,4 @@ export class APIUserRepository {
     const response = await this.request.post(url, payload)
     return toModel(response.data)
   }
-
-  async delete(userId: number[]): Promise<void> {
-    const url = `/users/${userId}`
-    await this.request.delete(url)
-  }
 }
