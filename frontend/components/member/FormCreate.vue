@@ -107,7 +107,7 @@ export default Vue.extend({
           password: '',
           passwordConfirmation: '',
           isStaff: false,
-          isSuperuser: false
+          isSuperUser: false
         }
       },
       set(val: MemberItem) {
