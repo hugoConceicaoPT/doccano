@@ -13,7 +13,7 @@ export class UserDTO {
     this.username = item.username
     this.password = item.password
     this.passwordConfirmation = item.passwordConfirmation
-    this.isSuperUser = item.isSuperUser
+    this.isSuperUser = item.isSuperuser
     this.isStaff = item.isStaff
   }
 }

@@ -26,8 +26,6 @@ export default Vue.extend({
     FormCreate
   },
 
-  layout: 'projects',
-
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
 
   data() {

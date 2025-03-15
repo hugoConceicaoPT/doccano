@@ -24,20 +24,20 @@
               :append-icon="show2 ? mdiEye : mdiEyeOff"
               :counter="30"
               name="password"
-              :rules="[
-                rules.required,
-                rules.counter,
-                rules.minLength,
-                rules.noCommonWords,
-                rules.hasNumberAndSpecialChar,
-                rules.notSimilarToPersonalInfo
-              ]"
+              :rules="[rules.required, rules.counter]"
               :type="show2 ? 'text' : 'password'"
               :label="$t('user.password')"
               outlined
               @click:append="show2 = !show2"
               @input="$emit('update:password', localPassword)"
             />
+            <div
+              v-for="(hint, index) in passwordHints"
+              :key="index"
+              class="text-caption text--secondary"
+            >
+              {{ hint }}
+            </div>
           </v-col>
         </v-row>
 
@@ -49,6 +49,8 @@
               :append-icon="show1 ? mdiEye : mdiEyeOff"
               :counter="30"
               name="passwordConfirmation"
+              hint="Enter the same password as before, for verification."
+              persistent-hint
               :rules="[rules.required, rules.counter, rules.passwordsMatch]"
               :type="show1 ? 'text' : 'password'"
               :label="$t('user.passwordConfirmation')"
@@ -62,10 +64,10 @@
         <v-row>
           <v-col cols="12" sm="6">
             <v-switch
-              v-model="localisSuperUser"
-              label="isSuperUser"
+              v-model="localIsSuperUser"
+              label="isSuperuser"
               outlined
-              @change="$emit('update:isSuperUser', localisSuperUser)"
+              @change="$emit('update:isSuperUser', localIsSuperUser)"
             >
             </v-switch>
           </v-col>
@@ -134,7 +136,7 @@ export default Vue.extend({
       localPassword: this.password,
       localPasswordConfirmation: this.passwordConfirmation,
       localIsStaff: this.isStaff,
-      localisSuperUser: this.isSuperUser,
+      localIsSuperUser: this.isSuperUser,
       selectedColorIndex: 0,
       valid: false,
       rules: {
@@ -147,38 +149,18 @@ export default Vue.extend({
         ) => (v && v.length <= 100) || this.$t('rules.userNameRules').userNameLessThan30Chars,
         nameDuplicated: (
           v: string // @ts-ignore
-        ) => !this.isUsedName(v) || this.$t('rules.userNameRules').duplicated,
-        minLength: (v: string) =>
-          (v && v.length >= 8) || 'Your password must contain at least 8 characters.',
-        noCommonWords: (v: string) => {
-          const commonWords = ['password', '123456', 'qwerty', 'letmein', 'admin']
-          return (
-            !commonWords.some((word) => v.toLowerCase().includes(word)) ||
-            'Avoid using common words or sequences.'
-          )
-        },
-        hasNumberAndSpecialChar: (v: string) => {
-          const hasNumber = /\d/.test(v)
-          const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(v)
-          return (
-            (hasNumber && hasSpecialChar) || 'It should include numbers and special characters.'
-          )
-        },
-        notSimilarToPersonalInfo: (v: string) => {
-          if (!v) return true // If empty, let 'required' rule handle it
-          const personalInfo = [this.username] // Add more fields if needed
-          for (const info of personalInfo) {
-            if (info && v.toLowerCase().includes(info.toLowerCase()))
-              return 'Your password can’t be too similar to your other personal information.'
-          }
-          return true
-        }
+        ) => !this.isUsedName(v) || this.$t('rules.userNameRules').duplicated
       },
       mdiReload,
       show2: false,
       mdiEye,
       mdiEyeOff,
-      show1: false
+      show1: false,
+      passwordHints: [
+        'Your password must contain at least 8 characters.',
+        'It should include numbers and special characters.',
+        'Avoid using common words or sequences.'
+      ]
     }
   },
 

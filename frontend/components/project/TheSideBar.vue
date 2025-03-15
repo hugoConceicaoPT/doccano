@@ -1,6 +1,6 @@
 <template>
   <v-list dense>
-    <v-list-item-group :value="selected" mandatory>
+    <v-list-item-group v-model="selected" mandatory>
       <v-list-item
         v-for="(item, i) in filteredItems"
         :key="i"
@@ -22,21 +22,40 @@
 </template>
 
 <script>
-import { mdiDeveloperBoard, mdiAccount } from '@mdi/js'
+import { mdiDeveloperBoard, mdiAccount, mdiPlayCircleOutline } from '@mdi/js'
 
 export default {
+  props: {
+    isSuperUser: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   data() {
     return {
-      selected: 0
+      selected: 0,
+      mdiPlayCircleOutline
     }
   },
 
   computed: {
     filteredItems() {
-      return [
-        { icon: mdiDeveloperBoard, text: 'Projects', link: 'projects' },
-        { icon: mdiAccount, text: 'Users', link: 'users' }
+      const items = [
+        {
+          icon: mdiDeveloperBoard,
+          text: 'Projects',
+          link: 'projects',
+          isVisible: true
+        },
+        {
+          icon: mdiAccount,
+          text: 'Users',
+          link: 'users',
+          isVisible: true
+        }
       ]
+      return items.filter((item) => item.isVisible)
     }
   }
 }
