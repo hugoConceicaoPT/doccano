@@ -27,7 +27,7 @@ import { mdiDeveloperBoard, mdiAccount } from '@mdi/js'
 export default {
   data() {
     return {
-      selected: 0
+      selected: 1
     }
   },
 

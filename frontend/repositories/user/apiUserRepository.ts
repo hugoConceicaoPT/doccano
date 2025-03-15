@@ -7,7 +7,7 @@ function toModel(item: { [key: string]: any }): UserItem {
     item.username,
     item.password,
     item.password_confirmation,
-    item.is_super_user,
+    item.is_superuser,
     item.is_staff
   )
 }
@@ -18,7 +18,7 @@ function toPayload(item: UserItem): { [key: string]: any } {
     username: item.username,
     password1: item.password,
     password2: item.passwordConfirmation,
-    is_superuser: item.isSuperuser,
+    is_superuser: item.isSuperUser,
     is_staff: item.isStaff
   }
 }
@@ -29,12 +29,16 @@ export class APIUserRepository {
   async getProfile(): Promise<UserItem> {
     const url = '/me'
     const response = await this.request.get(url)
-    console.log(response.data)
     return toModel(response.data)
   }
 
-  async list(projectId: string): Promise<UserItem[]> {
-    const url = `/projects/${projectId}/${this.baseUrl}s`
+  async list(username?: string): Promise<UserItem[]> {
+    let url = `/${this.baseUrl}s`
+
+    if (username) {
+      url += `?search=${encodeURIComponent(username)}`
+    }
+
     const response = await this.request.get(url)
     return response.data.map((item: { [key: string]: any }) => toModel(item))
   }

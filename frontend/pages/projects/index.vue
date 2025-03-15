@@ -59,7 +59,7 @@ export default Vue.extend({
       projects: {} as Page<Project>,
       selected: [] as Project[],
       isLoading: false,
-      drawerLeft: null,
+      drawerLeft: null
     }
   },
 
@@ -81,7 +81,6 @@ export default Vue.extend({
       return this.selected.length === 1
     }
   },
-
   watch: {
     '$route.query': _.debounce(function () {
       // @ts-ignore
