@@ -178,12 +178,7 @@ export default Vue.extend({
       show2: false,
       mdiEye,
       mdiEyeOff,
-      show1: false,
-      passwordHints: [
-        'Your password must contain at least 8 characters.',
-        'It should include numbers and special characters.',
-        'Avoid using common words or sequences.'
-      ]
+      show1: false
     }
   },
 

@@ -2,6 +2,9 @@ services:
 
   backend:
     image: doccano/doccano:backend
+    build: 
+      context: ../
+      dockerfile: ./docker/Dockerfile.prod
     volumes:
       - /c/Users/Hugo/Documents/Uni_trabalhos/3_ano/2_semestre/LES/Projeto/doccano/backend:/backend
       - static_volume:/backend/staticfiles
@@ -68,6 +71,9 @@ services:
 
   nginx:
     image: doccano/doccano:frontend
+    build: 
+      context: ../
+      dockerfile: ./docker/Dockerfile.nginx
     command: >
       /bin/sh -c
       "envsubst '

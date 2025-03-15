@@ -32,8 +32,13 @@ export class APIUserRepository {
     return toModel(response.data)
   }
 
-  async list(projectId: string): Promise<UserItem[]> {
-    const url = `/projects/${projectId}/${this.baseUrl}s`
+  async list(username?: string): Promise<UserItem[]> {
+    let url = `/${this.baseUrl}s`
+
+    if (username) {
+      url += `?search=${encodeURIComponent(username)}`
+    }
+
     const response = await this.request.get(url)
     return response.data.map((item: { [key: string]: any }) => toModel(item))
   }

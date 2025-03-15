@@ -17,4 +17,9 @@ export class UserApplicationService {
     const created = await this.repository.create(user)
     return new UserDTO(created)
   }
+
+  public async list(): Promise<UserDTO[]> {
+    const users = await this.repository.list()
+    return users.map((user) => new UserDTO(user))
+  }
 }
