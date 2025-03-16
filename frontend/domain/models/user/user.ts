@@ -1,3 +1,5 @@
+import { UserRepository } from './userRepository'
+
 export class UserItem {
   constructor(
     readonly id: number,
@@ -16,5 +18,9 @@ export class UserItem {
     isStaff: boolean
   ): UserItem {
     return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff)
+  }
+
+  static async list(repository: UserRepository): Promise<UserItem[]> {
+    return await repository.list()
   }
 }
