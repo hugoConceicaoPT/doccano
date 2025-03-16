@@ -206,3 +206,5 @@ backend/media
 backend/*.sqlite3*
 frontend/assets/fonts
 docker/Dockerfile.prod
+backend/config/settings/base.py
+backend/doccano
