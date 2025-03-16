@@ -205,3 +205,4 @@ backend/filepond-temp-uploads
 backend/media
 backend/*.sqlite3*
 frontend/assets/fonts
+docker/Dockerfile.prod
