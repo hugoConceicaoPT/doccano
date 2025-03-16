@@ -6,13 +6,13 @@
         {{ $t('generic.delete') }}
       </v-btn>
       <v-dialog v-model="dialogDelete">
-        <form-delete :selected="selected" @cancel="dialogDelete = false" />
+        <form-delete :selected="selected" @remove="handleDelete" @cancel="dialogDelete = false" />
       </v-dialog>
     </v-card-title>
     <v-navigation-drawer v-if="isSuperUser" v-model="drawerLeft" app clipped>
       <the-side-bar />
     </v-navigation-drawer>
-    <label-list v-model="selected" :items="items" :is-loading="isLoading" />
+    <user-list v-model="selected" :items="items" :is-loading="isLoading" />
   </v-card>
 </template>
 
@@ -21,15 +21,15 @@ import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import ActionMenu from '@/components/user/ActionMenu.vue'
 import FormDelete from '@/components/label/FormDelete.vue'
-import LabelList from '@/components/label/LabelList.vue'
+import UserList from '@/components/user/UserList.vue'
 import { UserDTO } from '~/services/application/user/userData'
-import TheSideBar from '~/components/user/TheSideBar.vue'
+import TheSideBar from '@/components/user/TheSideBar.vue'
 
 export default Vue.extend({
   components: {
     ActionMenu,
     FormDelete,
-    LabelList,
+    UserList,
     TheSideBar
   },
 
@@ -50,6 +50,24 @@ export default Vue.extend({
 
   computed: {
     ...mapGetters('auth', ['isStaff', 'isSuperUser'])
+  },
+
+  mounted() {
+    this.fetchUsers()
+  },
+
+  methods: {
+    async fetchUsers() {
+      this.isLoading = true
+      try {
+        const response = await this.$services.user.list()
+        this.items = response
+      } catch (error) {
+        console.error('Erro ao buscar utilizadores:', error)
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 })
 </script>

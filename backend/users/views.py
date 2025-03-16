@@ -28,6 +28,7 @@ class Users(generics.ListAPIView):
 
 
 class UserCreation(generics.CreateAPIView):
+    queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [IsAuthenticated & IsAdminUser]
 

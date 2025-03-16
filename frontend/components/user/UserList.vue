@@ -26,12 +26,9 @@
         filled
       />
     </template>
-    <template #[`item.backgroundColor`]="props">
-      <v-chip
-        :color="props.item.backgroundColor"
-        :text-color="$contrastColor(props.item.backgroundColor)"
-      >
-        {{ props.item.backgroundColor }}
+    <template #[`item.isSuperuser`]="props">
+      <v-chip :color="props.item.isSuperuser ? 'green' : 'red'">
+        {{ props.item.isSuperuser ? 'Sim' : 'Não' }}
       </v-chip>
     </template>
     <template #[`item.actions`]="{ item }">
@@ -46,7 +43,7 @@
 import { mdiMagnify, mdiPencil } from '@mdi/js'
 import type { PropType } from 'vue'
 import Vue from 'vue'
-import { LabelDTO } from '~/services/application/label/labelData'
+import { UserDTO } from '~/services/application/user/userData' // Ajuste o caminho conforme necessário
 
 export default Vue.extend({
   props: {
@@ -56,12 +53,12 @@ export default Vue.extend({
       required: true
     },
     items: {
-      type: Array as PropType<LabelDTO[]>,
+      type: Array as PropType<UserDTO[]>,
       default: () => [],
       required: true
     },
     value: {
-      type: Array as PropType<LabelDTO[]>,
+      type: Array as PropType<UserDTO[]>,
       default: () => [],
       required: true
     },
@@ -82,9 +79,9 @@ export default Vue.extend({
   computed: {
     headers() {
       const headers = [
-        { text: this.$t('generic.name'), value: 'text', sortable: true },
-        { text: this.$t('labels.shortkey'), value: 'suffixKey', sortable: true },
-        { text: this.$t('labels.color'), value: 'backgroundColor', sortable: true }
+        { text: this.$t('generic.username'), value: 'username', sortable: true },
+        { text: this.$t('generic.email'), value: 'email', sortable: true },
+        { text: this.$t('generic.isSuperuser'), value: 'isSuperuser', sortable: true }
       ]
       if (!this.disableEdit) {
         headers.push({ text: 'Actions', value: 'actions', sortable: false })
