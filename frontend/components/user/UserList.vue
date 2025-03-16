@@ -26,9 +26,14 @@
         filled
       />
     </template>
-    <template #[`item.isSuperuser`]="props">
-      <v-chip :color="props.item.isSuperuser ? 'green' : 'red'">
-        {{ props.item.isSuperuser ? 'Sim' : 'Não' }}
+    <template #[`item.isSuperUser`]="props">
+      <v-chip :color="props.item.isSuperUser ? 'blue' : 'grey'">
+        {{ props.item.isSuperUser ? 'Sim' : 'Não' }}
+      </v-chip>
+    </template>
+    <template #[`item.isStaff`]="props">
+      <v-chip :color="props.item.isStaff ? 'blue' : 'grey'">
+        {{ props.item.isStaff ? 'Sim' : 'Não' }}
       </v-chip>
     </template>
     <template #[`item.actions`]="{ item }">
@@ -79,9 +84,9 @@ export default Vue.extend({
   computed: {
     headers() {
       const headers = [
-        { text: this.$t('generic.username'), value: 'username', sortable: true },
-        { text: this.$t('generic.email'), value: 'email', sortable: true },
-        { text: this.$t('generic.isSuperuser'), value: 'isSuperuser', sortable: true }
+        { text: this.$t('Username'), value: 'username', sortable: true },
+        { text: this.$t('Superuser'), value: 'isSuperUser', sortable: true },
+        { text: this.$t('Staff'), value: 'isStaff', sortable: true }
       ]
       if (!this.disableEdit) {
         headers.push({ text: 'Actions', value: 'actions', sortable: false })
