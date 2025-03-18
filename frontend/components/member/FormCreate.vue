@@ -101,16 +101,17 @@ export default Vue.extend({
   computed: {
     user: {
       get(): UserItem {
-        return {
-          id: this.value.user,
-          username: this.value.username,
-          password: '',
-          passwordConfirmation: '',
-          isStaff: false,
-          isSuperUser: false
-        }
+        // Instancia a classe UserItem para garantir que todos os métodos (ex: delete) estejam presentes
+        return new UserItem(
+          this.value.user,
+          this.value.username,
+          '', // password
+          '', // passwordConfirmation
+          false, // isSuperUser
+          false // isStaff
+        )
       },
-      set(val: MemberItem) {
+      set(val: UserItem) {
         if (val === undefined) return
         const user = { user: val.id, username: val.username }
         this.$emit('input', { ...this.value, ...user })

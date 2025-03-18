@@ -20,7 +20,7 @@
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import ActionMenu from '@/components/user/ActionMenu.vue'
-import FormDelete from '@/components/label/FormDelete.vue'
+import FormDelete from '@/components/user/FormDelete.vue'
 import UserList from '@/components/user/UserList.vue'
 import { UserDTO } from '~/services/application/user/userData'
 import TheSideBar from '@/components/user/TheSideBar.vue'
@@ -44,7 +44,7 @@ export default Vue.extend({
       selected: [] as UserDTO[],
       isLoading: false,
       tab: 0,
-      drawerLeft: null
+      drawerLeft: false  // alterado de null para false
     }
   },
 
@@ -66,6 +66,37 @@ export default Vue.extend({
         console.error('Erro ao buscar utilizadores:', error)
       } finally {
         this.isLoading = false
+      }
+    },
+    async deleteUser(userId: number) {
+      this.isLoading = true;
+      try {
+        await this.$services.user.delete(userId);
+        this.items = this.items.filter(user => user.id !== userId);
+      } catch (error) {
+        console.error('Erro ao excluir utilizador:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async handleDelete() {
+      this.isLoading = true;
+      try {
+        // Exclui cada usuário selecionado
+        for (const user of this.selected) {
+          await this.$services.user.delete(user.id);
+        }
+        // Atualiza a lista removendo os usuários deletados
+        this.items = this.items.filter(
+          user => !this.selected.some(selectedUser => selectedUser.id === user.id)
+        );
+        // Limpa a seleção e fecha o diálogo
+        this.selected = [];
+        this.dialogDelete = false;
+      } catch (error) {
+        console.error('Erro ao excluir utilizadores:', error);
+      } finally {
+        this.isLoading = false;
       }
     }
   }

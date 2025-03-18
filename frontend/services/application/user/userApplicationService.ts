@@ -22,4 +22,9 @@ export class UserApplicationService {
     const users = await this.repository.list()
     return users.map((user) => new UserDTO(user))
   }
+
+  public async delete(userId: number): Promise<void> {
+    await this.repository.delete(userId)
+  }
 }
+

@@ -48,3 +48,13 @@ class UserCreation(generics.CreateAPIView):
         user.is_staff = is_staff
         user.save()
         return user
+
+class UserDeletion(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated & IsAdminUser]
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_object()  # Obtém o usuário com base no ID passado na URL
+        user.delete()  # Exclui o usuário
+        return Response({"detail": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
