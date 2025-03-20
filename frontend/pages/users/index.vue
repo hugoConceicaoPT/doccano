@@ -47,7 +47,6 @@ export default Vue.extend({
       items: [] as UserDTO[],
       selected: [] as UserDTO[],
       isLoading: false,
-      errorMessage: "", // Variável para armazenar mensagens de erro
       tab: 0,
       drawerLeft: null
     }
@@ -76,7 +75,6 @@ export default Vue.extend({
 
     async handleDelete() {
       this.isLoading = true
-      this.errorMessage = "" // Limpa mensagens anteriores
       try {
         // Tenta excluir cada usuário selecionado
         for (const user of this.selected) {
@@ -89,16 +87,17 @@ export default Vue.extend({
         this.selected = []
         this.dialogDelete = false // Fecha o diálogo em caso de sucesso
       } catch (error) {
-        console.error("Erro ao excluir utilizadores:", error)
-        const err = error as any
-        if (err.response && err.response.status === 403) {
-          this.errorMessage = err.response.data.detail || "Ação não permitida."
-          alert("You cannot delete your own account.");
-        } else {
-          this.errorMessage = "Ocorreu um erro ao excluir os utilizadores."
-        }
-        // Fecha o diálogo mesmo em caso de erro para exibir o alerta
-        this.dialogDelete = false
+        this.dialogDelete = false;
+
+        setTimeout(() => {
+          console.error("Erro ao excluir utilizadores:", error);
+          const err = error as any;
+          if (err.response && err.response.status === 403) {
+            alert("You cannot delete your own account.");
+          } else {
+            alert("Error deleting users");
+          }
+        }, 300);
       } finally {
         this.isLoading = false
       }
