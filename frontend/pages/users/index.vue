@@ -49,7 +49,7 @@ export default Vue.extend({
       isLoading: false,
       errorMessage: "", // Variável para armazenar mensagens de erro
       tab: 0,
-      drawerLeft: false // v-model espera um booleano
+      drawerLeft: null
     }
   },
 
