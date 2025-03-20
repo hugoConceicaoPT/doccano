@@ -6,7 +6,11 @@
         {{ $t('generic.delete') }}
       </v-btn>
       <v-dialog v-model="dialogDelete">
-        <form-delete :selected="selected" @remove="handleDelete" @cancel="dialogDelete = false" />
+        <form-delete
+          :selected="selected"
+          @remove="handleDelete"
+          @cancel="dialogDelete = false"
+        />
       </v-dialog>
     </v-card-title>
     <v-navigation-drawer v-if="isSuperUser" v-model="drawerLeft" app clipped>
@@ -43,8 +47,9 @@ export default Vue.extend({
       items: [] as UserDTO[],
       selected: [] as UserDTO[],
       isLoading: false,
+      errorMessage: "", // Variável para armazenar mensagens de erro
       tab: 0,
-      drawerLeft: null  
+      drawerLeft: false // v-model espera um booleano
     }
   },
 
@@ -68,35 +73,34 @@ export default Vue.extend({
         this.isLoading = false
       }
     },
-    async deleteUser(userId: number) {
-      this.isLoading = true;
-      try {
-        await this.$services.user.delete(userId);
-        this.items = this.items.filter(user => user.id !== userId);
-      } catch (error) {
-        console.error('Erro ao excluir utilizador:', error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
+
     async handleDelete() {
-      this.isLoading = true;
+      this.isLoading = true
+      this.errorMessage = "" // Limpa mensagens anteriores
       try {
-        // Exclui cada usuário selecionado
+        // Tenta excluir cada usuário selecionado
         for (const user of this.selected) {
-          await this.$services.user.delete(user.id);
+          await this.$services.user.delete(user.id)
         }
         // Atualiza a lista removendo os usuários deletados
         this.items = this.items.filter(
           user => !this.selected.some(selectedUser => selectedUser.id === user.id)
-        );
-        // Limpa a seleção e fecha o diálogo
-        this.selected = [];
-        this.dialogDelete = false;
+        )
+        this.selected = []
+        this.dialogDelete = false // Fecha o diálogo em caso de sucesso
       } catch (error) {
-        console.error('Erro ao excluir utilizadores:', error);
+        console.error("Erro ao excluir utilizadores:", error)
+        const err = error as any
+        if (err.response && err.response.status === 403) {
+          this.errorMessage = err.response.data.detail || "Ação não permitida."
+          alert("You cannot delete your own account.");
+        } else {
+          this.errorMessage = "Ocorreu um erro ao excluir os utilizadores."
+        }
+        // Fecha o diálogo mesmo em caso de erro para exibir o alerta
+        this.dialogDelete = false
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     }
   }
