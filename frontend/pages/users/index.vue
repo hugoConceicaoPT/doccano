@@ -44,7 +44,7 @@ export default Vue.extend({
       selected: [] as UserDTO[],
       isLoading: false,
       tab: 0,
-      drawerLeft: false  // alterado de null para false
+      drawerLeft: null  
     }
   },
 
