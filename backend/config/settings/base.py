@@ -33,6 +33,7 @@ DEBUG = env.bool("DEBUG", True)
 # Application definition
 INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
+    "perspectives",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
