@@ -30,4 +30,19 @@ export class UserItem {
     }
     await repository.delete(this.id)
   }
+
+  async update(repository: UserRepository): Promise<void> {
+    if (this.id === 0) {
+      throw new Error("Não é possível atualizar um usuário sem ID válido.")
+    }
+
+    if (this.password !== this.passwordConfirmation) {
+      throw new Error("A confirmação de senha não confere.")
+    }
+
+    await repository.update(this.id, {
+      username: this.username,
+      password: this.password
+    })
+  }
 }

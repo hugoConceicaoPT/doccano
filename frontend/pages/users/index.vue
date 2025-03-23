@@ -10,12 +10,27 @@
       >
         {{ $t('generic.delete') }}
       </v-btn>
+      <v-btn
+       class="text-capitalize ms-2"
+       outlined
+      :disabled="selected.length !== 1"
+      @click.stop="dialogEdit = true"
+>
+      {{ $t('generic.edit') }}
+      </v-btn>
       <v-dialog v-model="dialogDelete">
         <form-delete
           :selected="selected"
           @remove="handleDelete"
           @cancel="dialogDelete = false"
         />
+      </v-dialog>
+      <v-dialog v-model="dialogEdit">
+      <form-edit
+      :user="selected[0]"
+      @confirmEdit="handleEdit"
+      @cancel="dialogEdit = false"
+      />
       </v-dialog>
     </v-card-title>
     <v-navigation-drawer v-if="isSuperUser" v-model="drawerLeft" app clipped>
@@ -33,11 +48,14 @@ import FormDelete from '@/components/user/FormDelete.vue'
 import UserList from '@/components/user/UserList.vue'
 import { UserDTO } from '~/services/application/user/userData'
 import TheSideBar from '@/components/user/TheSideBar.vue'
+import FormEdit from '@/components/user/FormEdit.vue'
+
 
 export default Vue.extend({
   components: {
     ActionMenu,
     FormDelete,
+    FormEdit,
     UserList,
     TheSideBar
   },
@@ -51,6 +69,7 @@ export default Vue.extend({
       dialogDelete: false,
       items: [] as UserDTO[],
       selected: [] as UserDTO[],
+      dialogEdit: false,
       isLoading: false,
       tab: 0,
       drawerLeft: null
@@ -120,7 +139,26 @@ export default Vue.extend({
       } finally {
         this.isLoading = false
       }
-    }
+    },
+  async handleEdit(updatedUser: UserDTO) {
+  this.isLoading = true
+  try {
+    await this.$services.user.update(updatedUser.id, updatedUser)
+
+    // Atualiza localmente a lista com os dados editados
+    this.items = this.items.map(user =>
+      user.id === updatedUser.id ? updatedUser : user
+    )
+
+    this.dialogEdit = false
+    this.selected = []
+  } catch (error) {
+    console.error('Erro ao editar utilizador:', error)
+    alert('Erro ao editar utilizador')
+  } finally {
+    this.isLoading = false
+  }
+}
   }
 })
 </script>

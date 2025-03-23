@@ -55,4 +55,23 @@ export class APIUserRepository {
     const response = await this.request.delete(url)
     return toModel(response.data)
   }
+
+  async update(id: number, data: Partial<UserItem>): Promise<UserItem> {
+    const url = `/${this.baseUrl}s/${id}/edit` 
+
+    const payload: any = {
+      username: data.username,
+      is_superuser: data.isSuperUser,
+      is_staff: data.isStaff
+    }
+
+    if (data.password && data.passwordConfirmation) {
+      payload.password1 = data.password
+      payload.password2 = data.passwordConfirmation
+    }
+
+    console.log('🔼 UPDATE via PUT', payload)
+    const response = await this.request.put(url, payload)
+    return toModel(response.data)
+  }
 }

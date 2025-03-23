@@ -26,4 +26,9 @@ export class UserApplicationService {
   public async delete(userId: number): Promise<void> {
     await this.repository.delete(userId)
   }
+
+  public async update(userId: number, data: Partial<CreateUserCommand>): Promise<UserDTO> {
+    const updated = await this.repository.update(userId, data)
+    return new UserDTO(updated)
+  }  
 }
