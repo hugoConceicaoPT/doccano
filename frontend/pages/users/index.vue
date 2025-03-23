@@ -2,7 +2,12 @@
   <v-card>
     <v-card-title>
       <action-menu @create="$router.push('users/add')" />
-      <v-btn class="text-capitalize ms-2" outlined @click.stop="dialogDelete = true">
+      <v-btn
+        class="text-capitalize ms-2"
+        outlined
+        :disabled="!canDelete"
+        @click.stop="dialogDelete = true"
+      >
         {{ $t('generic.delete') }}
       </v-btn>
       <v-dialog v-model="dialogDelete">
@@ -53,7 +58,11 @@ export default Vue.extend({
   },
 
   computed: {
-    ...mapGetters('auth', ['isStaff', 'isSuperUser'])
+    ...mapGetters('auth', ['isStaff', 'isSuperUser']),
+
+    canDelete(): boolean {
+      return this.selected.length > 0
+    }
   },
 
   mounted() {
@@ -72,7 +81,17 @@ export default Vue.extend({
         this.isLoading = false
       }
     },
-
+    async deleteUser(userId: number) {
+      this.isLoading = true
+      try {
+        await this.$services.user.delete(userId)
+        this.items = this.items.filter((user) => user.id !== userId)
+      } catch (error) {
+        console.error('Erro ao excluir utilizador:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
     async handleDelete() {
       this.isLoading = true
       try {

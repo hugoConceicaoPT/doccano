@@ -27,4 +27,3 @@ export class UserApplicationService {
     await this.repository.delete(userId)
   }
 }
-

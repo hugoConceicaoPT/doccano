@@ -1,5 +1,6 @@
 from django.urls import include, path
-from .views import Me, UserCreation, Users, UserDeletion
+
+from .views import Me, UserCreation, UserDeletion, Users
 
 urlpatterns = [
     path(route="me", view=Me.as_view(), name="me"),

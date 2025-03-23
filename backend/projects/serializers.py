@@ -2,12 +2,15 @@ from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 
 from .models import (
+    Answer,
     BoundingBoxProject,
     ImageCaptioningProject,
     ImageClassificationProject,
     IntentDetectionAndSlotFillingProject,
     Member,
+    Perspective,
     Project,
+    Question,
     SegmentationProject,
     Seq2seqProject,
     SequenceLabelingProject,
@@ -20,6 +23,9 @@ from .models import (
 class MemberSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     rolename = serializers.SerializerMethodField()
+    perspective_id = serializers.PrimaryKeyRelatedField(
+        source="perspective", queryset=Perspective.objects.all(), allow_null=True
+    )
 
     @classmethod
     def get_username(cls, instance):
@@ -33,7 +39,40 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = ("id", "user", "role", "username", "rolename")
+        fields = ("id", "user", "role", "username", "rolename", "perspective_id")
+
+
+class AnswerSerializer(serializers.ModelSerializer):
+    member = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all())
+
+    class Meta:
+        model = Answer
+        fields = ("id", "answer", "member", "question")
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True, read_only=True)
+    perspective = serializers.PrimaryKeyRelatedField(
+        queryset=Perspective.objects.all(), write_only=True, required=False
+    )
+
+    class Meta:
+        model = Question
+        fields = ("id", "question", "perspective", "answers")
+
+
+class PerspectiveSerializer(serializers.ModelSerializer):
+    members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.filter(role__name="annotator"), many=True)
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        source="project",
+    )
+    questions = QuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Perspective
+        fields = ("id", "project_id", "created_at", "members", "questions")
+        read_only_fields = ("created_at",)
 
 
 class TagSerializer(serializers.ModelSerializer):

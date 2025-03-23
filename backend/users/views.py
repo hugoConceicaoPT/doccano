@@ -49,11 +49,12 @@ class UserCreation(generics.CreateAPIView):
         user.save()
         return user
 
+
 class UserDeletion(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated & IsAdminUser]
-    
+
     def delete(self, request, *args, **kwargs):
         user = self.get_object()  
         

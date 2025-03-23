@@ -49,11 +49,10 @@ export class APIUserRepository {
     const response = await this.request.post(url, payload)
     return toModel(response.data)
   }
-  
+
   async delete(id: number): Promise<UserItem> {
     const url = `/${this.baseUrl}s/${id}/delete`
     const response = await this.request.delete(url)
     return toModel(response.data)
   }
-  
 }

@@ -24,6 +24,7 @@ import { APICatalogRepository } from '@/repositories/upload/apiCatalogRepository
 import { APIParseRepository } from '@/repositories/upload/apiParseRepository'
 import { APIUserRepository } from '@/repositories/user/apiUserRepository'
 import { APISegmentationRepository } from '~/repositories/tasks/apiSegmentationRepository'
+import { APIPerspectiveRepository } from '~/repositories/perspective/apiPerspectiveRepository'
 export interface Repositories {
   // User
   auth: APIAuthRepository
@@ -34,6 +35,7 @@ export interface Repositories {
   member: APIMemberRepository
   role: APIRoleRepository
   tag: APITagRepository
+  perspective: APIPerspectiveRepository
 
   // Example
   example: APIExampleRepository
@@ -85,6 +87,7 @@ const repositories: Repositories = {
   member: new APIMemberRepository(),
   role: new APIRoleRepository(),
   tag: new APITagRepository(),
+  perspective: new APIPerspectiveRepository(),
 
   // Example
   example: new APIExampleRepository(),

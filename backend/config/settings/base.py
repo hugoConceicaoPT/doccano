@@ -33,7 +33,6 @@ DEBUG = env.bool("DEBUG", True)
 # Application definition
 INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
-    "perspectives",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -194,8 +193,11 @@ LOGOUT_REDIRECT_URL = "/"
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": path.join(BASE_DIR, "db.sqlite3"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "doccano",
+        "USER": "hugo",
+        "PASSWORD": "1234",
+        "PORT": "5433",
     }
 }
 # Change 'default' database configuration with $DATABASE_URL.
