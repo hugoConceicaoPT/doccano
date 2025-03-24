@@ -1,7 +1,9 @@
 <template>
   <v-card>
     <v-card-title>
-      <action-menu @create="$router.push('users/add')" />
+      <v-btn class="text-capitalize" color="primary" @click.stop="$router.push('users/add')">
+        {{ $t('generic.create') }}
+      </v-btn>
       <v-btn
         class="text-capitalize ms-2"
         outlined
@@ -33,9 +35,6 @@
       />
       </v-dialog>
     </v-card-title>
-    <v-navigation-drawer v-if="isSuperUser" v-model="drawerLeft" app clipped>
-      <the-side-bar />
-    </v-navigation-drawer>
     <user-list v-model="selected" :items="items" :is-loading="isLoading" />
   </v-card>
 </template>
@@ -43,21 +42,17 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import ActionMenu from '@/components/user/ActionMenu.vue'
 import FormDelete from '@/components/user/FormDelete.vue'
 import UserList from '@/components/user/UserList.vue'
 import { UserDTO } from '~/services/application/user/userData'
-import TheSideBar from '@/components/user/TheSideBar.vue'
 import FormEdit from '@/components/user/FormEdit.vue'
 
 
 export default Vue.extend({
   components: {
-    ActionMenu,
     FormDelete,
     FormEdit,
     UserList,
-    TheSideBar
   },
 
   layout: 'projects',

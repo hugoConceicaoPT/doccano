@@ -19,9 +19,6 @@
         <form-delete :selected="selected" @cancel="dialogDelete = false" @remove="remove" />
       </v-dialog>
     </v-card-title>
-    <v-navigation-drawer v-if="isSuperUser" v-model="drawerLeft" app clipped>
-      <the-side-bar />
-    </v-navigation-drawer>
     <project-list
       v-model="selected"
       :items="projects.items"
@@ -41,13 +38,11 @@ import FormDelete from '~/components/project/FormDelete.vue'
 import { Page } from '~/domain/models/page'
 import { Project } from '~/domain/models/project/project'
 import { SearchQueryData } from '~/services/application/project/projectApplicationService'
-import TheSideBar from '~/components/project/TheSideBar.vue'
 
 export default Vue.extend({
   components: {
     FormDelete,
     ProjectList,
-    TheSideBar
   },
   layout: 'projects',
 
