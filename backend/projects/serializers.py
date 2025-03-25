@@ -24,7 +24,7 @@ class MemberSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     rolename = serializers.SerializerMethodField()
     perspective_id = serializers.PrimaryKeyRelatedField(
-        source="perspective", queryset=Perspective.objects.all(), allow_null=True
+        source="perspective", required=False, queryset=Perspective.objects.all(), allow_null=True
     )
 
     @classmethod

@@ -26,11 +26,11 @@ urlpatterns = [
         view=PerspectiveCreation.as_view(),
         name="perspectives_create",
     ),
-    path(route="projects/<int:project_id>/perspectives/answers", view=Answers.as_view(), name="answers_list"),
+    path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/answers", view=Answers.as_view(), name="answers_list"),
     path(
-        route="projects/<int:project_id>/perspectives/answers/create",
+        route="projects/<int:project_id>/perspectives/<int:perspective_id>/answers/create",
         view=AnswerCreation.as_view(),
         name="answers_create",
     ),
-    path(route="projects/<int:project_id>/perspectives/questions", view=Questions.as_view(), name="questions_list"),
+    path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/questions", view=Questions.as_view(), name="questions_list"),
 ]
