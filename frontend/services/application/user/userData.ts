@@ -7,6 +7,9 @@ export class UserDTO {
   passwordConfirmation: string
   isSuperUser: boolean
   isStaff: boolean
+  firstName?: string
+  lastName?: string
+  email?: string
 
   constructor(item: UserItem) {
     this.id = item.id
@@ -15,5 +18,8 @@ export class UserDTO {
     this.passwordConfirmation = item.passwordConfirmation
     this.isSuperUser = item.isSuperUser
     this.isStaff = item.isStaff
+    this.firstName = item.firstName ?? ''
+    this.lastName = item.lastName ?? ''
+    this.email = item.email ?? ''
   }
 }

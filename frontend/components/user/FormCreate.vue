@@ -27,9 +27,11 @@
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="12" sm="12">
+          <v-col cols="6" sm="6">
             <v-text-field id="password" v-model="localPassword" :append-icon="show2 ? mdiEye : mdiEyeOff" :counter="30"
-              name="password" :rules="[
+              name="password" 
+              persistent-hint
+              :rules="[
                 rules.required,
                 rules.counter,
                 rules.minLength,
@@ -39,11 +41,10 @@
               ]" :type="show2 ? 'text' : 'password'" :label="$t('user.password')" outlined
               @click:append="show2 = !show2" @input="$emit('update:password', localPassword)" />
           </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12" sm="12">
+          <v-col cols="6" sm="6">
             <v-text-field id="passwordConfirmation" v-model="localPasswordConfirmation"
               :append-icon="show1 ? mdiEye : mdiEyeOff" :counter="30" name="passwordConfirmation"
+              persistent-hint
               :rules="[rules.required, rules.counter, rules.passwordsMatch]" :type="show1 ? 'text' : 'password'"
               :label="$t('user.passwordConfirmation')" outlined @click:append="show1 = !show1"
               @input="$emit('update:passwordConfirmation', localPasswordConfirmation)" />

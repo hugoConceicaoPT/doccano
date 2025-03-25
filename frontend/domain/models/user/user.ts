@@ -7,7 +7,10 @@ export class UserItem {
     readonly password: string,
     readonly passwordConfirmation: string,
     readonly isSuperUser: boolean,
-    readonly isStaff: boolean
+    readonly isStaff: boolean,
+    readonly firstName?: string,
+    readonly lastName?: string,
+    readonly email?: string
   ) {}
 
   static create(
@@ -15,9 +18,12 @@ export class UserItem {
     password: string,
     passwordConfirmation: string,
     isSuperUser: boolean,
-    isStaff: boolean
+    isStaff: boolean,
+    firstName?: string,
+    lastName?: string,
+    email?: string
   ): UserItem {
-    return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff)
+    return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff, firstName, lastName, email)
   }
 
   static async list(repository: UserRepository): Promise<UserItem[]> {

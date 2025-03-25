@@ -12,7 +12,10 @@ export class UserApplicationService {
       item.password,
       item.passwordConfirmation,
       item.isSuperUser,
-      item.isStaff
+      item.isStaff,
+      item.firstName, 
+      item.lastName,
+      item.email
     )
     const created = await this.repository.create(user)
     return new UserDTO(created)

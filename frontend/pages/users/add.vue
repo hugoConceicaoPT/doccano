@@ -1,11 +1,11 @@
 <template>
-  <form-create v-slot="slotProps" v-bind.sync="editedItem" :items="items">
-    <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
+  <form-create v-bind.sync="editedItem" :items="items">
+    <v-btn :disabled="!isFormValid" color="primary" class="text-capitalize" @click="save">
       Save
     </v-btn>
 
     <v-btn
-      :disabled="!slotProps.valid"
+      :disabled="!isFormValid"
       color="primary"
       style="text-transform: none"
       outlined
@@ -34,6 +34,9 @@ export default Vue.extend({
     return {
       editedItem: {
         username: '',
+        firstName: '',
+        lastName: '',
+        email: '',
         password: '',
         passwordConfirmation: '',
         isSuperUser: false,
@@ -41,6 +44,9 @@ export default Vue.extend({
       } as UserDTO,
       defaultItem: {
         username: '',
+        firstName: '',
+        lastName: '',
+        email: '',
         password: '',
         passwordConfirmation: '',
         isSuperUser: false,
@@ -53,6 +59,10 @@ export default Vue.extend({
   computed: {
     projectId(): string {
       return this.$route.params.id
+    },
+
+    isFormValid(): boolean {
+      return !!this.editedItem.username && !!this.editedItem.password && !!this.editedItem.passwordConfirmation;
     },
 
     service(): any {
