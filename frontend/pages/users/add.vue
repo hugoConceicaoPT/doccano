@@ -28,7 +28,7 @@ export default Vue.extend({
 
   layout: 'projects',
 
-  middleware: ['check-auth', 'auth', 'setCurrentProject'],
+  middleware: ['check-auth', 'auth'],
 
   data() {
     return {
