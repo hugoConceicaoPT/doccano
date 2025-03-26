@@ -8,7 +8,10 @@ function toModel(item: { [key: string]: any }): UserItem {
     item.password,
     item.password_confirmation,
     item.is_superuser,
-    item.is_staff
+    item.is_staff,
+    item?.first_name,
+    item?.last_name,
+    item?.email
   )
 }
 
@@ -19,7 +22,10 @@ function toPayload(item: UserItem): { [key: string]: any } {
     password1: item.password,
     password2: item.passwordConfirmation,
     is_superuser: item.isSuperUser,
-    is_staff: item.isStaff
+    is_staff: item.isStaff,
+    first_name: item.first_name ?? '',
+    last_name: item.last_name ?? '',
+    email: item.email ?? ''
   }
 }
 

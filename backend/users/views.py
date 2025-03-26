@@ -43,9 +43,13 @@ class UserCreation(generics.CreateAPIView):
         user = serializer.save(self.request)
         is_superuser = self.request.data.get("is_superuser", False)
         is_staff = self.request.data.get("is_staff", False)
+        first_name = self.request.data.get("first_name", "")  
+        last_name = self.request.data.get("last_name", "") 
 
         user.is_superuser = is_superuser
         user.is_staff = is_staff
+        user.first_name = first_name
+        user.last_name = last_name
         user.save()
         return user
     

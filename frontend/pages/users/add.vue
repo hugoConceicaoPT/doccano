@@ -1,19 +1,16 @@
 <template>
-  <form-create v-bind.sync="editedItem" :items="items">
-    <v-btn :disabled="!isFormValid" color="primary" class="text-capitalize" @click="save">
-      Save
-    </v-btn>
+  <div>
+    <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
+    <form-create v-bind.sync="editedItem" :items="items">
+      <v-btn :disabled="!isFormValid" color="primary" class="text-capitalize" @click="save">
+        Save
+      </v-btn>
 
-    <v-btn
-      :disabled="!isFormValid"
-      color="primary"
-      style="text-transform: none"
-      outlined
-      @click="saveAndAnother"
-    >
-      Save and add another
-    </v-btn>
-  </form-create>
+      <v-btn :disabled="!isFormValid" color="primary" style="text-transform: none" outlined @click="saveAndAnother">
+        Save and add another
+      </v-btn>
+    </form-create>
+  </div>
 </template>
 
 <script lang="ts">
@@ -34,8 +31,8 @@ export default Vue.extend({
     return {
       editedItem: {
         username: '',
-        firstName: '',
-        lastName: '',
+        first_name: '',
+        last_name: '',
         email: '',
         password: '',
         passwordConfirmation: '',
@@ -44,15 +41,16 @@ export default Vue.extend({
       } as UserDTO,
       defaultItem: {
         username: '',
-        firstName: '',
-        lastName: '',
+        first_name: '',
+        last_name: '',
         email: '',
         password: '',
         passwordConfirmation: '',
         isSuperUser: false,
         isStaff: false
       } as UserDTO,
-      items: [] as UserDTO[]
+      items: [] as UserDTO[],
+      errorMessage: ''
     }
   },
 
@@ -72,14 +70,38 @@ export default Vue.extend({
 
   methods: {
     async save() {
-      await this.service.create(this.editedItem)
-      this.$router.push(`/users`)
+      try {
+        await this.service.create(this.editedItem)
+        this.$router.push(`/users`)
+      } catch (error) {
+        this.handleError(error)
+      }
     },
 
     async saveAndAnother() {
-      await this.service.create(this.editedItem)
+      try {
+        await this.service.create(this.editedItem)
+        this.editedItem = Object.assign({}, this.defaultItem)
+        this.items = await this.service.list()
+      } catch (error) {
+        this.handleError(error)
+      }
+    },
+
+    handleError(error: any) {
       this.editedItem = Object.assign({}, this.defaultItem)
-      this.items = await this.service.list()
+      if (error.response && error.response.status === 400) {
+        const errors = error.response.data
+        if (errors.username) {
+          this.errorMessage = errors.username[0]
+        } else if (errors.email) {
+          this.errorMessage = errors.email[0]
+        } else {
+          this.errorMessage = JSON.stringify(errors)
+        }
+      } else {
+        this.errorMessage = 'An unexpected error occurred. Please try again.'
+      }
     }
   }
 })

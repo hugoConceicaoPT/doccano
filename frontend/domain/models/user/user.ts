@@ -8,8 +8,8 @@ export class UserItem {
     readonly passwordConfirmation: string,
     readonly isSuperUser: boolean,
     readonly isStaff: boolean,
-    readonly firstName?: string,
-    readonly lastName?: string,
+    readonly first_name?: string,
+    readonly last_name?: string,
     readonly email?: string
   ) {}
 
@@ -19,11 +19,11 @@ export class UserItem {
     passwordConfirmation: string,
     isSuperUser: boolean,
     isStaff: boolean,
-    firstName?: string,
-    lastName?: string,
+    first_name?: string,
+    last_name?: string,
     email?: string
   ): UserItem {
-    return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff, firstName, lastName, email)
+    return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff, first_name, last_name, email)
   }
 
   static async list(repository: UserRepository): Promise<UserItem[]> {

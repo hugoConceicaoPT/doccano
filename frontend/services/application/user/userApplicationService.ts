@@ -13,8 +13,8 @@ export class UserApplicationService {
       item.passwordConfirmation,
       item.isSuperUser,
       item.isStaff,
-      item.firstName, 
-      item.lastName,
+      item.first_name, 
+      item.last_name,
       item.email
     )
     const created = await this.repository.create(user)

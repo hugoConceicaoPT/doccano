@@ -13,11 +13,11 @@
         <v-row>
           <v-col cols="12" sm="6">
             <v-text-field v-model="localFirstName" label="First name" outlined 
-              @input="$emit('update:firstName', localFirstName)" />
+              @input="$emit('update:first_name', localFirstName)" />
           </v-col>
           <v-col cols="12" sm="6">
             <v-text-field v-model="localLastName" label="Last name" outlined 
-              @input="$emit('update:lastName', localLastName)" />
+              @input="$emit('update:last_name', localLastName)" />
           </v-col>
         </v-row>
         <v-row>
@@ -90,11 +90,11 @@ export default Vue.extend({
       type: String,
       required: true
     },
-    firstName: {
+    first_name: {
       type: String,
       required: false
     },
-    lastName: {
+    last_name: {
       type: String,
       required: false
     },
@@ -125,8 +125,8 @@ export default Vue.extend({
       localPasswordConfirmation: this.passwordConfirmation,
       localIsStaff: this.isStaff,
       localisSuperUser: this.isSuperUser,
-      localFirstName: this.firstName,
-      localLastName: this.lastName,
+      localFirstName: this.first_name,
+      localLastName: this.last_name,
       localEmail: this.email,
       valid: false,
       rules: {
@@ -181,10 +181,10 @@ export default Vue.extend({
     passwordConfirmation(newVal) {
       this.localPasswordConfirmation = newVal
     },
-    firstName(newVal) {
+    first_name(newVal) {
       this.localFirstName = newVal
     },
-    lastName(newVal) {
+    last_name(newVal) {
       this.localLastName = newVal
     },
     email(newVal) {
