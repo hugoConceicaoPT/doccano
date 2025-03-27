@@ -25,18 +25,9 @@ export default Vue.extend({
             context: {
                 text: ''
             },
-            exampleId: this.exampleId
         }
     },
-    props: {
-        exampleId: {
-            type: Number,
-            required: true
-        }
-    },
-    mounted() {
-        console.log('FormContext.vue: Component mounted! exampleId =', this.exampleId)
-    },
+
     watch: {
         'context.text'(newVal) {
             console.log('FormContext.vue: context.text changed to:', newVal)
