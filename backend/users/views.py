@@ -86,9 +86,13 @@ class UserDeletion(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated & IsAdminUser]
 
     def delete(self, request, *args, **kwargs):
-        user = self.get_object()  
+        # Obtém os usuários a partir dos IDs passados na requisição
+        user_ids = request.data.get('user_ids', [])
         
         
+        # Se apenas um usuário for excluído, obtém o usuário
+        user = self.get_object()
+
         if request.user == user:
             return Response(
                 {"detail": "You cannot delete your own account."},

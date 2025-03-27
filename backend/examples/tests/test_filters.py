@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 from django.test import TestCase
-from model_mommy import mommy
+from model_bakery import baker as mommy
 
 from .utils import make_doc, make_example_state
 from examples.filters import ExampleFilter

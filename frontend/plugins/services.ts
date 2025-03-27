@@ -9,6 +9,7 @@ import { BoundingBoxApplicationService } from '@/services/application/tasks/boun
 import { SegmentationApplicationService } from '@/services/application/tasks/segmentation/segmentationApplicationService'
 import { SequenceLabelingApplicationService } from '@/services/application/tasks/sequenceLabeling/sequenceLabelingApplicationService'
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
+import { ContextApplicationService } from '@/services/application/context/contextApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
 
 export interface Services {
@@ -23,6 +24,7 @@ export interface Services {
   bbox: BoundingBoxApplicationService
   segmentation: SegmentationApplicationService
   user: UserApplicationService
+  context: ContextApplicationService
   perspective: PerspectiveApplicationService
 }
 
@@ -48,6 +50,7 @@ const plugin: Plugin = (_, inject) => {
     bbox: new BoundingBoxApplicationService(repositories.boundingBox),
     segmentation: new SegmentationApplicationService(repositories.segmentation),
     user: new UserApplicationService(repositories.user),
+    context: new ContextApplicationService(repositories.context),
     perspective: new PerspectiveApplicationService(repositories.perspective)
   }
   inject('services', services)

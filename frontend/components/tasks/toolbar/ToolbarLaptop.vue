@@ -18,25 +18,24 @@
           <form-comment :example-id="docId" @click:cancel="dialogComment = false" />
         </v-dialog>
 
+        <button-context @click="dialogNewAction = true" />
+        <v-dialog v-model="dialogNewAction" persistent max-width="600px">
+          <form-context :example-id="docId" @refresh:comments="onRefreshComments"
+            @comment:added="dialogNewAction = false" @click:cancel="dialogNewAction = false" />
+        </v-dialog>
+
         <button-auto-labeling @click:auto="dialogAutoLabeling = true" />
         <v-dialog v-model="dialogAutoLabeling">
-          <form-auto-labeling
-            :is-enabled="enableAutoLabeling"
-            :error-message="errorMessage"
-            @click:cancel="dialogAutoLabeling = false"
-            @input="updateAutoLabeling"
-          />
+          <form-auto-labeling :is-enabled="enableAutoLabeling" :error-message="errorMessage"
+            @click:cancel="dialogAutoLabeling = false" @input="updateAutoLabeling" />
         </v-dialog>
 
         <button-clear @click:clear="dialogClear = true" />
         <v-dialog v-model="dialogClear">
-          <form-clear-label
-            @click:ok="
-              $emit('click:clear-label')
-              dialogClear = false
-            "
-            @click:cancel="dialogClear = false"
-          />
+          <form-clear-label @click:ok="
+            $emit('click:clear-label')
+          dialogClear = false
+            " @click:cancel="dialogClear = false" />
         </v-dialog>
 
         <button-keyboard-shortcut @click:open="dialogShortcut = true" />
@@ -46,15 +45,9 @@
       </v-btn-toggle>
       <slot />
       <v-spacer />
-      <button-pagination
-        :value="page"
-        :total="total"
-        @click:prev="updatePage(page - 1)"
-        @click:next="updatePage(page + 1)"
-        @click:first="updatePage(1)"
-        @click:last="updatePage(total)"
-        @click:jump="updatePage($event)"
-      />
+      <button-pagination :value="page" :total="total" @click:prev="updatePage(page - 1)"
+        @click:next="updatePage(page + 1)" @click:first="updatePage(1)" @click:last="updatePage(total)"
+        @click:jump="updatePage($event)" />
     </v-row>
   </v-toolbar>
 </template>
@@ -64,6 +57,7 @@ import Vue from 'vue'
 import ButtonAutoLabeling from './buttons/ButtonAutoLabeling.vue'
 import ButtonClear from './buttons/ButtonClear.vue'
 import ButtonComment from './buttons/ButtonComment.vue'
+import ButtonContext from './buttons/ButtonContext.vue'
 import ButtonFilter from './buttons/ButtonFilter.vue'
 import ButtonGuideline from './buttons/ButtonGuideline.vue'
 import ButtonOrder from './buttons/ButtonOrder.vue'
@@ -73,6 +67,7 @@ import ButtonKeyboardShortcut from './buttons/ButtonKeyboardShortcut.vue'
 import FormAutoLabeling from './forms/FormAutoLabeling.vue'
 import FormClearLabel from './forms/FormClearLabel.vue'
 import FormComment from './forms/FormComment.vue'
+import FormContext from './forms/FormContext.vue'
 import FormGuideline from './forms/FormGuideline.vue'
 import FormKeyboardShortcut from './forms/FormKeyboardShortcut.vue'
 
@@ -81,6 +76,7 @@ export default Vue.extend({
     ButtonAutoLabeling,
     ButtonClear,
     ButtonComment,
+    ButtonContext,
     ButtonFilter,
     ButtonGuideline,
     ButtonOrder,
@@ -90,6 +86,7 @@ export default Vue.extend({
     FormAutoLabeling,
     FormClearLabel,
     FormComment,
+    FormContext,
     FormGuideline,
     FormKeyboardShortcut
   },
@@ -125,6 +122,7 @@ export default Vue.extend({
       dialogClear: false,
       dialogComment: false,
       dialogGuideline: false,
+      dialogNewAction: false,
       dialogShortcut: false,
       errorMessage: ''
     }
@@ -142,6 +140,15 @@ export default Vue.extend({
     orderOption(): string {
       // @ts-ignore
       return this.$route.query.ordering
+    }
+  },
+
+  watch: {
+    docId(newVal) {
+      console.log('[ToolbarLaptop.vue] docId changed to:', newVal)
+    },
+    dialogNewAction(newVal) {
+      console.log('[ToolbarLaptop.vue] dialogNewAction changed to:', newVal)
     }
   },
 
@@ -185,6 +192,21 @@ export default Vue.extend({
       } else {
         this.$emit('update:enable-auto-labeling', false)
       }
+    },
+
+    async handleNewAction(data: { id: number; comment: string }) {
+      console.log('[ToolbarLaptop.vue] handleNewAction triggered with:', data)
+      try {
+        await this.$services.context.createContext(data.id, data.comment)
+        this.dialogNewAction = false
+      } catch (error) {
+        console.error('[ToolbarLaptop.vue] Erro ao guardar a tag da anotação:', error)
+      }
+    },
+
+    onRefreshComments() {
+      console.log('[ToolbarLaptop.vue] Refreshing comments after new context action')
+      // Optional: perform actions such as re-fetching data if needed
     }
   }
 })
@@ -197,7 +219,7 @@ export default Vue.extend({
   z-index: 100;
 }
 
-.toolbar-control >>> .v-toolbar__content {
+.toolbar-control>>>.v-toolbar__content {
   padding: 0px !important;
 }
 

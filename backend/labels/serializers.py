@@ -111,3 +111,4 @@ class SegmentationSerializer(serializers.ModelSerializer):
             "points",
         )
         read_only_fields = ("user",)
+

@@ -1,6 +1,5 @@
 from django.test import TestCase
-from model_mommy import mommy
-
+from model_bakery import baker as mommy
 from examples.models import ExampleState
 from projects.models import ProjectType
 from projects.tests.utils import prepare_project

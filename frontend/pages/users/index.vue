@@ -4,35 +4,17 @@
       <v-btn class="text-capitalize" color="primary" @click.stop="$router.push('users/add')">
         {{ $t('generic.create') }}
       </v-btn>
-      <v-btn
-        class="text-capitalize ms-2"
-        outlined
-        :disabled="!canDelete"
-        @click.stop="dialogDelete = true"
-      >
+      <v-btn class="text-capitalize ms-2" outlined :disabled="!canDelete" @click.stop="dialogDelete = true">
         {{ $t('generic.delete') }}
       </v-btn>
-      <v-btn
-       class="text-capitalize ms-2"
-       outlined
-      :disabled="selected.length !== 1"
-      @click.stop="dialogEdit = true"
->
-      {{ $t('generic.edit') }}
+      <v-btn class="text-capitalize ms-2" outlined :disabled="selected.length !== 1" @click.stop="dialogEdit = true">
+        {{ $t('generic.edit') }}
       </v-btn>
       <v-dialog v-model="dialogDelete">
-        <form-delete
-          :selected="selected"
-          @remove="handleDelete"
-          @cancel="dialogDelete = false"
-        />
+        <form-delete :selected="selected" @remove="handleDelete" @cancel="dialogDelete = false" />
       </v-dialog>
       <v-dialog v-model="dialogEdit">
-      <form-edit
-      :user="selected[0]"
-      @confirmEdit="handleEdit"
-      @cancel="dialogEdit = false"
-      />
+        <form-edit :user="selected[0]" @confirmEdit="handleEdit" @cancel="dialogEdit = false" />
       </v-dialog>
     </v-card-title>
     <user-list v-model="selected" :items="items" :is-loading="isLoading" />
@@ -109,51 +91,60 @@ export default Vue.extend({
     async handleDelete() {
       this.isLoading = true
       try {
-        // Tenta excluir cada usuário selecionado
+        // Tries to delete each selected user
         for (const user of this.selected) {
           await this.$services.user.delete(user.id)
         }
-        // Atualiza a lista removendo os usuários deletados
+        // Updates the list by removing the deleted users
         this.items = this.items.filter(
           user => !this.selected.some(selectedUser => selectedUser.id === user.id)
         )
         this.selected = []
-        this.dialogDelete = false // Fecha o diálogo em caso de sucesso
+        this.dialogDelete = false // Closes the dialog on success
+
+        // Shows an alert when the users are successfully removed with a delay
+        setTimeout(() => {
+          alert('Users successfully removed!')
+        }, 180)
       } catch (error) {
         this.dialogDelete = false;
 
         setTimeout(() => {
-          console.error("Erro ao excluir utilizadores:", error);
+          console.error("Error deleting users:", error);
           const err = error as any;
+
+          // Check if the error is about deleting the own account
           if (err.response && err.response.status === 403) {
             alert("You cannot delete your own account.");
-          } else {
-            alert("Error deleting users");
           }
-        }, 300);
+          // General error alert for other cases
+          else {
+            alert("Error: The database is currently unavailable. Please try again later.");
+          }
+        }, 180);
       } finally {
         this.isLoading = false
       }
     },
-  async handleEdit(updatedUser: UserDTO) {
-  this.isLoading = true
-  try {
-    await this.$services.user.update(updatedUser.id, updatedUser)
+    async handleEdit(updatedUser: UserDTO) {
+      this.isLoading = true
+      try {
+        await this.$services.user.update(updatedUser.id, updatedUser)
 
-    // Atualiza localmente a lista com os dados editados
-    this.items = this.items.map(user =>
-      user.id === updatedUser.id ? updatedUser : user
-    )
+        // Atualiza localmente a lista com os dados editados
+        this.items = this.items.map(user =>
+          user.id === updatedUser.id ? updatedUser : user
+        )
 
-    this.dialogEdit = false
-    this.selected = []
-  } catch (error) {
-    console.error('Erro ao editar utilizador:', error)
-    alert('Erro ao editar utilizador')
-  } finally {
-    this.isLoading = false
-  }
-}
+        this.dialogEdit = false
+        this.selected = []
+      } catch (error) {
+        console.error('Erro ao editar utilizador:', error)
+        alert('Erro ao editar utilizador')
+      } finally {
+        this.isLoading = false
+      }
+    }
   }
 })
 </script>
