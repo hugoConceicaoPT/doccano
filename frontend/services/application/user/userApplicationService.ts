@@ -13,7 +13,7 @@ export class UserApplicationService {
       item.passwordConfirmation,
       item.isSuperUser,
       item.isStaff,
-      item.first_name, 
+      item.first_name,
       item.last_name,
       item.email
     )
@@ -33,5 +33,5 @@ export class UserApplicationService {
   public async update(userId: number, data: Partial<CreateUserCommand>): Promise<UserDTO> {
     const updated = await this.repository.update(userId, data)
     return new UserDTO(updated)
-  }  
+  }
 }

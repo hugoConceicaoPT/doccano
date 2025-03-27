@@ -6,7 +6,13 @@
         Save
       </v-btn>
 
-      <v-btn :disabled="!isFormValid" color="primary" style="text-transform: none" outlined @click="saveAndAnother">
+      <v-btn
+        :disabled="!isFormValid"
+        color="primary"
+        style="text-transform: none"
+        outlined
+        @click="saveAndAnother"
+      >
         Save and add another
       </v-btn>
     </form-create>
@@ -60,7 +66,11 @@ export default Vue.extend({
     },
 
     isFormValid(): boolean {
-      return !!this.editedItem.username && !!this.editedItem.password && !!this.editedItem.passwordConfirmation;
+      return (
+        !!this.editedItem.username &&
+        !!this.editedItem.password &&
+        !!this.editedItem.passwordConfirmation
+      )
     },
 
     service(): any {

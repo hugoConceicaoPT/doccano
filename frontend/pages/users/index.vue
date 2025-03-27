@@ -4,10 +4,20 @@
       <v-btn class="text-capitalize" color="primary" @click.stop="$router.push('users/add')">
         {{ $t('generic.create') }}
       </v-btn>
-      <v-btn class="text-capitalize ms-2" outlined :disabled="!canDelete" @click.stop="dialogDelete = true">
+      <v-btn
+        class="text-capitalize ms-2"
+        outlined
+        :disabled="!canDelete"
+        @click.stop="dialogDelete = true"
+      >
         {{ $t('generic.delete') }}
       </v-btn>
-      <v-btn class="text-capitalize ms-2" outlined :disabled="selected.length !== 1" @click.stop="dialogEdit = true">
+      <v-btn
+        class="text-capitalize ms-2"
+        outlined
+        :disabled="selected.length !== 1"
+        @click.stop="dialogEdit = true"
+      >
         {{ $t('generic.edit') }}
       </v-btn>
       <v-dialog v-model="dialogDelete">
@@ -29,12 +39,11 @@ import UserList from '@/components/user/UserList.vue'
 import { UserDTO } from '~/services/application/user/userData'
 import FormEdit from '@/components/user/FormEdit.vue'
 
-
 export default Vue.extend({
   components: {
     FormDelete,
     FormEdit,
-    UserList,
+    UserList
   },
 
   layout: 'projects',
@@ -97,7 +106,7 @@ export default Vue.extend({
         }
         // Updates the list by removing the deleted users
         this.items = this.items.filter(
-          user => !this.selected.some(selectedUser => selectedUser.id === user.id)
+          (user) => !this.selected.some((selectedUser) => selectedUser.id === user.id)
         )
         this.selected = []
         this.dialogDelete = false // Closes the dialog on success
@@ -107,21 +116,21 @@ export default Vue.extend({
           alert('Users successfully removed!')
         }, 180)
       } catch (error) {
-        this.dialogDelete = false;
+        this.dialogDelete = false
 
         setTimeout(() => {
-          console.error("Error deleting users:", error);
-          const err = error as any;
+          console.error('Error deleting users:', error)
+          const err = error as any
 
           // Check if the error is about deleting the own account
           if (err.response && err.response.status === 403) {
-            alert("You cannot delete your own account.");
+            alert('You cannot delete your own account.')
           }
           // General error alert for other cases
           else {
-            alert("Error: The database is currently unavailable. Please try again later.");
+            alert('Error: The database is currently unavailable. Please try again later.')
           }
-        }, 180);
+        }, 180)
       } finally {
         this.isLoading = false
       }
@@ -132,9 +141,7 @@ export default Vue.extend({
         await this.$services.user.update(updatedUser.id, updatedUser)
 
         // Atualiza localmente a lista com os dados editados
-        this.items = this.items.map(user =>
-          user.id === updatedUser.id ? updatedUser : user
-        )
+        this.items = this.items.map((user) => (user.id === updatedUser.id ? updatedUser : user))
 
         this.dialogEdit = false
         this.selected = []

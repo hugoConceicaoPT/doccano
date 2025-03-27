@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { mdiDeveloperBoard, mdiAccount } from '@mdi/js'
+import { mdiDeveloperBoard, mdiAccount, mdiAccountGroup } from '@mdi/js'
 
 export default {
   data() {
@@ -35,7 +35,8 @@ export default {
     filteredItems() {
       return [
         { icon: mdiDeveloperBoard, text: 'Projects', link: 'projects' },
-        { icon: mdiAccount, text: 'Users', link: 'users' }
+        { icon: mdiAccount, text: 'Users', link: 'users' },
+        { icon: mdiAccountGroup, text: 'Groups', link: 'groups' }
       ]
     }
   }

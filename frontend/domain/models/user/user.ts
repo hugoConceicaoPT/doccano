@@ -23,7 +23,17 @@ export class UserItem {
     last_name?: string,
     email?: string
   ): UserItem {
-    return new UserItem(0, username, password, passwordConfirmation, isSuperUser, isStaff, first_name, last_name, email)
+    return new UserItem(
+      0,
+      username,
+      password,
+      passwordConfirmation,
+      isSuperUser,
+      isStaff,
+      first_name,
+      last_name,
+      email
+    )
   }
 
   static async list(repository: UserRepository): Promise<UserItem[]> {
@@ -39,11 +49,11 @@ export class UserItem {
 
   async update(repository: UserRepository): Promise<void> {
     if (this.id === 0) {
-      throw new Error("Não é possível atualizar um usuário sem ID válido.")
+      throw new Error('Não é possível atualizar um usuário sem ID válido.')
     }
 
     if (this.password !== this.passwordConfirmation) {
-      throw new Error("A confirmação de senha não confere.")
+      throw new Error('A confirmação de senha não confere.')
     }
 
     await repository.update(this.id, {

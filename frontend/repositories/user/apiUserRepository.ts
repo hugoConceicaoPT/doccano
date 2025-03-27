@@ -63,7 +63,7 @@ export class APIUserRepository {
   }
 
   async update(id: number, data: Partial<UserItem>): Promise<UserItem> {
-    const url = `/${this.baseUrl}s/${id}/edit` 
+    const url = `/${this.baseUrl}s/${id}/edit`
 
     const payload: any = {
       username: data.username,

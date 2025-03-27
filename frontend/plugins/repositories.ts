@@ -73,7 +73,6 @@ export interface Repositories {
   textLabel: APITextLabelRepository
   boundingBox: APIBoundingBoxRepository
   segmentation: APISegmentationRepository
-
 }
 
 declare module 'vue/types/vue' {
@@ -93,7 +92,7 @@ const repositories: Repositories = {
   role: new APIRoleRepository(),
   tag: new APITagRepository(),
   perspective: new APIPerspectiveRepository(),
-  question: new APIQuestionRepository,
+  question: new APIQuestionRepository(),
 
   // Example
   example: new APIExampleRepository(),

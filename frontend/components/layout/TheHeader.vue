@@ -29,6 +29,7 @@
     >
       {{ $t('header.projects') }}
     </v-btn>
+
     <v-btn
       v-if="isSuperUser && isAuthenticated"
       text
@@ -37,6 +38,17 @@
     >
       {{ $t('Users') }}
     </v-btn>
+
+    <!-- Novo botão adicionado aqui -->
+    <v-btn
+      v-if="isSuperUser && isAuthenticated"
+      text
+      class="text-capitalize"
+      @click="$router.push(localePath('/groups'))"
+    >
+      {{ $t('Groups') }}
+    </v-btn>
+
     <v-menu v-if="!isAuthenticated" open-on-hover offset-y>
       <template #activator="{ on }">
         <v-btn text v-on="on">

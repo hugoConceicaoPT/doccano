@@ -20,22 +20,33 @@
 
         <button-context @click="dialogNewAction = true" />
         <v-dialog v-model="dialogNewAction" persistent max-width="600px">
-          <form-context :example-id="docId" @refresh:comments="onRefreshComments"
-            @comment:added="dialogNewAction = false" @click:cancel="dialogNewAction = false" />
+          <form-context
+            :example-id="docId"
+            @refresh:comments="onRefreshComments"
+            @comment:added="dialogNewAction = false"
+            @click:cancel="dialogNewAction = false"
+          />
         </v-dialog>
 
         <button-auto-labeling @click:auto="dialogAutoLabeling = true" />
         <v-dialog v-model="dialogAutoLabeling">
-          <form-auto-labeling :is-enabled="enableAutoLabeling" :error-message="errorMessage"
-            @click:cancel="dialogAutoLabeling = false" @input="updateAutoLabeling" />
+          <form-auto-labeling
+            :is-enabled="enableAutoLabeling"
+            :error-message="errorMessage"
+            @click:cancel="dialogAutoLabeling = false"
+            @input="updateAutoLabeling"
+          />
         </v-dialog>
 
         <button-clear @click:clear="dialogClear = true" />
         <v-dialog v-model="dialogClear">
-          <form-clear-label @click:ok="
-            $emit('click:clear-label')
-          dialogClear = false
-            " @click:cancel="dialogClear = false" />
+          <form-clear-label
+            @click:ok="
+              $emit('click:clear-label')
+              dialogClear = false
+            "
+            @click:cancel="dialogClear = false"
+          />
         </v-dialog>
 
         <button-keyboard-shortcut @click:open="dialogShortcut = true" />
@@ -45,9 +56,15 @@
       </v-btn-toggle>
       <slot />
       <v-spacer />
-      <button-pagination :value="page" :total="total" @click:prev="updatePage(page - 1)"
-        @click:next="updatePage(page + 1)" @click:first="updatePage(1)" @click:last="updatePage(total)"
-        @click:jump="updatePage($event)" />
+      <button-pagination
+        :value="page"
+        :total="total"
+        @click:prev="updatePage(page - 1)"
+        @click:next="updatePage(page + 1)"
+        @click:first="updatePage(1)"
+        @click:last="updatePage(total)"
+        @click:jump="updatePage($event)"
+      />
     </v-row>
   </v-toolbar>
 </template>
@@ -219,7 +236,7 @@ export default Vue.extend({
   z-index: 100;
 }
 
-.toolbar-control>>>.v-toolbar__content {
+.toolbar-control >>> .v-toolbar__content {
   padding: 0px !important;
 }
 

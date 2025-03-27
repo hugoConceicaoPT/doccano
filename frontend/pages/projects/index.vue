@@ -42,7 +42,7 @@ import { SearchQueryData } from '~/services/application/project/projectApplicati
 export default Vue.extend({
   components: {
     FormDelete,
-    ProjectList,
+    ProjectList
   },
   layout: 'projects',
 
