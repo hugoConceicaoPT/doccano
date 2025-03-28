@@ -75,12 +75,3 @@ class ExampleStateSerializer(serializers.ModelSerializer):
         fields = ("id", "example", "confirmed_by", "confirmed_at")
         read_only_fields = ("id", "example", "confirmed_by", "confirmed_at")
 
-
-class ContextoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Context
-        fields = (
-            "id",
-            "text",
-        )
-        read_only_fields = ("id")

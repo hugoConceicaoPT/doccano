@@ -23,7 +23,6 @@ import { APITextLabelRepository } from '@/repositories/tasks/apiTextLabelReposit
 import { APICatalogRepository } from '@/repositories/upload/apiCatalogRepository'
 import { APIParseRepository } from '@/repositories/upload/apiParseRepository'
 import { APIUserRepository } from '@/repositories/user/apiUserRepository'
-import { APIContextRepository } from '@/repositories/context/apiContextRepository'
 import { APISegmentationRepository } from '~/repositories/tasks/apiSegmentationRepository'
 import { APIPerspectiveRepository } from '~/repositories/perspective/apiPerspectiveRepository'
 import { APIQuestionRepository } from '~/repositories/perspective/question/apiQuestionRepository'
@@ -47,7 +46,7 @@ export interface Repositories {
   metrics: APIMetricsRepository
   option: LocalStorageOptionRepository
   assignment: APIAssignmentRepository
-  context: APIContextRepository
+
 
   // Auto Labeling
   config: APIConfigRepository
@@ -101,7 +100,6 @@ const repositories: Repositories = {
   metrics: new APIMetricsRepository(),
   option: new LocalStorageOptionRepository(),
   assignment: new APIAssignmentRepository(),
-  context: new APIContextRepository(),
 
   // Auto Labeling
   config: new APIConfigRepository(),

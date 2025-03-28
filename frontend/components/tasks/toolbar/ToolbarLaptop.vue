@@ -18,16 +18,6 @@
           <form-comment :example-id="docId" @click:cancel="dialogComment = false" />
         </v-dialog>
 
-        <button-context @click="dialogNewAction = true" />
-        <v-dialog v-model="dialogNewAction" persistent max-width="600px">
-          <form-context
-            :example-id="docId"
-            @refresh:comments="onRefreshComments"
-            @comment:added="dialogNewAction = false"
-            @click:cancel="dialogNewAction = false"
-          />
-        </v-dialog>
-
         <button-auto-labeling @click:auto="dialogAutoLabeling = true" />
         <v-dialog v-model="dialogAutoLabeling">
           <form-auto-labeling
@@ -210,21 +200,6 @@ export default Vue.extend({
         this.$emit('update:enable-auto-labeling', false)
       }
     },
-
-    async handleNewAction(data: { id: number; comment: string }) {
-      console.log('[ToolbarLaptop.vue] handleNewAction triggered with:', data)
-      try {
-        await this.$services.context.createContext(data.id, data.comment)
-        this.dialogNewAction = false
-      } catch (error) {
-        console.error('[ToolbarLaptop.vue] Erro ao guardar a tag da anotação:', error)
-      }
-    },
-
-    onRefreshComments() {
-      console.log('[ToolbarLaptop.vue] Refreshing comments after new context action')
-      // Optional: perform actions such as re-fetching data if needed
-    }
   }
 })
 </script>
