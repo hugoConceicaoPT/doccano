@@ -64,7 +64,6 @@ import Vue from 'vue'
 import ButtonAutoLabeling from './buttons/ButtonAutoLabeling.vue'
 import ButtonClear from './buttons/ButtonClear.vue'
 import ButtonComment from './buttons/ButtonComment.vue'
-import ButtonContext from './buttons/ButtonContext.vue'
 import ButtonFilter from './buttons/ButtonFilter.vue'
 import ButtonGuideline from './buttons/ButtonGuideline.vue'
 import ButtonOrder from './buttons/ButtonOrder.vue'
@@ -74,7 +73,6 @@ import ButtonKeyboardShortcut from './buttons/ButtonKeyboardShortcut.vue'
 import FormAutoLabeling from './forms/FormAutoLabeling.vue'
 import FormClearLabel from './forms/FormClearLabel.vue'
 import FormComment from './forms/FormComment.vue'
-import FormContext from './forms/FormContext.vue'
 import FormGuideline from './forms/FormGuideline.vue'
 import FormKeyboardShortcut from './forms/FormKeyboardShortcut.vue'
 
@@ -83,7 +81,6 @@ export default Vue.extend({
     ButtonAutoLabeling,
     ButtonClear,
     ButtonComment,
-    ButtonContext,
     ButtonFilter,
     ButtonGuideline,
     ButtonOrder,
@@ -93,7 +90,6 @@ export default Vue.extend({
     FormAutoLabeling,
     FormClearLabel,
     FormComment,
-    FormContext,
     FormGuideline,
     FormKeyboardShortcut
   },
