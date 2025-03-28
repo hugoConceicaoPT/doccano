@@ -4,3 +4,7 @@ import { QuestionDTO } from './questionData'
 export type CreateQuestionCommand = Omit<QuestionDTO, 'id'> & {
   answers: CreateAnswerCommand[]
 }
+
+export type ListQuestionCommand = {
+  username?: string
+}

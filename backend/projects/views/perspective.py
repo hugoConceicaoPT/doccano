@@ -3,6 +3,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, status
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework import serializers
+from rest_framework.generics import RetrieveAPIView
 
 from projects.models import Answer, Perspective, Question
 from projects.permissions import IsProjectAdmin
@@ -79,3 +81,29 @@ class Questions(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("perspective__id", "question")
+
+class AnswerNestedSerializer(serializers.ModelSerializer):
+    member = serializers.StringRelatedField()
+
+    class Meta:
+        model = Answer
+        fields = ("id", "answer", "member")
+
+class QuestionNestedSerializer(serializers.ModelSerializer):
+    answers = AnswerNestedSerializer(many=True, read_only=True, source='answer_set')
+
+    class Meta:
+        model = Question
+        fields = ("id", "question", "answers")
+
+class PerspectiveDetailSerializer(serializers.ModelSerializer):
+    questions = QuestionNestedSerializer(many=True, read_only=True, source='question_set')
+
+    class Meta:
+        model = Perspective
+        fields = ("id", "name", "questions")
+
+class PerspectiveDetail(RetrieveAPIView):
+    queryset = Perspective.objects.all()
+    serializer_class = PerspectiveDetailSerializer
+    permission_classes = [IsAuthenticated]

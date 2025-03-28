@@ -86,9 +86,34 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "project")
 
 
+class AnswerNestedSerializer(serializers.ModelSerializer):
+    member = serializers.StringRelatedField()
+
+    class Meta:
+        model = Answer
+        fields = ("id", "answer", "member")
+
+
+class QuestionNestedSerializer(serializers.ModelSerializer):
+    answers = AnswerNestedSerializer(many=True, read_only=True, source="answers")
+
+    class Meta:
+        model = Question
+        fields = ("id", "question", "answers")
+
+
+class PerspectiveNestedSerializer(serializers.ModelSerializer):
+    questions = QuestionNestedSerializer(many=True, read_only=True, source="questions")
+
+    class Meta:
+        model = Perspective
+        fields = ("id", "created_at", "questions")
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, required=False)
     author = serializers.SerializerMethodField()
+    perspectives = PerspectiveNestedSerializer(many=True, read_only=True)
 
     @classmethod
     def get_author(cls, instance):
@@ -113,6 +138,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "allow_member_to_create_label_type",
             "is_text_project",
             "tags",
+            "perspectives",
         ]
         read_only_fields = (
             "created_at",

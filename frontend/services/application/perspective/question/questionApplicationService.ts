@@ -14,4 +14,9 @@ export class QuestionApplicationService {
     const created = await this.repository.create(question)
     return new QuestionDTO(created)
   }
+  
+  public async list(): Promise<QuestionDTO[]> {
+    const questions = await this.repository.list()
+    return questions.map((question) => new QuestionDTO(question))
+  }
 }

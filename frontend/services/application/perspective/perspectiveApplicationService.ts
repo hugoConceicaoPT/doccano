@@ -11,4 +11,9 @@ export class PerspectiveApplicationService {
     const created = await this.repository.create(projectId, perspective)
     return new PerspectiveDTO(created)
   }
+
+  public async list(projectId: string): Promise<PerspectiveDTO[]> {
+    const perspectives = await this.repository.list(projectId)
+    return perspectives.map(perspective => new PerspectiveDTO(perspective))
+  }
 }

@@ -49,6 +49,9 @@ class Project(PolymorphicModel):
             role=admin_role,
         )
 
+    def get_perspectives(self):
+        return Perspective.objects.filter(project=self)
+
     @property
     @abc.abstractmethod
     def is_text_project(self) -> bool:

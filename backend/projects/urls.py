@@ -7,6 +7,7 @@ from .views.perspective import (
     PerspectiveCreation,
     Perspectives,
     Questions,
+    PerspectiveDetail,
 )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
@@ -33,4 +34,9 @@ urlpatterns = [
         name="answers_create",
     ),
     path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/questions", view=Questions.as_view(), name="questions_list"),
+    path(
+        route="projects/<int:project_id>/perspectives/<int:pk>",
+        view=PerspectiveDetail.as_view(),
+        name="perspective_detail",
+    ),
 ]

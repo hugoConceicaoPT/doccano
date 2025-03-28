@@ -6,4 +6,9 @@ export class QuestionItem {
   static create(question: string, answers: AnswerItem[] = []): QuestionItem {
     return new QuestionItem(0, question, answers)
   }
+
+  
+  static list(items: { id: number, question: string, answers: AnswerItem[] }[]): QuestionItem[] {
+    return items.map(item => new QuestionItem(item.id, item.question, item.answers))
+  }
 }
