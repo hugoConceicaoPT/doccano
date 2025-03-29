@@ -134,22 +134,30 @@ export default Vue.extend({
       }
     },
     async handleEdit(updatedUser: UserDTO) {
-      this.isLoading = true
-      try {
-        await this.$services.user.update(updatedUser.id, updatedUser)
+  this.isLoading = true
+  try {
+    await this.$services.user.update(updatedUser.id, updatedUser)
 
-        // Atualiza localmente a lista com os dados editados
-        this.items = this.items.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+    // Atualiza localmente a lista com os dados editados
+    this.items = this.items.map((user) =>
+      user.id === updatedUser.id ? updatedUser : user
+    )
 
-        this.dialogEdit = false
-        this.selected = []
-      } catch (error) {
-        console.error('Erro ao editar utilizador:', error)
-        alert('Erro ao editar utilizador')
-      } finally {
-        this.isLoading = false
-      }
-    },
+    this.dialogEdit = false
+    this.selected = []
+  } catch (error) {
+    console.error('Erro ao editar utilizador:', error)
+
+    const err = error as any
+    if (err.response && err.response.status >= 500) {
+      alert('A base de dados está desligada, tente mais tarde!')
+    } else {
+      alert('Erro ao editar utilizador.')
+    }
+  } finally {
+    this.isLoading = false
+  }
+},
     openEditDialog(user: UserDTO) {
     this.selected = [user]
     this.dialogEdit = true
