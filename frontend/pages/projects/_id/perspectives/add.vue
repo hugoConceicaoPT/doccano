@@ -86,9 +86,15 @@ export default Vue.extend({
         const questionTypeOpen = await this.$services.questionType.findById(this.projectId, this.questionTypeItem[0].id)
         const questionTypeClosed = await this.$services.questionType.findById(this.projectId, this.questionTypeItem[1].id)
         if(!questionTypeOpen || !questionTypeOpen.id)
-          await this.$services.questionType.create(this.projectId, this.questionTypeItem[0]) 
+          await this.$services.questionType.create(this.projectId,  { 
+            id: this.questionTypeItem[0].id,
+            question_type: this.questionTypeItem[0].question_type
+          }) 
         if(!questionTypeClosed || !questionTypeClosed.id)
-          await this.$services.questionType.create(this.projectId, this.questionTypeItem[1]) 
+          await this.$services.questionType.create(this.projectId, { 
+            id: this.questionTypeItem[1].id,
+            question_type: this.questionTypeItem[1].question_type
+          }) 
         for (let i= 0; i < this.editedItem.questions.length; i++) {
           if (this.editedItem.questions[i].type === 2) {
             console.log(this.optionsGroupItem[j])

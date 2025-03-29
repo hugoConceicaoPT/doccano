@@ -232,6 +232,7 @@ class Member(models.Model):
         unique_together = ("user", "project")
 
 class QuestionType(models.Model):
+    id = models.IntegerField(primary_key=True) 
     question_type = models.TextField()
 
 class OptionsGroup(models.Model):
