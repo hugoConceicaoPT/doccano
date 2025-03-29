@@ -2,7 +2,7 @@ import ApiService from '@/services/api.service'
 import { QuestionItem } from '~/domain/models/perspective/question/question'
 
 function toModel(item: { [key: string]: any }): QuestionItem {
-  return new QuestionItem(item.id, item.question, item.answers)
+  return new QuestionItem(item.id, item.question, item.type_id ,item.answers, item.perspective_id ?? null, item.options_group ?? null)
 }
 
 export class APIQuestionRepository {

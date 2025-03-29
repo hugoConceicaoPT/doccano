@@ -6,12 +6,15 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework.generics import RetrieveAPIView
 
-from projects.models import Answer, Perspective, Question
+from projects.models import Answer, Perspective, Question, OptionQuestion, OptionsGroup, QuestionType
 from projects.permissions import IsProjectAdmin
 from projects.serializers import (
     AnswerSerializer,
+    OptionQuestionSerializer,
+    OptionsGroupSerializer,
     PerspectiveSerializer,
     QuestionSerializer,
+    QuestionTypeSerializer,
 )
 
 
@@ -54,7 +57,7 @@ class Answers(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ("question__id", "member__user__username", "answer")
+    search_fields = ("question__id", "member__user__username", "answer_text", "answer_option")
 
 
 class AnswerCreation(generics.CreateAPIView):
@@ -82,6 +85,7 @@ class Questions(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("perspective__id", "question")
 
+
 class AnswerNestedSerializer(serializers.ModelSerializer):
     member = serializers.StringRelatedField()
 
@@ -107,3 +111,121 @@ class PerspectiveDetail(RetrieveAPIView):
     queryset = Perspective.objects.all()
     serializer_class = PerspectiveDetailSerializer
     permission_classes = [IsAuthenticated]
+
+class OptionsQuestion(generics.ListAPIView):
+    queryset = OptionQuestion.objects.all()
+    serializer_class = OptionQuestionSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ("option", "options_group__name")
+
+class OptionsQuestionCreation(generics.CreateAPIView):
+    queryset = OptionQuestion.objects.all()
+    serializer_class = OptionQuestionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        option_question = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(OptionQuestionSerializer(option_question).data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+class OptionsGroups(generics.ListAPIView):
+    queryset = OptionsGroup.objects.all()
+    serializer_class = OptionsGroupSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ("name",)
+
+class OptionsGroupsCreation(generics.CreateAPIView):
+    queryset = OptionsGroup.objects.all()
+    serializer_class = OptionsGroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        options_group = self.perform_create(serializer)
+        options_questions_data = self.request.data.get("options_questions", [])
+        options_group = serializer.save()
+
+        for option_data in options_questions_data:
+            option_data["options_group"] = options_group.id
+            option_question_serializer = OptionQuestionSerializer(data=option_data)
+            option_question_serializer.is_valid(raise_exception=True)
+            option_question_serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(OptionsGroupSerializer(options_group).data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+class OptionsGroupDetail(generics.RetrieveAPIView):
+    serializer_class = OptionsGroupSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        group_name = self.kwargs["group_name"]
+        try:
+            return OptionsGroup.objects.get(name=group_name)
+        except OptionsGroup.DoesNotExist:
+            return None
+
+    def retrieve(self, request, *args, **kwargs):
+        obj = self.get_object()
+        
+        if obj is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data)
+    
+class QuestionsType(generics.ListAPIView):
+    queryset = QuestionType.objects.all()
+    serializer_class = QuestionTypeSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ("question_type",)
+
+class QuestionsTypeCreation(generics.CreateAPIView):
+    queryset = QuestionType.objects.all()
+    serializer_class = QuestionTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        option_question = self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(QuestionTypeSerializer(option_question).data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        return serializer.save()
+
+
+class QuestionsTypeDetail(generics.RetrieveAPIView):
+    serializer_class = QuestionTypeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        question_type_id = self.kwargs["question_type_id"]
+        try:
+            return QuestionType.objects.get(id=question_type_id)
+        except QuestionType.DoesNotExist:
+            return None
+
+    def retrieve(self, request, *args, **kwargs):
+        obj = self.get_object()
+        
+        if obj is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data)

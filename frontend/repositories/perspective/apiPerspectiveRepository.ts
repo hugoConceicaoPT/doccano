@@ -31,7 +31,6 @@ export class APIPerspectiveRepository {
   async create(projectId: string, item: PerspectiveItem): Promise<PerspectiveItem> {
     const url = `/projects/${projectId}/${this.baseUrl}s/create`
     const payload = toPayload(item)
-    console.log('Payload enviado:', JSON.stringify(payload, null, 2))
     const response = await this.request.post(url, payload)
     return toModel(response.data)
   }

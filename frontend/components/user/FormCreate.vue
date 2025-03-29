@@ -36,13 +36,8 @@
         </v-row>
         <v-row>
           <v-col cols="12" sm="12">
-            <v-text-field
-              v-model="localEmail"
-              label="Email address"
-              :rules="[rules.email]"
-              outlined
-              @input="$emit('update:email', localEmail)"
-            />
+            <v-text-field v-model="localEmail" label="Email address" :rules="[rules.email, rules.required]" outlined 
+              @input="$emit('update:email', localEmail)" />
           </v-col>
         </v-row>
         <v-row>
@@ -88,20 +83,11 @@
         </v-row>
         <v-row>
           <v-col cols="12" sm="6">
-            <v-switch
-              v-model="localisSuperUser"
-              label="isSuperUser"
-              outlined
-              @change="$emit('update:isSuperUser', localisSuperUser)"
-            />
+            <v-switch v-model="localisSuperUser" label="isSuperUser" outlined
+              @change="$emit('update:isSuperUser', localisSuperUser)" />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-switch
-              v-model="localIsStaff"
-              label="isStaff"
-              outlined
-              @change="$emit('update:isStaff', localIsStaff)"
-            />
+            <v-switch v-model="localIsStaff" label="isStaff" outlined @change="$emit('update:isStaff', localIsStaff)" />
           </v-col>
         </v-row>
         <v-row>

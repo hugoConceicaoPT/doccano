@@ -4,10 +4,16 @@ from .views.member import MemberDetail, MemberList, MyRole
 from .views.perspective import (
     AnswerCreation,
     Answers,
+    OptionsGroupDetail,
+    OptionsGroups,
+    OptionsQuestionCreation,
     PerspectiveCreation,
     Perspectives,
     Questions,
     PerspectiveDetail,
+    OptionsGroupsCreation,
+    QuestionsTypeCreation,
+    QuestionsTypeDetail
 )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
@@ -39,4 +45,9 @@ urlpatterns = [
         view=PerspectiveDetail.as_view(),
         name="perspective_detail",
     ),
+    path(route="projects/<int:project_id>/options-group/create", view=OptionsGroupsCreation.as_view(), name="options_group_create"),
+    path(route="projects/<int:project_id>/options-group/<str:group_name>", view=OptionsGroupDetail.as_view(), name="options_group_detail"),
+    path(route="projects/<int:project_id>/options-question/create", view=OptionsQuestionCreation.as_view(), name="options_question_create"),
+    path(route="projects/<int:project_id>/question-type/create", view=QuestionsTypeCreation.as_view(), name="options_question_create"),
+    path(route="projects/<int:project_id>/question-type/<int:question_type_id>", view=QuestionsTypeDetail.as_view(), name="question_type_detail"),
 ]

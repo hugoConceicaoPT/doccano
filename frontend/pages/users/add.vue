@@ -1,7 +1,11 @@
 <template>
   <div>
+    <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
     <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
     <form-create v-bind.sync="editedItem" :items="items">
+      <v-btn color="error" style="text-transform: none" @click="$router.push('/users')">
+        Cancel
+      </v-btn>
       <v-btn :disabled="!isFormValid" color="primary" class="text-capitalize" @click="save">
         Save
       </v-btn>
@@ -56,7 +60,8 @@ export default Vue.extend({
         isStaff: false
       } as UserDTO,
       items: [] as UserDTO[],
-      errorMessage: ''
+      errorMessage: '',
+      sucessMessage: ''
     }
   },
 
@@ -81,16 +86,28 @@ export default Vue.extend({
   methods: {
     async save() {
       try {
-        await this.service.create(this.editedItem)
-        this.$router.push(`/users`)
-      } catch (error) {
-        this.handleError(error)
+        let isRequestSuccessful = false;
+        const timeoutId = setTimeout(() => {
+          if (!isRequestSuccessful) {
+            this.errorMessage = "Database is slow or unavailable. Please try again later.";
+          }
+        }, 1000);
+        await this.service.create(this.editedItem);
+        isRequestSuccessful = true;
+        clearTimeout(timeoutId);
+        this.sucessMessage = "The user was successfully created!"
+        setTimeout(() => {
+          this.$router.push(`/users`)
+        }, 1000)
+      } catch (error: any) {
+          this.handleError(error);
       }
     },
 
     async saveAndAnother() {
       try {
         await this.service.create(this.editedItem)
+        this.sucessMessage = "The user was successfully created!"
         this.editedItem = Object.assign({}, this.defaultItem)
         this.items = await this.service.list()
       } catch (error) {
@@ -110,7 +127,7 @@ export default Vue.extend({
           this.errorMessage = JSON.stringify(errors)
         }
       } else {
-        this.errorMessage = 'An unexpected error occurred. Please try again.'
+        this.errorMessage = 'Something went wrong. Please try again'
       }
     }
   }

@@ -7,7 +7,7 @@ export class MemberItem {
     readonly role: number,
     readonly username: string,
     readonly rolename: RoleName,
-    readonly perspectiveId?: number
+    public perspectiveId?: number | null
   ) {}
 
   get isProjectAdmin(): boolean {

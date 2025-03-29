@@ -1,23 +1,8 @@
 <template>
-  <form-create
-    v-slot="slotProps"
-    v-bind.sync="editedItem"
-    :perspective-id="null"
-    :items="items"
-    @update-questions="updateQuestions"
-  >
+  <form-create v-slot="slotProps" v-bind.sync="editedItem" :perspective-id="null" :items="items"
+    @update-questions="updateQuestions" @update-options-group="updateOptionsGroup">
     <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
       Save
-    </v-btn>
-
-    <v-btn
-      :disabled="!slotProps.valid"
-      color="primary"
-      style="text-transform: none"
-      outlined
-      @click="saveAndAnother"
-    >
-      Save and add another
     </v-btn>
   </form-create>
 </template>
@@ -27,7 +12,8 @@ import Vue from 'vue'
 import FormCreate from '~/components/perspective/FormCreate.vue'
 import { CreatePerspectiveCommand } from '~/services/application/perspective/perspectiveCommand'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
-import { QuestionDTO } from '~/services/application/perspective/question/questionData'
+import { CreateOptionsGroupCommand } from '~/services/application/perspective/question/questionCommand'
+import { OptionsGroupDTO, QuestionDTO, QuestionTypeDTO } from '~/services/application/perspective/question/questionData'
 
 export default Vue.extend({
   components: {
@@ -46,6 +32,20 @@ export default Vue.extend({
         questions: [],
         members: []
       } as CreatePerspectiveCommand,
+
+      optionsGroupItem: [{
+        name: '',
+        options_questions: []
+      }] as CreateOptionsGroupCommand[],
+
+      questionTypeItem: [ {
+        id: 1,
+        question_type: 'Open Question',
+      }, 
+      {
+        id: 2,
+        question_type: 'Closed Question',
+      }] as QuestionTypeDTO[],
 
       defaultItem: {
         id: null,
@@ -72,18 +72,49 @@ export default Vue.extend({
     updateQuestions(questions: QuestionDTO[]) {
       this.editedItem.questions = questions
     },
-    async save() {
-      this.editedItem.project_id = Number(this.projectId)
-      this.editedItem.members = await this.getAnnotatorIds()
-      await this.service.create(this.projectId, this.editedItem)
-      this.$router.push(`/projects/${this.projectId}/perspectives`)
+
+    updateOptionsGroup(optionsGroup: OptionsGroupDTO[]) {
+      this.optionsGroupItem = optionsGroup
+      console.log(this.optionsGroupItem)
     },
 
-    async saveAndAnother() {
-      this.editedItem.project_id = Number(this.projectId)
-      await this.service.create(this.projectId, this.editedItem)
-      this.editedItem = Object.assign({}, this.defaultItem)
-      this.items = await this.service.list()
+    async save() {
+      try {
+        this.editedItem.project_id = Number(this.projectId);
+        this.editedItem.members = await this.getAnnotatorIds();
+        let j = 0;
+        const questionTypeOpen = await this.$services.questionType.findById(this.projectId, this.questionTypeItem[0].id)
+        const questionTypeClosed = await this.$services.questionType.findById(this.projectId, this.questionTypeItem[1].id)
+        if(!questionTypeOpen || !questionTypeOpen.id)
+          await this.$services.questionType.create(this.projectId, this.questionTypeItem[0]) 
+        if(!questionTypeClosed || !questionTypeClosed.id)
+          await this.$services.questionType.create(this.projectId, this.questionTypeItem[1]) 
+        for (let i= 0; i < this.editedItem.questions.length; i++) {
+          if (this.editedItem.questions[i].type === 2) {
+            console.log(this.optionsGroupItem[j])
+            const existingOptionGroup = await this.$services.optionsGroup.findByName(
+              this.projectId,
+              this.optionsGroupItem[j].name
+            )
+
+            if (existingOptionGroup && existingOptionGroup.id) {
+              this.editedItem.questions[i].options_group = existingOptionGroup.id
+            } else {
+              const optionGroup = await this.$services.optionsGroup.create(this.projectId, this.optionsGroupItem[j])
+              this.editedItem.questions[i].options_group = optionGroup.id
+              console.log(optionGroup.id)
+            }
+            j++
+          }
+        }
+
+        console.log(this.editedItem)
+        await this.service.create(this.projectId, this.editedItem);
+        this.$router.push(`/projects/${this.projectId}/perspectives`);
+      } catch (error) {
+        console.error("Erro ao salvar perspectiva:", error);
+        alert("Erro ao salvar a perspectiva. Tente novamente.");
+      }
     },
     async getAnnotatorIds(): Promise<number[]> {
       const members = await this.$repositories.member.list(this.projectId)

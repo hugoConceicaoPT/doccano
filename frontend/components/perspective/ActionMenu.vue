@@ -16,7 +16,7 @@ export default Vue.extend({
     items() {
       const items = [
         {
-          title: this.$t('Define Perspective'),
+          title: this.$t('Create Perspective'),
           icon: mdiPencil,
           event: 'create'
         }

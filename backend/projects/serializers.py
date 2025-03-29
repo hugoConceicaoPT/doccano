@@ -8,9 +8,12 @@ from .models import (
     ImageClassificationProject,
     IntentDetectionAndSlotFillingProject,
     Member,
+    OptionQuestion,
+    OptionsGroup,
     Perspective,
     Project,
     Question,
+    QuestionType,
     SegmentationProject,
     Seq2seqProject,
     SequenceLabelingProject,
@@ -41,13 +44,45 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Member
         fields = ("id", "user", "role", "username", "rolename", "perspective_id")
 
+class QuestionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionType
+        fields = ['id', 'question_type']
+
+class OptionQuestionSerializer(serializers.ModelSerializer):
+    options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False) 
+
+    class Meta:
+        model = OptionQuestion
+        fields = ['id', 'option', 'options_group']
+
+class OptionsGroupSerializer(serializers.ModelSerializer):
+    options_questions = OptionQuestionSerializer( many=True, read_only=True)
+    class Meta:
+        model = OptionsGroup
+        fields = ['id', 'name', 'options_questions']
+
 
 class AnswerSerializer(serializers.ModelSerializer):
     member = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all())
+    answer_option = serializers.PrimaryKeyRelatedField(queryset=OptionQuestion.objects.all(), required=False)
+    answer_text = serializers.CharField(required=False)
 
     class Meta:
         model = Answer
-        fields = ("id", "answer", "member", "question")
+        fields = ("id", "question", "member", "answer_text", "answer_option")
+    
+    def validate(self, attrs):
+        answer_text = attrs.get('answer_text', None)
+        answer_option = attrs.get('answer_option', None)
+
+        if answer_text and answer_option:
+            raise serializers.ValidationError("You can only provide one of the fiels: 'answer_text' or 'answer_option', but not both.")
+        
+        if not answer_text and not answer_option:
+            raise serializers.ValidationError("You must provide at least one of the fields: 'answer_text' or 'answer_option'.")
+
+        return attrs
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -55,10 +90,12 @@ class QuestionSerializer(serializers.ModelSerializer):
     perspective = serializers.PrimaryKeyRelatedField(
         queryset=Perspective.objects.all(), write_only=True, required=False
     )
+    type = serializers.PrimaryKeyRelatedField(queryset=QuestionType.objects.all())
+    options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
 
     class Meta:
         model = Question
-        fields = ("id", "question", "perspective", "answers")
+        fields = ("id", "question", "perspective", "answers", "type", "options_group")
 
 
 class PerspectiveSerializer(serializers.ModelSerializer):
