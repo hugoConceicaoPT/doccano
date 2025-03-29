@@ -33,6 +33,12 @@ class PerspectiveCreation(generics.CreateAPIView):
     permission_classes = [IsAuthenticated & IsAdminUser]
 
     def create(self, request, *args, **kwargs):
+        project_id = request.data.get("project_id")
+        if project_id and Perspective.objects.filter(project_id=project_id).exists():
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         with transaction.atomic():
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)

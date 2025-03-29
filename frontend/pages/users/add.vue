@@ -86,15 +86,7 @@ export default Vue.extend({
   methods: {
     async save() {
       try {
-        let isRequestSuccessful = false;
-        const timeoutId = setTimeout(() => {
-          if (!isRequestSuccessful) {
-            this.errorMessage = "Database is slow or unavailable. Please try again later.";
-          }
-        }, 1000);
         await this.service.create(this.editedItem);
-        isRequestSuccessful = true;
-        clearTimeout(timeoutId);
         this.sucessMessage = "The user was successfully created!"
         setTimeout(() => {
           this.$router.push(`/users`)
@@ -126,6 +118,8 @@ export default Vue.extend({
         } else {
           this.errorMessage = JSON.stringify(errors)
         }
+      } else if(error.response && error.response.status === 500) {
+        this.errorMessage = "Database is slow or unavailable. Please try again later.";
       } else {
         this.errorMessage = 'Something went wrong. Please try again'
       }
