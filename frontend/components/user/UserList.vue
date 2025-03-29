@@ -16,6 +16,7 @@
     show-select
     @input="$emit('input', $event)"
   >
+    <!-- Campo de busca -->
     <template #top>
       <v-text-field
         v-model="search"
@@ -26,18 +27,24 @@
         filled
       />
     </template>
+
+    <!-- Chip para Superuser -->
     <template #[`item.isSuperUser`]="props">
       <v-chip :color="props.item.isSuperUser ? 'blue' : 'grey'">
         {{ props.item.isSuperUser ? 'Sim' : 'Não' }}
       </v-chip>
     </template>
+
+    <!-- Chip para Staff -->
     <template #[`item.isStaff`]="props">
       <v-chip :color="props.item.isStaff ? 'blue' : 'grey'">
         {{ props.item.isStaff ? 'Sim' : 'Não' }}
       </v-chip>
     </template>
+
+    <!-- Ações (ícone de editar) -->
     <template #[`item.actions`]="{ item }">
-      <v-icon small @click="$emit('edit', item)">
+      <v-icon small @click="$emit('editUser', item)">
         {{ mdiPencil }}
       </v-icon>
     </template>
@@ -48,7 +55,7 @@
 import { mdiMagnify, mdiPencil } from '@mdi/js'
 import type { PropType } from 'vue'
 import Vue from 'vue'
-import { UserDTO } from '~/services/application/user/userData' // Ajuste o caminho conforme necessário
+import { UserDTO } from '~/services/application/user/userData'
 
 export default Vue.extend({
   props: {

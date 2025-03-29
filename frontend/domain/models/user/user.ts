@@ -51,14 +51,22 @@ export class UserItem {
     if (this.id === 0) {
       throw new Error('Não é possível atualizar um usuário sem ID válido.')
     }
-
-    if (this.password !== this.passwordConfirmation) {
+  
+    if (this.password && this.password !== this.passwordConfirmation) {
       throw new Error('A confirmação de senha não confere.')
     }
-
-    await repository.update(this.id, {
+  
+    const updatedFields: Record<string, any> = {
       username: this.username,
-      password: this.password
-    })
+      first_name: this.first_name,
+      last_name: this.last_name,
+      email: this.email
+    }
+  
+    if (this.password) {
+      updatedFields.password = this.password
+    }
+  
+    await repository.update(this.id, updatedFields)
   }
 }

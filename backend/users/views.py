@@ -53,32 +53,16 @@ class UserCreation(generics.CreateAPIView):
         user.save()
         return user
     
-class UserEdit(generics.UpdateAPIView):
+class UserUpdate(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated & IsAdminUser]
 
-    def update(self, request, *args, **kwargs):
-        user = self.get_object()
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
-        if request.user == user:
-            return Response(
-                {"detail": "You cannot edit your own account."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        name = request.data.get("name")
-        password = request.data.get("password")
-
-        if name:
-            user.username = name
-        if password:
-            user.set_password(password) 
-
-        user.save()
-
-        return Response({"detail": "User updated successfully."}, status=status.HTTP_200_OK)
-
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
 
 class UserDeletion(generics.DestroyAPIView):
     queryset = User.objects.all()

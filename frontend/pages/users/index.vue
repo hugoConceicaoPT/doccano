@@ -12,22 +12,20 @@
       >
         {{ $t('generic.delete') }}
       </v-btn>
-      <v-btn
-        class="text-capitalize ms-2"
-        outlined
-        :disabled="selected.length !== 1"
-        @click.stop="dialogEdit = true"
-      >
-        {{ $t('generic.edit') }}
-      </v-btn>
       <v-dialog v-model="dialogDelete">
         <form-delete :selected="selected" @remove="handleDelete" @cancel="dialogDelete = false" />
       </v-dialog>
       <v-dialog v-model="dialogEdit">
-        <form-edit :user="selected[0]" @confirmEdit="handleEdit" @cancel="dialogEdit = false" />
-      </v-dialog>
+    <form-edit :user="selected[0]" @confirmEdit="handleEdit" @cancel="dialogEdit = false" />
+  </v-dialog>
     </v-card-title>
-    <user-list v-model="selected" :items="items" :is-loading="isLoading" />
+    <user-list
+  v-model="selected"
+  :items="items"
+  :is-loading="isLoading"
+  @editUser="openEditDialog"
+/>
+
   </v-card>
 </template>
 
@@ -151,7 +149,11 @@ export default Vue.extend({
       } finally {
         this.isLoading = false
       }
-    }
+    },
+    openEditDialog(user: UserDTO) {
+    this.selected = [user]
+    this.dialogEdit = true
+  }
   }
 })
 </script>
