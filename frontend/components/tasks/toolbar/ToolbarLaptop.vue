@@ -195,7 +195,7 @@ export default Vue.extend({
       } else {
         this.$emit('update:enable-auto-labeling', false)
       }
-    },
+    }
   }
 })
 </script>

@@ -13,14 +13,8 @@
           :label="$t('Username')"
           :rules="[rules.required]"
         />
-        <v-text-field
-          v-model="formData.first_name"
-          :label="$t('First Name')"
-        />
-        <v-text-field
-          v-model="formData.last_name"
-          :label="$t('Last Name')"
-        />
+        <v-text-field v-model="formData.first_name" :label="$t('First Name')" />
+        <v-text-field v-model="formData.last_name" :label="$t('Last Name')" />
         <v-text-field
           v-model="formData.email"
           :label="$t('Email')"
@@ -34,14 +28,8 @@
           :rules="[rules.password]"
         />
         <!-- Campos booleanos com checkboxes -->
-        <v-checkbox
-          v-model="formData.isSuperUser"
-          :label="$t('Superuser')"
-        />
-        <v-checkbox
-          v-model="formData.isStaff"
-          :label="$t('Staff')"
-        />
+        <v-checkbox v-model="formData.isSuperUser" :label="$t('Superuser')" />
+        <v-checkbox v-model="formData.isStaff" :label="$t('Staff')" />
       </v-form>
     </template>
   </base-card>
@@ -81,8 +69,10 @@ export default Vue.extend({
         required: (v: string) => !!v || 'Required',
         password: (v: string) => {
           if (!v) return true
-          return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(v) ||
+          return (
+            /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/.test(v) ||
             'A palavra-passe deve ter pelo menos 8 caracteres e conter letras e números.'
+          )
         }
       }
     }

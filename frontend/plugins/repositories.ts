@@ -53,7 +53,6 @@ export interface Repositories {
   option: LocalStorageOptionRepository
   assignment: APIAssignmentRepository
 
-
   // Auto Labeling
   config: APIConfigRepository
   template: APITemplateRepository

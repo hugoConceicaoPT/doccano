@@ -10,7 +10,11 @@ import { SegmentationApplicationService } from '@/services/application/tasks/seg
 import { SequenceLabelingApplicationService } from '@/services/application/tasks/sequenceLabeling/sequenceLabelingApplicationService'
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
-import { OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import {
+  OptionsGroupApplicationService,
+  OptionsQuestionApplicationService,
+  QuestionTypeApplicationService
+} from '~/services/application/perspective/question/questionApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService

@@ -5,8 +5,14 @@
       <v-form ref="form">
         <v-row>
           <v-col cols="12">
-            <v-text-field v-model="newQuestion" label="Add a Question" outlined required :rules="[rules.required]"
-              @keyup.enter="addQuestion" />
+            <v-text-field
+              v-model="newQuestion"
+              label="Add a Question"
+              outlined
+              required
+              :rules="[rules.required]"
+              @keyup.enter="addQuestion"
+            />
           </v-col>
         </v-row>
 
@@ -24,7 +30,12 @@
             <v-text-field v-model="optionGroupName" label="Option Group Name" outlined required />
           </v-col>
           <v-col cols="12">
-            <v-text-field v-model="newOption" label="Add an Option" outlined @keyup.enter="addOption" />
+            <v-text-field
+              v-model="newOption"
+              label="Add an Option"
+              outlined
+              @keyup.enter="addOption"
+            />
             <v-btn color="primary" @click="addOption">Add Option</v-btn>
           </v-col>
           <v-col cols="12">
@@ -55,8 +66,11 @@
               <v-list-item-group>
                 <v-list-item v-for="(question, index) in questionsList" :key="index">
                   <v-list-item-content>
-                    <v-list-item-title>{{ question.question }} ({{ getQuestionType(question.type)
-                      }})</v-list-item-title>
+                    <v-list-item-title
+                      >{{ question.question }} ({{
+                        getQuestionType(question.type)
+                      }})</v-list-item-title
+                    >
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-btn icon color="red" @click="removeQuestion(index)">
@@ -82,7 +96,11 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mdiDelete } from '@mdi/js'
-import { CreateQuestionCommand, CreateOptionsGroupCommand, CreateOptionsQuestionCommand } from '~/services/application/perspective/question/questionCommand'
+import {
+  CreateQuestionCommand,
+  CreateOptionsGroupCommand,
+  CreateOptionsQuestionCommand
+} from '~/services/application/perspective/question/questionCommand'
 
 interface QuestionType {
   id: number
@@ -122,7 +140,7 @@ export default Vue.extend({
     addOption() {
       if (this.newOption.trim()) {
         const newOptionObject: CreateOptionsQuestionCommand = {
-          option: this.newOption.trim(),
+          option: this.newOption.trim()
         }
         this.optionsQuestionList.push(newOptionObject)
         this.newOption = ''
@@ -148,11 +166,10 @@ export default Vue.extend({
         optionsGroupData = {
           name: this.optionGroupName,
           options_questions: this.optionsQuestionList
-        };
+        }
         this.optionsGroupList.push(optionsGroupData)
         this.emitUpdatedOptionsGroup()
       }
-
 
       this.questionsList.push(questionData)
       this.emitUpdatedQuestions()

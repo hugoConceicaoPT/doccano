@@ -10,7 +10,6 @@ from .views.comment import CommentDetail, CommentList
 from .views.example import ExampleDetail, ExampleList
 from .views.example_state import ExampleStateList
 
-
 urlpatterns = [
     path(route="assignments", view=AssignmentList.as_view(), name="assignment_list"),
     path(route="assignments/<uuid:assignment_id>", view=AssignmentDetail.as_view(), name="assignment_detail"),

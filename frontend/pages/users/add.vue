@@ -9,14 +9,7 @@
       <v-btn :disabled="!isFormValid" color="primary" class="text-capitalize" @click="save">
         Save
       </v-btn>
-
-      <v-btn
-        :disabled="!isFormValid"
-        color="primary"
-        style="text-transform: none"
-        outlined
-        @click="saveAndAnother"
-      >
+      <v-btn :disabled="!isFormValid" color="primary" style="text-transform: none" outlined @click="saveAndAnother">
         Save and add another
       </v-btn>
     </form-create>
@@ -71,11 +64,7 @@ export default Vue.extend({
     },
 
     isFormValid(): boolean {
-      return (
-        !!this.editedItem.username &&
-        !!this.editedItem.password &&
-        !!this.editedItem.passwordConfirmation
-      )
+      return !!this.editedItem.username && !!this.editedItem.password && !!this.editedItem.passwordConfirmation;
     },
 
     service(): any {
@@ -86,20 +75,20 @@ export default Vue.extend({
   methods: {
     async save() {
       try {
-        await this.service.create(this.editedItem);
-        this.sucessMessage = "The user was successfully created!"
+        await this.service.create(this.editedItem)
+        this.sucessMessage = 'The user was successfully created!'
         setTimeout(() => {
           this.$router.push(`/users`)
         }, 1000)
       } catch (error: any) {
-          this.handleError(error);
+        this.handleError(error)
       }
     },
 
     async saveAndAnother() {
       try {
         await this.service.create(this.editedItem)
-        this.sucessMessage = "The user was successfully created!"
+        this.sucessMessage = 'The user was successfully created!'
         this.editedItem = Object.assign({}, this.defaultItem)
         this.items = await this.service.list()
       } catch (error) {
@@ -118,10 +107,8 @@ export default Vue.extend({
         } else {
           this.errorMessage = JSON.stringify(errors)
         }
-      } else if(error.response && error.response.status === 500) {
-        this.errorMessage = "Database is slow or unavailable. Please try again later.";
       } else {
-        this.errorMessage = 'Something went wrong. Please try again'
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }
     }
   }

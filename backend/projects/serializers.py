@@ -44,23 +44,27 @@ class MemberSerializer(serializers.ModelSerializer):
         model = Member
         fields = ("id", "user", "role", "username", "rolename", "perspective_id")
 
+
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionType
-        fields = ['id', 'question_type']
+        fields = ["id", "question_type"]
+
 
 class OptionQuestionSerializer(serializers.ModelSerializer):
-    options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False) 
+    options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
 
     class Meta:
         model = OptionQuestion
-        fields = ['id', 'option', 'options_group']
+        fields = ["id", "option", "options_group"]
+
 
 class OptionsGroupSerializer(serializers.ModelSerializer):
-    options_questions = OptionQuestionSerializer( many=True, read_only=True)
+    options_questions = OptionQuestionSerializer(many=True, read_only=True)
+
     class Meta:
         model = OptionsGroup
-        fields = ['id', 'name', 'options_questions']
+        fields = ["id", "name", "options_questions"]
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -71,16 +75,20 @@ class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = ("id", "question", "member", "answer_text", "answer_option")
-    
+
     def validate(self, attrs):
-        answer_text = attrs.get('answer_text', None)
-        answer_option = attrs.get('answer_option', None)
+        answer_text = attrs.get("answer_text", None)
+        answer_option = attrs.get("answer_option", None)
 
         if answer_text and answer_option:
-            raise serializers.ValidationError("You can only provide one of the fiels: 'answer_text' or 'answer_option', but not both.")
-        
+            raise serializers.ValidationError(
+                "You can only provide one of the fiels: 'answer_text' or 'answer_option', but not both."
+            )
+
         if not answer_text and not answer_option:
-            raise serializers.ValidationError("You must provide at least one of the fields: 'answer_text' or 'answer_option'.")
+            raise serializers.ValidationError(
+                "You must provide at least one of the fields: 'answer_text' or 'answer_option'."
+            )
 
         return attrs
 

@@ -5,39 +5,30 @@
       <v-form ref="form" v-model="valid">
         <v-row>
           <v-col cols="12" sm="12">
-            <v-text-field
-              :value="username"
-              :counter="100"
-              :label="'Username'"
-              :rules="[rules.required, rules.counter, rules.nameDuplicated]"
-              outlined
-              required
-              @input="$emit('update:username', $event)"
-            />
+            <v-text-field :value="username" :counter="100" :label="'Username'"
+              :rules="[rules.required, rules.counter, rules.nameDuplicated]" outlined required
+              @input="$emit('update:username', $event)" />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="localFirstName"
-              label="First name"
-              outlined
-              @input="$emit('update:first_name', localFirstName)"
-            />
+            <v-text-field v-model="localFirstName" label="First name" outlined 
+              @input="$emit('update:first_name', localFirstName)" />
           </v-col>
           <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="localLastName"
-              label="Last name"
-              outlined
-              @input="$emit('update:last_name', localLastName)"
-            />
+            <v-text-field v-model="localLastName" label="Last name" outlined 
+            @input="$emit('update:last_name', localLastName)" />
           </v-col>
         </v-row>
         <v-row>
           <v-col cols="12" sm="12">
-            <v-text-field v-model="localEmail" label="Email address" :rules="[rules.email, rules.required]" outlined 
-              @input="$emit('update:email', localEmail)" />
+            <v-text-field
+              v-model="localEmail"
+              label="Email address"
+              :rules="[rules.email, rules.required]"
+              outlined
+              @input="$emit('update:email', localEmail)"
+            />
           </v-col>
         </v-row>
         <v-row>
@@ -79,6 +70,11 @@
               @click:append="show1 = !show1"
               @input="$emit('update:passwordConfirmation', localPasswordConfirmation)"
             />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col cols="12" sm="12">
+            <slot :valid="valid" />
           </v-col>
         </v-row>
       </v-form>

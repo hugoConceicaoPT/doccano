@@ -7,10 +7,10 @@ export class AnswerItem {
   ) {}
 
   static create(answer: string, memberId: number, questionId: number): AnswerItem {
-    return new AnswerItem(0, answer, memberId, questionId);
+    return new AnswerItem(0, answer, memberId, questionId)
   }
 
   static list(items: { answer: string; memberId: number; questionId: number }[]): AnswerItem[] {
-    return items.map(item => AnswerItem.create(item.answer, item.memberId, item.questionId));
+    return items.map((item) => AnswerItem.create(item.answer, item.memberId, item.questionId))
   }
 }
