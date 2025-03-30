@@ -74,4 +74,3 @@ class ExampleStateSerializer(serializers.ModelSerializer):
         model = ExampleState
         fields = ("id", "example", "confirmed_by", "confirmed_at")
         read_only_fields = ("id", "example", "confirmed_by", "confirmed_at")
-

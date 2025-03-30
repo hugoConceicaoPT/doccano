@@ -1,12 +1,18 @@
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, generics, status
+from rest_framework import filters, generics, serializers, status
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import serializers
-from rest_framework.generics import RetrieveAPIView
 
-from projects.models import Answer, Perspective, Question, OptionQuestion, OptionsGroup, QuestionType
+from projects.models import (
+    Answer,
+    OptionQuestion,
+    OptionsGroup,
+    Perspective,
+    Question,
+    QuestionType,
+)
 from projects.permissions import IsProjectAdmin
 from projects.serializers import (
     AnswerSerializer,
@@ -35,9 +41,7 @@ class PerspectiveCreation(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         project_id = request.data.get("project_id")
         if project_id and Perspective.objects.filter(project_id=project_id).exists():
-            return Response(
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             serializer = self.get_serializer(data=request.data)
@@ -99,24 +103,28 @@ class AnswerNestedSerializer(serializers.ModelSerializer):
         model = Answer
         fields = ("id", "answer", "member")
 
+
 class QuestionNestedSerializer(serializers.ModelSerializer):
-    answers = AnswerNestedSerializer(many=True, read_only=True, source='answer_set')
+    answers = AnswerNestedSerializer(many=True, read_only=True, source="answer_set")
 
     class Meta:
         model = Question
         fields = ("id", "question", "answers")
 
+
 class PerspectiveDetailSerializer(serializers.ModelSerializer):
-    questions = QuestionNestedSerializer(many=True, read_only=True, source='question_set')
+    questions = QuestionNestedSerializer(many=True, read_only=True, source="question_set")
 
     class Meta:
         model = Perspective
         fields = ("id", "name", "questions")
 
+
 class PerspectiveDetail(RetrieveAPIView):
     queryset = Perspective.objects.all()
     serializer_class = PerspectiveDetailSerializer
     permission_classes = [IsAuthenticated]
+
 
 class OptionsQuestion(generics.ListAPIView):
     queryset = OptionQuestion.objects.all()
@@ -125,6 +133,7 @@ class OptionsQuestion(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("option", "options_group__name")
+
 
 class OptionsQuestionCreation(generics.CreateAPIView):
     queryset = OptionQuestion.objects.all()
@@ -141,6 +150,7 @@ class OptionsQuestionCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         return serializer.save()
 
+
 class OptionsGroups(generics.ListAPIView):
     queryset = OptionsGroup.objects.all()
     serializer_class = OptionsGroupSerializer
@@ -148,6 +158,7 @@ class OptionsGroups(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("name",)
+
 
 class OptionsGroupsCreation(generics.CreateAPIView):
     queryset = OptionsGroup.objects.all()
@@ -172,6 +183,7 @@ class OptionsGroupsCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         return serializer.save()
 
+
 class OptionsGroupDetail(generics.RetrieveAPIView):
     serializer_class = OptionsGroupSerializer
     permission_classes = [IsAuthenticated]
@@ -185,13 +197,14 @@ class OptionsGroupDetail(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         obj = self.get_object()
-        
+
         if obj is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        
+
         serializer = self.get_serializer(obj)
         return Response(serializer.data)
-    
+
+
 class QuestionsType(generics.ListAPIView):
     queryset = QuestionType.objects.all()
     serializer_class = QuestionTypeSerializer
@@ -199,6 +212,7 @@ class QuestionsType(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("question_type",)
+
 
 class QuestionsTypeCreation(generics.CreateAPIView):
     queryset = QuestionType.objects.all()
@@ -229,9 +243,9 @@ class QuestionsTypeDetail(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         obj = self.get_object()
-        
+
         if obj is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        
+
         serializer = self.get_serializer(obj)
         return Response(serializer.data)

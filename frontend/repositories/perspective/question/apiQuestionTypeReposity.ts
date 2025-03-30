@@ -13,7 +13,7 @@ function toPayload(item: QuestionTypeItem): { [key: string]: any } {
 }
 
 export class APIQuestionTypeRepository {
-  constructor(private readonly baseUrl = 'question', private readonly request = ApiService) { }
+  constructor(private readonly baseUrl = 'question', private readonly request = ApiService) {}
 
   async create(projectId: string, item: QuestionTypeItem): Promise<QuestionTypeItem> {
     const url = `projects/${projectId}/${this.baseUrl}-type/create`

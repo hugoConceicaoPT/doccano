@@ -6,7 +6,7 @@ export interface QuestionRepository {
 }
 
 export interface OptionsGroupRepository {
-  create(projectId: string,item: OptionsGroupItem): Promise<OptionsGroupItem>
+  create(projectId: string, item: OptionsGroupItem): Promise<OptionsGroupItem>
   findByName(projectId: string, name: string): Promise<OptionsGroupItem>
 }
 

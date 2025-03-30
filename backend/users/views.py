@@ -43,8 +43,8 @@ class UserCreation(generics.CreateAPIView):
         user = serializer.save(self.request)
         is_superuser = self.request.data.get("is_superuser", False)
         is_staff = self.request.data.get("is_staff", False)
-        first_name = self.request.data.get("first_name", "")  
-        last_name = self.request.data.get("last_name", "") 
+        first_name = self.request.data.get("first_name", "")
+        last_name = self.request.data.get("last_name", "")
 
         user.is_superuser = is_superuser
         user.is_staff = is_staff
@@ -52,7 +52,8 @@ class UserCreation(generics.CreateAPIView):
         user.last_name = last_name
         user.save()
         return user
-    
+
+
 class UserUpdate(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -64,6 +65,7 @@ class UserUpdate(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
 
+
 class UserDeletion(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -71,17 +73,12 @@ class UserDeletion(generics.DestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         # Obtém os usuários a partir dos IDs passados na requisição
-        user_ids = request.data.get('user_ids', [])
-        
-        
+
         # Se apenas um usuário for excluído, obtém o usuário
         user = self.get_object()
 
         if request.user == user:
-            return Response(
-                {"detail": "You cannot delete your own account."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
+            return Response({"detail": "You cannot delete your own account."}, status=status.HTTP_403_FORBIDDEN)
+
         user.delete()  # Exclui o usuário
         return Response({"detail": "User deleted successfully."}, status=status.HTTP_204_NO_CONTENT)

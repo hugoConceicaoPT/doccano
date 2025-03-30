@@ -64,20 +64,20 @@ export class APIUserRepository {
 
   async update(id: number, data: Partial<UserItem>): Promise<UserItem> {
     const url = `/${this.baseUrl}s/${id}/update`
-  
+
     const payload: any = {
       username: data.username,
       first_name: data.first_name ?? '',
       last_name: data.last_name ?? '',
       email: data.email ?? ''
     }
-  
+
     if (data.password && data.passwordConfirmation) {
       payload.password1 = data.password
       payload.password2 = data.passwordConfirmation
     }
-  
+
     const response = await this.request.put(url, payload)
     return toModel(response.data)
-  }  
+  }
 }

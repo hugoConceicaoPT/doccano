@@ -17,15 +17,15 @@ export class APIOptionsGroupRepository {
   constructor(private readonly baseUrl = 'option', private readonly request = ApiService) {}
 
   async create(projectId: string, item: OptionsGroupItem): Promise<OptionsGroupItem> {
-      const url = `projects/${projectId}/${this.baseUrl}s-group/create`
-      const payload = toPayload(item)
-      const response = await this.request.post(url, payload)
-      return toModel(response.data)
-    }
-  
-    async findByName(projectId: string, name: string) : Promise<OptionsGroupItem> {
-      const url = `projects/${projectId}/${this.baseUrl}s-group/${name}`
-      const response = await this.request.get(url)
-      return toModel(response.data) 
-    }
+    const url = `projects/${projectId}/${this.baseUrl}s-group/create`
+    const payload = toPayload(item)
+    const response = await this.request.post(url, payload)
+    return toModel(response.data)
+  }
+
+  async findByName(projectId: string, name: string): Promise<OptionsGroupItem> {
+    const url = `projects/${projectId}/${this.baseUrl}s-group/${name}`
+    const response = await this.request.get(url)
+    return toModel(response.data)
+  }
 }
