@@ -88,7 +88,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True)
     perspective = serializers.PrimaryKeyRelatedField(
-        queryset=Perspective.objects.all(), write_only=True, required=False
+        queryset=Perspective.objects.all(), required=False
     )
     type = serializers.PrimaryKeyRelatedField(queryset=QuestionType.objects.all())
     options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)

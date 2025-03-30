@@ -21,7 +21,7 @@ from projects.serializers import (
 class Perspectives(generics.ListAPIView):
     queryset = Perspective.objects.all()
     serializer_class = PerspectiveSerializer
-    permission_classes = [IsAuthenticated & IsProjectAdmin]
+    permission_classes = [IsAuthenticated]
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("members__user__username",)

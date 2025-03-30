@@ -7,13 +7,17 @@ export class PerspectiveApplicationService {
   constructor(private readonly repository: PerspectiveRepository) {}
 
   public async create(projectId: string, item: CreatePerspectiveCommand): Promise<PerspectiveDTO> {
-    const perspective = PerspectiveItem.create(item.project_id, item.questions, item.members)
+    const perspective = PerspectiveItem.create(
+      item.project_id,
+      item.questions.map(q => ({ ...q, perspective_id: q.perspective_id ?? 0 })),
+      item.members
+    )
     const created = await this.repository.create(projectId, perspective)
     return new PerspectiveDTO(created)
   }
 
-  public async list(projectId: string): Promise<PerspectiveDTO[]> {
-    const perspectives = await this.repository.list(projectId)
-    return perspectives.map(perspective => new PerspectiveDTO(perspective))
+  public async list(projectId: string): Promise<PerspectiveDTO> {
+    const perspective = await this.repository.list(projectId)
+    return perspective
   }
 }

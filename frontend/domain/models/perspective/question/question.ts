@@ -1,5 +1,7 @@
 import { AnswerItem } from '../answer/answer'
+import { QuestionRepository } from './questionRepository'
 import { CreateOptionsQuestionCommand } from '~/services/application/perspective/question/questionCommand'
+
 
 export class QuestionItem {
   constructor(
@@ -7,12 +9,16 @@ export class QuestionItem {
     readonly question: string,
     readonly type: number,
     readonly answers: AnswerItem[],
-    readonly perspective_id?: number,
+    readonly perspective_id: number,
     readonly options_group?: number
   ) { }
 
-  static create(question: string, type: number, answers: AnswerItem[] = [], perspective_id?: number, options_group?: number): QuestionItem {
+  static create(question: string, type: number, answers: AnswerItem[] = [], perspective_id: number, options_group?: number): QuestionItem {
     return new QuestionItem(0, question, type, answers, perspective_id, options_group)
+  }
+
+  static list(repository: QuestionRepository, perspectiveId: number, project_id: string): Promise<QuestionItem[]> {
+    return repository.list(perspectiveId, project_id)
   }
 }
 
@@ -37,6 +43,10 @@ export class OptionsQuestionItem {
 
   static create(option: string, options_group: number) : OptionsQuestionItem {
     return new OptionsQuestionItem(0, option, options_group)
+  }
+
+  static list(items: { id: number, option: string, options_group: number }[]): OptionsQuestionItem[] {
+    return items.map(item => new OptionsQuestionItem(item.id, item.option, item.options_group))
   }
 }
 

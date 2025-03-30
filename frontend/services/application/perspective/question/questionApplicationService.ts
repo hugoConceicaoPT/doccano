@@ -4,21 +4,22 @@ import { AnswerItem } from '~/domain/models/perspective/answer/answer'
 import { OptionsGroupItem, OptionsQuestionItem, QuestionItem, QuestionTypeItem } from '~/domain/models/perspective/question/question'
 import { OptionsGroupRepository, OptionsQuestionRepository, QuestionRepository, QuestionTypeRepository } from '~/domain/models/perspective/question/questionRepository'
 
+
 export class QuestionApplicationService {
   constructor(private readonly repository: QuestionRepository) { }
 
-  public async create(item: CreateQuestionCommand): Promise<QuestionDTO> {
-    const answers = item.answers.map((a) => new AnswerItem(0, a.answer, a.memberId, a.questionId))
-    const question = new QuestionItem(0, item.question, item.type, answers, item.perspective_id, item.options_group)
+  public async create(projectId: string, item: CreateQuestionCommand): Promise<QuestionDTO> {
+    const answers = item.answers.map((a) => new AnswerItem(0, a.member, a.question, a.answer_text, a.answer_option))
+    const question = new QuestionItem(0, item.question, item.type, answers, item.perspective_id ?? 0, item.options_group ?? 0)
 
-    const created = await this.repository.create(question)
+    const created = await this.repository.create(projectId, question)
     return new QuestionDTO(created)
   }
-  
-  public async list(): Promise<QuestionDTO[]> {
-    const questions = await this.repository.list()
-    return questions.map((question) => new QuestionDTO(question))
+
+  public async list(perspectiveId: number, projectId: string): Promise<QuestionItem[]> {
+    return await this.repository.list(perspectiveId, projectId)
   }
+  
 }
 export class OptionsGroupApplicationService {
   constructor(private readonly repository: OptionsGroupRepository) { }
@@ -44,6 +45,10 @@ export class OptionsQuestionApplicationService {
 
     const created = await this.repository.create(project_id, optionsQuestion)
     return new OptionsQuestionDTO(created)
+  }
+
+  public async list(perspective_id: number, project_id: string, optionsGroupId: number): Promise<OptionsQuestionItem[]> {
+    return await this.repository.list(perspective_id, project_id, optionsGroupId)
   }
 }
 

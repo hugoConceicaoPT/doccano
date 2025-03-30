@@ -22,4 +22,12 @@ export class APIOptionsQuestionRepository {
       const response = await this.request.post(url, payload)
       return toModel(response.data)
     }
+
+  async list(perspective_id: number, project_id: string, optionsGroupId: number): Promise<OptionsQuestionItem[]> {
+    const url = `projects/${project_id}/perspectives/${perspective_id}/${this.baseUrl}-type`
+    const response = await this.request.get(url)
+    return response.data
+      .filter((item: { [key: string]: any }) => item.options_group === optionsGroupId)
+      .map((item: { [key: string]: any }) => toModel(item))
+  }
 }

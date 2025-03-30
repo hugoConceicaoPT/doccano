@@ -216,3 +216,4 @@ frontend/.yarnrc
 backend/pyproject.toml
 frontend/yarn.lock
 backend/poetry.lock
+backend/config/settings/base.py

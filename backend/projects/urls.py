@@ -35,7 +35,7 @@ urlpatterns = [
     ),
     path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/answers", view=Answers.as_view(), name="answers_list"),
     path(
-        route="projects/<int:project_id>/perspectives/<int:perspective_id>/answers/create",
+        route="projects/<int:project_id>/perspectives/answers/create",
         view=AnswerCreation.as_view(),
         name="answers_create",
     ),
@@ -49,5 +49,6 @@ urlpatterns = [
     path(route="projects/<int:project_id>/options-group/<str:group_name>", view=OptionsGroupDetail.as_view(), name="options_group_detail"),
     path(route="projects/<int:project_id>/options-question/create", view=OptionsQuestionCreation.as_view(), name="options_question_create"),
     path(route="projects/<int:project_id>/question-type/create", view=QuestionsTypeCreation.as_view(), name="options_question_create"),
+    path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/question-type/", view=OptionsGroups.as_view(), name="options_group_list"),
     path(route="projects/<int:project_id>/question-type/<int:question_type_id>", view=QuestionsTypeDetail.as_view(), name="question_type_detail"),
 ]

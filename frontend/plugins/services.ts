@@ -11,6 +11,8 @@ import { SequenceLabelingApplicationService } from '@/services/application/tasks
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
 import { OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import { QuestionApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService
@@ -28,6 +30,8 @@ export interface Services {
   optionsGroup: OptionsGroupApplicationService
   optionsQuestion: OptionsQuestionApplicationService
   questionType: QuestionTypeApplicationService
+  question: QuestionApplicationService
+  answer: AnswerApplicationService
 }
 
 declare module 'vue/types/vue' {
@@ -55,7 +59,9 @@ const plugin: Plugin = (_, inject) => {
     perspective: new PerspectiveApplicationService(repositories.perspective),
     optionsGroup: new OptionsGroupApplicationService(repositories.optionsGroup),
     optionsQuestion: new OptionsQuestionApplicationService(repositories.optionsQuestion),
-    questionType: new QuestionTypeApplicationService(repositories.questionType)
+    questionType: new QuestionTypeApplicationService(repositories.questionType),
+    question: new QuestionApplicationService(repositories.question),
+    answer: new AnswerApplicationService(repositories.answer)
   }
   inject('services', services)
 }

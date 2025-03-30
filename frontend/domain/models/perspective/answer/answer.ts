@@ -1,16 +1,17 @@
 export class AnswerItem {
   constructor(
     readonly id: number,
-    readonly answer: string,
-    readonly memberId: number,
-    readonly questionId: number
+    readonly member: number,
+    readonly question: number,
+    readonly answer_text?: string,
+    readonly answer_option?: string
   ) {}
 
-  static create(answer: string, memberId: number, questionId: number): AnswerItem {
-    return new AnswerItem(0, answer, memberId, questionId);
+  static create(member: number, question: number, answer_text?: string, answer_option?: string): AnswerItem {
+    return new AnswerItem(0, member, question, answer_text, answer_option);
   }
 
-  static list(items: { answer: string; memberId: number; questionId: number }[]): AnswerItem[] {
-    return items.map(item => AnswerItem.create(item.answer, item.memberId, item.questionId));
+  static list(items: { member: number, question: number, answer_text?: string, answer_option?: string }[]): AnswerItem[] {
+    return items.map(item => AnswerItem.create(item.member, item.question, item.answer_text, item.answer_option));
   }
 }

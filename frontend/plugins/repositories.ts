@@ -29,6 +29,7 @@ import { APIQuestionRepository } from '~/repositories/perspective/question/apiQu
 import { APIOptionsGroupRepository } from '~/repositories/perspective/question/apiOptionsGroupRepository'
 import { APIOptionsQuestionRepository } from '~/repositories/perspective/question/apiOptionsQuestionReposity'
 import { APIQuestionTypeRepository } from '~/repositories/perspective/question/apiQuestionTypeReposity'
+import { APIAnswerRepository } from '~/repositories/perspective/answer/apiAnswerRepository'
 export interface Repositories {
   // User
   auth: APIAuthRepository
@@ -44,6 +45,7 @@ export interface Repositories {
   optionsGroup: APIOptionsGroupRepository
   optionsQuestion: APIOptionsQuestionRepository
   questionType: APIQuestionTypeRepository
+  answer: APIAnswerRepository 
 
   // Example
   example: APIExampleRepository
@@ -101,6 +103,7 @@ const repositories: Repositories = {
   optionsGroup: new APIOptionsGroupRepository(),
   optionsQuestion: new APIOptionsQuestionRepository(),
   questionType: new APIQuestionTypeRepository(),
+  answer: new APIAnswerRepository(),
 
   // Example
   example: new APIExampleRepository(),

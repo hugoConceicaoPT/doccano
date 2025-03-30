@@ -1,24 +1,24 @@
 import ApiService from '@/services/api.service'
 import { AnswerItem } from '~/domain/models/perspective/answer/answer'
-import { PerspectiveItem } from '~/domain/models/perspective/perspective'
 
 function toModel(item: { [key: string]: any }): AnswerItem {
-  return new AnswerItem(item.id, item.answer, item.memberId, item.questionId)
+  return new AnswerItem(item.id, item.answer, item.member, item.question)
 }
 
 function toPayload(item: AnswerItem): { [key: string]: any } {
   return {
     id: item.id,
-    answer: item.answer,
-    memberId: item.memberId,
-    questionId: item.questionId
+    member: item.member,
+    question: item.question,
+    answer_text: item.answer_text,
+    answer_option: item.answer_option
   }
 }
 
 export class APIAnswerRepository {
   constructor(private readonly baseUrl = 'answer', private readonly request = ApiService) {}
 
-  async list(username?: string): Promise<PerspectiveItem[]> {
+  async list(username?: string): Promise<AnswerItem[]> {
     let url = `/${this.baseUrl}s`
 
     if (username) {

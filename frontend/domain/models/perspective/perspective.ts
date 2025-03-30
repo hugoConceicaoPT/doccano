@@ -1,3 +1,4 @@
+import { PerspectiveRepository } from './perspectiveRepository'
 import { QuestionItem } from './question/question'
 
 export class PerspectiveItem {
@@ -22,4 +23,7 @@ export class PerspectiveItem {
     ));
   }
     */
+  static async list(repository: PerspectiveRepository, project_id: string): Promise<PerspectiveItem>{
+    return await repository.list(project_id)
+  }
 }
