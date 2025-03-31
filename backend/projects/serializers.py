@@ -256,3 +256,15 @@ class ProjectPolymorphicSerializer(PolymorphicSerializer):
         Project: ProjectSerializer,
         **{cls.Meta.model: cls for cls in ProjectSerializer.__subclasses__()},
     }
+
+class PerspectiveListSerializer(serializers.ModelSerializer):
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        source="project"
+    )
+    project_name = serializers.CharField(source="project.name", read_only=True)
+    creator_name = serializers.CharField(source="created_by.username", read_only=True)
+
+    class Meta:
+        model = Perspective
+        fields = ("id", "project_id", "project_name", "creator_name", "created_at")
