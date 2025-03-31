@@ -87,14 +87,22 @@ class PerspectiveCreation(generics.CreateAPIView):
         return serializer.save()
 
 
-
 class Answers(generics.ListAPIView):
-    queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    # Optionally, you can also use filterset_fields for other filtering
+    filterset_fields = ['question']
     search_fields = ("question__id", "member__user__username", "answer_text", "answer_option")
+
+    def get_queryset(self):
+        queryset = Answer.objects.all()
+        # Get the selected question id from query parameters
+        question_id = self.request.query_params.get('question_id')
+        if question_id:
+            queryset = queryset.filter(question__id=question_id)
+        return queryset
 
 
 class AnswerCreation(generics.CreateAPIView):
