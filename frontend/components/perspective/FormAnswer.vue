@@ -3,7 +3,7 @@
     <v-card-title>Responder Perspectiva</v-card-title>
     <v-card-text>
       <v-form ref="form">
-        <v-row v-for="(question, index) in questionsList" :key="index">
+        <v-row v-for="question in questionsList" :key="question.id">
           <v-col cols="12">
             <!-- Exibir o texto da pergunta -->
             <v-list-item>
@@ -15,9 +15,10 @@
             <div v-if="question.options_group !== null">
               <v-radio-group v-model="answers[question.id]" row>
                 <v-radio
-                  v-for="(option, idx) in getOptionsForQuestion(question.options_group ?? 0)"
-                  :key="idx"
+                  v-for="(option) in getOptionsForQuestion(question.options_group ?? -1)"
+                  :key="option.id"
                   :label="option.option"
+                  :value="option.id"
                 />
               </v-radio-group>
             </div>
@@ -61,26 +62,35 @@ export default Vue.extend({
   },
   data() {
     return {
-      // Utilizando um objeto para armazenar respostas associadas ao ID da questão
-      answers: {} as Record<number, string>,
+      // Armazena as respostas associadas ao ID da questão.
+      // Para perguntas de texto, será uma string; para escolha múltipla, um número.
+      answers: {} as Record<number, any>,
     };
   },
   computed: {
     isFormValid(): boolean {
-      return this.questionsList.every(
-        (question) => this.answers[question.id] && this.answers[question.id].trim().length > 0
-      );
+      return this.questionsList.every((question) => {
+        const answer = this.answers[question.id];
+        // Para perguntas de escolha múltipla (options_group !== null), verifica se o valor não é undefined ou null
+        if (question.options_group !== null) {
+          return answer !== undefined && answer !== null;
+        } else {
+          // Para perguntas de texto, verifica se há valor não vazio
+          return typeof answer === "string" && answer.trim().length > 0;
+        }
+      });
     },
   },
   methods: {
     getOptionsForQuestion(optionsGroup: number) {
+      // Filtra as opções cujo options_group corresponde
       return this.optionsList.filter(option => option.options_group === optionsGroup);
     },
     submit() {
       const formattedAnswers = this.questionsList.map((question) => ({
         questionId: question.id,
-        answer: this.answers[question.id] || "",
-        questionType: question.type,
+        answer: this.answers[question.id],
+        questionType: question.type, // assume que question.type é informado
       }));
       this.$emit("submit-answers", formattedAnswers);
       console.log("Respostas enviadas:", formattedAnswers);

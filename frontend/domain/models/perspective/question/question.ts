@@ -1,5 +1,5 @@
 import { AnswerItem } from '../answer/answer'
-import { QuestionRepository } from './questionRepository'
+import { OptionsQuestionRepository, QuestionRepository } from './questionRepository'
 import { CreateOptionsQuestionCommand } from '~/services/application/perspective/question/questionCommand'
 
 
@@ -47,8 +47,8 @@ export class OptionsQuestionItem {
     return new OptionsQuestionItem(0, option, options_group)
   }
 
-  static list(items: { id: number, option: string, options_group: number }[]): OptionsQuestionItem[] {
-    return items.map(item => new OptionsQuestionItem(item.id, item.option, item.options_group))
+  static async list(repository: OptionsQuestionRepository, perspective_id: number, option: string, options_group: number): Promise<OptionsQuestionItem[]> {
+    return await repository.list(perspective_id, option, options_group)
   }
 }
 
