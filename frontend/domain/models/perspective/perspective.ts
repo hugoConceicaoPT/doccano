@@ -13,17 +13,8 @@ export class PerspectiveItem {
     return new PerspectiveItem(0, project_id, questions, members)
   }
 
-  /*
-  static list(items: { id: number; project_id: number; questions: any[]; members: number[] }[]): PerspectiveItem[] {
-    return items.map(item => new PerspectiveItem(
-      item.id,
-      item.project_id,
-      QuestionItem.list(item.questions),
-      item.members
-    ));
-  }
-    */
-  static async list(repository: PerspectiveRepository, project_id: string): Promise<PerspectiveItem>{
-    return await repository.list(project_id)
+  static async list(repository: PerspectiveRepository, project_id: string): Promise<PerspectiveItem[]> {
+    const items = await repository.list(project_id)
+    return Array.isArray(items) ? items : [items]
   }
 }
