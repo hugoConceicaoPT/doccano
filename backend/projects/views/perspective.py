@@ -1,4 +1,3 @@
-from venv import logger
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, serializers, status
@@ -19,11 +18,11 @@ from projects.serializers import (
     AnswerSerializer,
     OptionQuestionSerializer,
     OptionsGroupSerializer,
-    PerspectiveDetailSerializer,
     PerspectiveSerializer,
     QuestionSerializer,
     QuestionTypeSerializer,
 )
+
 
 class Perspectives(generics.ListAPIView):
     queryset = Perspective.objects.all()
@@ -33,14 +32,6 @@ class Perspectives(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("members__user__username",)
 
-    def list(self, request, *args, **kwargs):
-        logger.debug("Requisição GET recebida para listagem de perspectivas.")
-        queryset = self.filter_queryset(self.get_queryset())
-        count = queryset.count()
-        logger.debug(f"Número de registros na consulta: {count}")
-        serializer = self.get_serializer(queryset, many=True)
-        logger.debug(f"Dados serializados: {serializer.data}")
-        return Response(serializer.data)
 
 class PerspectiveCreation(generics.CreateAPIView):
     queryset = Perspective.objects.all()
@@ -69,6 +60,7 @@ class PerspectiveCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         return serializer.save()
 
+
 class Answers(generics.ListAPIView):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
@@ -76,6 +68,7 @@ class Answers(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("question__id", "member__user__username", "answer_text", "answer_option")
+
 
 class AnswerCreation(generics.CreateAPIView):
     queryset = Answer.objects.all()
@@ -92,6 +85,7 @@ class AnswerCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         answer = serializer.save()
         return answer
+
 
 class Questions(generics.ListAPIView):
     queryset = Question.objects.all()
@@ -131,13 +125,6 @@ class PerspectiveDetail(RetrieveAPIView):
     serializer_class = PerspectiveDetailSerializer
     permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        logger.debug("Requisição GET recebida para detalhe da perspectiva.")
-        instance = self.get_object()
-        logger.debug(f"Perspective instance: {instance}")
-        serializer = self.get_serializer(instance)
-        logger.debug(f"Serialized detail: {serializer.data}")
-        return Response(serializer.data)
 
 class OptionsQuestion(generics.ListAPIView):
     queryset = OptionQuestion.objects.all()
@@ -217,6 +204,7 @@ class OptionsGroupDetail(generics.RetrieveAPIView):
         serializer = self.get_serializer(obj)
         return Response(serializer.data)
 
+
 class QuestionsType(generics.ListAPIView):
     queryset = QuestionType.objects.all()
     serializer_class = QuestionTypeSerializer
@@ -241,6 +229,7 @@ class QuestionsTypeCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         return serializer.save()
 
+
 class QuestionsTypeDetail(generics.RetrieveAPIView):
     serializer_class = QuestionTypeSerializer
     permission_classes = [IsAuthenticated]
@@ -259,21 +248,4 @@ class QuestionsTypeDetail(generics.RetrieveAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         serializer = self.get_serializer(obj)
-        return Response(serializer.data)
-
-class PerspectiveList(generics.ListAPIView):
-    queryset = Perspective.objects.all()
-    serializer_class = PerspectiveSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ("members__user__username",)
-
-    def list(self, request, *args, **kwargs):
-        logger.debug("Requisição GET recebida para listagem de perspectivas (PerspectiveList).")
-        queryset = self.filter_queryset(self.get_queryset())
-        count = queryset.count()
-        logger.debug(f"Número de registros na consulta (PerspectiveList): {count}")
-        serializer = self.get_serializer(queryset, many=True)
-        logger.debug(f"Dados serializados (PerspectiveList): {serializer.data}")
         return Response(serializer.data)

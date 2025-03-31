@@ -120,27 +120,6 @@ class PerspectiveSerializer(serializers.ModelSerializer):
         read_only_fields = ("created_at",)
 
 
-
-class AnswerNestedSerializer(serializers.ModelSerializer):
-    member = serializers.StringRelatedField()
-
-    class Meta:
-        model = Answer
-        fields = ("id", "answer", "member")
-
-class QuestionNestedSerializer(serializers.ModelSerializer):
-    answers = AnswerNestedSerializer(many=True, read_only=True, source='answer_set')
-
-    class Meta:
-        model = Question
-        fields = ("id", "question", "answers")
-
-class PerspectiveDetailSerializer(serializers.ModelSerializer):
-    questions = QuestionNestedSerializer(many=True, read_only=True, source='question_set')
-
-    class Meta:
-        model = Perspective
-        fields = ("id", "name", "questions")
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -277,13 +256,3 @@ class ProjectPolymorphicSerializer(PolymorphicSerializer):
         Project: ProjectSerializer,
         **{cls.Meta.model: cls for cls in ProjectSerializer.__subclasses__()},
     }
-
-class PerspectiveListSerializer(serializers.ModelSerializer):
-    project_id = serializers.PrimaryKeyRelatedField(
-        queryset=Project.objects.all(),
-        source="project"
-    )
-
-    class Meta:
-        model = Perspective
-        fields = ("id", "project_id", "created_at")
