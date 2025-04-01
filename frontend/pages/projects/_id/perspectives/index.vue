@@ -6,11 +6,8 @@
     <v-alert v-if="errorMessage" type="error" dismissible @click="errorMessage = ''">
       {{ errorMessage }}
     </v-alert>
-    <template v-if="isSubmitted">
-      <v-card-title>Respostas Submetidas.</v-card-title>
-    </template>
     <template v-if="isAnswered">
-      <v-card-title>Perspectiva pessoal já definida.</v-card-title>
+      <v-card-title>Perspectiva pessoal já definida</v-card-title>
     </template>
     <template v-else>
       <template v-if="isAdmin">
@@ -228,7 +225,7 @@ export default Vue.extend({
           this.successMessage = ''
           this.submitted = true
           this.$router.push(`/projects/${this.projectId}/perspectives`)
-        }, 1000)
+        }, 7000)
       } catch (error: any) {
         console.error('Erro ao submeter respostas:', error)
         if (error.response && error.response.status === 400) {
@@ -241,7 +238,7 @@ export default Vue.extend({
         } else if (error.response && error.response.status === 500) {
           this.errorMessage = 'Database is slow or unavailable. Please try again later.'
         } else {
-          this.errorMessage = 'Something went wrong. Please try again'
+          this.errorMessage = 'Database is slow or unavailable. Please try again later.'
         }
       }
     }

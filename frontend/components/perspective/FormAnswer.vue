@@ -1,5 +1,8 @@
 <template>
-  <v-card>
+  <v-card v-if="questionsList.length == 0">
+    <v-card-title> Não foram encontradas questões na perspectiva</v-card-title>
+  </v-card>
+  <v-card v-else>
     <v-card-title>Responder Perspectiva</v-card-title>
     <v-card-text>
       <v-form ref="form">
@@ -15,7 +18,7 @@
             <div v-if="question.options_group !== null">
               <v-radio-group v-model="answers[question.id]" row>
                 <v-radio
-                  v-for="(option) in getOptionsForQuestion(question.options_group ?? -1)"
+                  v-for="(option) in getOptionsForQuestion(question.options_group)"
                   :key="option.id"
                   :label="option.option"
                   :value="option.id"
@@ -35,21 +38,37 @@
         </v-row>
         <v-row>
           <v-col cols="12">
-            <v-btn :disabled="!isFormValid" color="primary" @click="submit">
+            <v-btn :disabled="!isFormValid" color="primary" @click="openConfirmDialog">
               Submeter Respostas
             </v-btn>
           </v-col>
         </v-row>
       </v-form>
     </v-card-text>
+
+    <!-- Janela de Confirmação -->
+    <v-dialog v-model="confirmDialog" persistent max-width="500px">
+      <confirm-form
+        title="Confirmar Submissão"
+        message="Tem certeza que deseja submeter as respostas?"
+        buttonTrueText="Sim"
+        buttonFalseText="Cancelar"
+        @ok="handleConfirmOk"
+        @cancel="handleConfirmCancel"
+      />
+    </v-dialog>
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import { OptionsQuestionItem, QuestionItem } from "~/domain/models/perspective/question/question";
+import ConfirmForm from '@/components/utils/ConfirmForm.vue'
 
 export default Vue.extend({
+  components: {
+    ConfirmForm
+  },
   props: {
     questionsList: {
       type: Array as () => QuestionItem[],
@@ -65,6 +84,8 @@ export default Vue.extend({
       // Armazena as respostas associadas ao ID da questão.
       // Para perguntas de texto, será uma string; para escolha múltipla, um número.
       answers: {} as Record<number, any>,
+      // Controle da janela de confirmação
+      confirmDialog: false
     };
   },
   computed: {
@@ -85,6 +106,18 @@ export default Vue.extend({
     getOptionsForQuestion(optionsGroup: number) {
       // Filtra as opções cujo options_group corresponde
       return this.optionsList.filter(option => option.options_group === optionsGroup);
+    },
+    openConfirmDialog() {
+      this.confirmDialog = true;
+    },
+    handleConfirmOk() {
+      // Fecha a janela de confirmação e submete as respostas
+      this.confirmDialog = false;
+      this.submit();
+    },
+    handleConfirmCancel() {
+      // Fecha a janela de confirmação sem submeter
+      this.confirmDialog = false;
     },
     submit() {
       const formattedAnswers = this.questionsList.map((question) => ({
