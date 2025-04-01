@@ -1,3 +1,5 @@
+import { AnswerRepository } from "./answerRepository";
+
 export class AnswerItem {
   constructor(
     readonly id: number,
@@ -11,7 +13,7 @@ export class AnswerItem {
     return new AnswerItem(0, member, question, answer_text, answer_option);
   }
 
-  static list(items: { member: number, question: number, answer_text?: string, answer_option?: string }[]): AnswerItem[] {
-    return items.map(item => AnswerItem.create(item.member, item.question, item.answer_text, item.answer_option));
+  static async list(AnswerRepository: AnswerRepository): Promise<AnswerItem[]> {
+    return await AnswerRepository.list();
   }
 }

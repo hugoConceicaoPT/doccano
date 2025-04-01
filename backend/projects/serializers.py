@@ -69,12 +69,13 @@ class OptionsGroupSerializer(serializers.ModelSerializer):
 
 class AnswerSerializer(serializers.ModelSerializer):
     member = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all())
+    question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
     answer_option = serializers.PrimaryKeyRelatedField(queryset=OptionQuestion.objects.all(), required=False)
     answer_text = serializers.CharField(required=False)
 
     class Meta:
         model = Answer
-        fields = ("id", "question", "member", "answer_text", "answer_option")
+        fields = ("id", "member", "question", "answer_text", "answer_option")
 
     def validate(self, attrs):
         answer_text = attrs.get("answer_text", None)

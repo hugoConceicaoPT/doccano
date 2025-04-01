@@ -258,8 +258,8 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     answer_text = models.TextField()
     answer_option = models.ForeignKey(
         OptionQuestion, on_delete=models.CASCADE, null=True, blank=True, related_name="answer_option"

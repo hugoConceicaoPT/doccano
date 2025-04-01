@@ -7,7 +7,10 @@
       {{ errorMessage }}
     </v-alert>
     <template v-if="isSubmitted">
-      <v-card-title>Respostas Submetidas</v-card-title>
+      <v-card-title>Respostas Submetidas.</v-card-title>
+    </template>
+    <template v-if="isAnswered">
+      <v-card-title>Perspectiva pessoal já definida.</v-card-title>
     </template>
     <template v-else>
       <template v-if="isAdmin">
@@ -72,6 +75,7 @@ export default Vue.extend({
       answersList: [] as AnswerItem[],
       // Mapa de escolha múltipla onde a chave é o question id
       multipleChoiceMap: {} as { [questionId: number]: boolean },
+      AlreadyAnswered: false,
       submitted: false,
       successMessage: '',
       errorMessage: ''
@@ -88,6 +92,9 @@ export default Vue.extend({
     },
     isSubmitted(): boolean {
       return this.submitted
+    },
+    isAnswered(): boolean {
+      return this.AlreadyAnswered
     }
   },
 
@@ -99,6 +106,7 @@ export default Vue.extend({
         await this.fetchPerspectives()
       } else {
         await this.fetchQuestions()
+        await this.fetchAnswers()
       }
     } catch (error) {
       console.error('Erro ao buscar o papel ou perguntas:', error)
@@ -114,6 +122,23 @@ export default Vue.extend({
         this.items = Array.isArray(response) ? response : [response]
       } catch (error) {
         console.error('Erro ao buscar perspectivas:', error)
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async fetchAnswers() {
+      this.isLoading = true
+      try {
+        const response = await this.$services.answer.list()
+        console.log('Respostas:', response)
+        this.AlreadyAnswered = response.some((answer: AnswerItem) => {
+          return this.questionsList.some((question) => question.id === answer.question) &&
+                 answer.member === this.myRole?.id;
+        });
+        console.log('Respondeu?', this.AlreadyAnswered)
+      } catch (error) {
+        console.error('Erro ao buscar respostas:', error)
       } finally {
         this.isLoading = false
       }
@@ -181,15 +206,15 @@ export default Vue.extend({
           index++
           if (isMultipleChoice) {
             return {
+              member: this.myRole?.id || 0,
               question: formattedAnswer.questionId,
-              answer_option: formattedAnswer.answer, // Para escolha múltipla
-              member: this.myRole?.id || 0
+              answer_option: formattedAnswer.answer // Para escolha múltipla
             }
           } else {
             return {
+              member: this.myRole?.id || 0,
               question: formattedAnswer.questionId,
-              answer_text: formattedAnswer.answer, // Para perguntas normais
-              member: this.myRole?.id || 0
+              answer_text: formattedAnswer.answer // Para perguntas normais
             }
           }
         })

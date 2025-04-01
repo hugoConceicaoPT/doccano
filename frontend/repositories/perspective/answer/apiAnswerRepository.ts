@@ -2,7 +2,7 @@ import ApiService from '@/services/api.service'
 import { AnswerItem } from '~/domain/models/perspective/answer/answer'
 
 function toModel(item: { [key: string]: any }): AnswerItem {
-  return new AnswerItem(item.id, item.answer, item.member, item.question)
+  return new AnswerItem(item.id,item.member, item.question, item.answer_text, item.answer_option)
 }
 
 function toPayload(item: AnswerItem): { [key: string]: any } {

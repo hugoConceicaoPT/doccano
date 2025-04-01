@@ -12,9 +12,7 @@ export class AnswerApplicationService {
     return new AnswerDTO(created)
   }
 
-  public async list(): Promise<AnswerDTO[]> {
-    const response = await this.repository.list()
-    const answers = AnswerItem.list(response)
-    return answers.map((answer) => new AnswerDTO(answer))
+  public async list(): Promise<AnswerItem[]> {
+    return await this.repository.list()
   }
 }

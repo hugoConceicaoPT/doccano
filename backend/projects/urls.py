@@ -30,7 +30,7 @@ urlpatterns = [
     path(route="projects/<int:project_id>/members/<int:member_id>", view=MemberDetail.as_view(), name="member_detail"),
     path(route="projects/<int:project_id>/perspectives", view=Perspectives.as_view(), name="perspectives_list"),
     path(route="projects/<int:project_id>/perspectives/create",view=PerspectiveCreation.as_view(),name="perspectives_create",),
-    path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/answers",view=Answers.as_view(),name="answers_list",),
+    path(route="answers",view=Answers.as_view(),name="answers_list",),
     path(route="projects/<int:project_id>/perspectives/answers/create",view=AnswerCreation.as_view(),name="answers_create",),
     path(route="projects/<int:project_id>/perspectives/<int:perspective_id>/questions",view=Questions.as_view(),name="questions_list",),
     path(route="projects/<int:project_id>/options-questions",view=OptionsQuestion.as_view(),name="option_questions_list",),
