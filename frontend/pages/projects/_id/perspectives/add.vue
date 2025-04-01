@@ -102,7 +102,7 @@ export default Vue.extend({
     async save() {
       try {
         this.editedItem.project_id = Number(this.projectId)
-        this.editedItem.members = await this.getAnnotatorIds()
+        this.editedItem.members = await this.getAnnotatorIds();
         let j = 0
         const questionTypeOpen = await this.$services.questionType.findById(
           this.projectId,
@@ -143,7 +143,7 @@ export default Vue.extend({
           }
         }
         await this.service.create(this.projectId, this.editedItem)
-        this.sucessMessage = 'A perspective has been successfully added to this project'
+        this.sucessMessage = 'A perspective has been successfully added to this project and an email has been sent to all annotators of the project'
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/perspectives`)
         }, 1000)

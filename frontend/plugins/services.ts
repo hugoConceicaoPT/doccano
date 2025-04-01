@@ -10,8 +10,7 @@ import { SegmentationApplicationService } from '@/services/application/tasks/seg
 import { SequenceLabelingApplicationService } from '@/services/application/tasks/sequenceLabeling/sequenceLabelingApplicationService'
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
-import { OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
-import { QuestionApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
 
 export interface Services {

@@ -1,9 +1,11 @@
+from django.conf import settings
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, serializers, status
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from django.core.mail import send_mail
 
 from projects.models import (
     Answer,
@@ -12,6 +14,7 @@ from projects.models import (
     Perspective,
     Question,
     QuestionType,
+    Member
 )
 from projects.permissions import IsProjectAdmin
 from projects.serializers import (
@@ -54,20 +57,52 @@ class PerspectiveCreation(generics.CreateAPIView):
                 question_serializer = QuestionSerializer(data=question_data)
                 question_serializer.is_valid(raise_exception=True)
                 question_serializer.save()
-
+            members_ids = request.data.get("members", [])
+            members = Member.objects.filter(id__in=members_ids).select_related("user")
+            recipients = [member.user.email for member in members if member.user.email]
+            if recipients:
+                subject = 'Perspective of the project created'
+                message = 'You have to add your perspective to the project'
+                self.send_notification_email(recipients, subject, message)
             return Response(PerspectiveSerializer(perspective).data, status=status.HTTP_201_CREATED)
+        
+    def send_notification_email(self, recipients, subject, message):
+        if not recipients:
+            return False
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=recipients,
+                fail_silently=False,
+        )
+            return True
+        except Exception as e:
+            print(f"Erro ao enviar e-mail: {e}")
+            return False   
+     
 
     def perform_create(self, serializer):
         return serializer.save()
 
 
 class Answers(generics.ListAPIView):
-    queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    # Optionally, you can also use filterset_fields for other filtering
+    filterset_fields = ['question']
     search_fields = ("question__id", "member__user__username", "answer_text", "answer_option")
+
+    def get_queryset(self):
+        queryset = Answer.objects.all()
+        # Get the selected question id from query parameters
+        question_id = self.request.query_params.get('question_id')
+        if question_id:
+            queryset = queryset.filter(question__id=question_id)
+        return queryset
 
 
 class AnswerCreation(generics.CreateAPIView):

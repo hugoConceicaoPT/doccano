@@ -206,7 +206,7 @@ backend/media
 backend/*.sqlite3*
 frontend/assets/fonts
 docker/Dockerfile.prod
-backend/config/settings/base.py
+backend/config/
 backend/doccano
 frontend/yarn.lock
 frontend/package.json
@@ -216,4 +216,3 @@ frontend/.yarnrc
 backend/pyproject.toml
 frontend/yarn.lock
 backend/poetry.lock
-backend/config/settings/base.py
