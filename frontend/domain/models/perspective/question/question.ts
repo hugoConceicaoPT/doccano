@@ -47,8 +47,8 @@ export class OptionsQuestionItem {
     return new OptionsQuestionItem(0, option, options_group)
   }
 
-  static async list(repository: OptionsQuestionRepository, perspective_id: number, option: string, options_group: number): Promise<OptionsQuestionItem[]> {
-    return await repository.list(perspective_id, option, options_group)
+  static async list(repository: OptionsQuestionRepository, perspective_id: number, option: string): Promise<OptionsQuestionItem[]> {
+    return await repository.list(perspective_id, option)
   }
 }
 

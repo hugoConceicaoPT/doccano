@@ -67,8 +67,8 @@ export class OptionsQuestionApplicationService {
     return new OptionsQuestionDTO(created)
   }
 
-  public async list(perspective_id: number, project_id: string, optionsGroupId: number): Promise<OptionsQuestionItem[]> {
-    return await this.repository.list(perspective_id, project_id, optionsGroupId)
+  public async list(perspective_id: number, project_id: string): Promise<OptionsQuestionItem[]> {
+    return await this.repository.list(perspective_id, project_id)
   }
 }
 

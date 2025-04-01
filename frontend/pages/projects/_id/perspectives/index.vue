@@ -137,7 +137,7 @@ export default Vue.extend({
           if(this.multipleChoiceMap[index]) {
             if (q.options_group !== undefined && q.options_group !== null) {
               console.log('Id das opções:', q.options_group)
-              const options = await this.$services.optionsQuestion.list(perspectiveId, this.projectId, q.options_group)
+              const options = await this.$services.optionsQuestion.list(perspectiveId, this.projectId)
               this.optionsList = options
               console.log('Opções:', options)
             }

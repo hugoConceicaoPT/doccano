@@ -12,7 +12,7 @@ export interface OptionsGroupRepository {
 
 export interface OptionsQuestionRepository {
   create(projectId: string, item: OptionsQuestionItem): Promise<OptionsQuestionItem>
-  list(perspective_id: number, projectId: string, optionsGroupId: number): Promise<OptionsQuestionItem[]>
+  list(perspective_id: number, projectId: string): Promise<OptionsQuestionItem[]>
 }
 
 export interface QuestionTypeRepository {
