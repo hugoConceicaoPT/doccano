@@ -96,7 +96,6 @@ export default Vue.extend({
 
     updateOptionsGroup(optionsGroup: OptionsGroupDTO[]) {
       this.optionsGroupItem = optionsGroup
-      console.log(this.optionsGroupItem)
     },
 
     async save() {

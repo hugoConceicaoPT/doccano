@@ -28,4 +28,10 @@ export class APIOptionsGroupRepository {
     const response = await this.request.get(url)
     return toModel(response.data)
   }
+
+  async list(project_id: string): Promise<OptionsGroupItem[]> {
+    const url = `projects/${project_id}/${this.baseUrl}s-group`
+    const response = await this.request.get(url)
+    return response.data.map((item: { [key: string]: any }) => toModel(item))
+  }
 }

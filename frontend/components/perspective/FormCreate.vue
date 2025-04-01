@@ -1,18 +1,12 @@
 <template>
   <v-card>
-    <v-card-title>Define Perspective</v-card-title>
+    <v-card-title>Create Perspective</v-card-title>
     <v-card-text>
       <v-form ref="form">
         <v-row>
           <v-col cols="12">
-            <v-text-field
-              v-model="newQuestion"
-              label="Add a Question"
-              outlined
-              required
-              :rules="[rules.required]"
-              @keyup.enter="addQuestion"
-            />
+            <v-text-field v-model="newQuestion" label="Add a Question" outlined required :rules="[rules.required]"
+              @keyup.enter="addQuestion" />
           </v-col>
         </v-row>
 
@@ -20,22 +14,18 @@
           <v-col cols="12">
             <v-radio-group v-model="questionType.id" row>
               <v-radio label="Open Question" :value="1"></v-radio>
-              <v-radio label="Closed Question" :value="2"></v-radio>
+              <v-radio label="Multiple Choice Question" :value="2"></v-radio>
             </v-radio-group>
           </v-col>
         </v-row>
 
         <v-row v-if="questionType.id === 2">
           <v-col cols="12">
-            <v-text-field v-model="optionGroupName" label="Option Group Name" outlined required />
+            <v-combobox v-model="optionGroupName" :items="optionGroupNames" label="Option Group Name" outlined
+              @change="loadOptionsFromGroup"></v-combobox>
           </v-col>
           <v-col cols="12">
-            <v-text-field
-              v-model="newOption"
-              label="Add an Option"
-              outlined
-              @keyup.enter="addOption"
-            />
+            <v-text-field v-model="newOption" label="Add an Option" outlined @keyup.enter="addOption" />
             <v-btn color="primary" @click="addOption">Add Option</v-btn>
           </v-col>
           <v-col cols="12">
@@ -66,11 +56,9 @@
               <v-list-item-group>
                 <v-list-item v-for="(question, index) in questionsList" :key="index">
                   <v-list-item-content>
-                    <v-list-item-title
-                      >{{ question.question }} ({{
-                        getQuestionType(question.type)
-                      }})</v-list-item-title
-                    >
+                    <v-list-item-title>{{ question.question }} ({{
+                      getQuestionType(question.type)
+                    }})</v-list-item-title>
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-btn icon color="red" @click="removeQuestion(index)">
@@ -113,6 +101,7 @@ export default Vue.extend({
       newQuestion: '',
       questionType: { id: 1, question_type: 'Open Question' } as QuestionType,
       optionGroupName: '',
+      optionGroupNames: [] as string[],
       newOption: '',
       questionsList: [] as CreateQuestionCommand[],
       optionsGroupList: [] as CreateOptionsGroupCommand[],
@@ -123,16 +112,36 @@ export default Vue.extend({
       mdiDelete
     }
   },
+  mounted() {
+    this.fetchOptionGroupName()
+  },
   computed: {
+    projectId(): string {
+      return this.$route.params.id
+    },
+
     isFormValid(): boolean {
       return this.questionsList.length > 0
-    }
+    },
   },
   methods: {
+
+    async fetchOptionGroupName() {
+      const optionsGroup = await this.$services.optionsGroup.list(this.projectId)
+      this.optionGroupNames = optionsGroup.map(optionsGroup => optionsGroup.name)
+    },
+
+    async loadOptionsFromGroup() {
+      const groupOptions = await this.$services.optionsGroup.findByName(this.projectId,this.optionGroupName)
+      if(!groupOptions)  return
+      const optionsQuestions = await this.$services.optionsQuestion.list(this.projectId)
+      this.optionsQuestionList = optionsQuestions.filter(optionQuestion => optionQuestion.options_group === groupOptions.id)
+    },
+
     getQuestionType(type: number): string {
       const types: { [key: number]: string } = {
         1: 'Open Question',
-        2: 'Closed Question'
+        2: 'Multiple Choice Question'
       }
       return types[type] || 'Unknown'
     },
@@ -193,6 +202,6 @@ export default Vue.extend({
       this.optionsGroupList = []
       this.optionsQuestionList = []
     }
-  }
+  },
 })
 </script>

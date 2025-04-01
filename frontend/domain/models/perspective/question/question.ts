@@ -1,5 +1,5 @@
 import { AnswerItem } from '../answer/answer'
-import { OptionsQuestionRepository, QuestionRepository } from './questionRepository'
+import { OptionsGroupRepository, OptionsQuestionRepository, QuestionRepository } from './questionRepository'
 import { CreateOptionsQuestionCommand } from '~/services/application/perspective/question/questionCommand'
 
 
@@ -38,6 +38,10 @@ export class OptionsGroupItem {
   static create(name: string, options_questions: CreateOptionsQuestionCommand[]): OptionsGroupItem {
     return new OptionsGroupItem(0, name, options_questions)
   }
+
+  static list(repository: OptionsGroupRepository, project_id: string): Promise<OptionsGroupItem[]> {
+    return repository.list(project_id)
+  }
 }
 
 export class OptionsQuestionItem {
@@ -47,8 +51,8 @@ export class OptionsQuestionItem {
     return new OptionsQuestionItem(0, option, options_group)
   }
 
-  static async list(repository: OptionsQuestionRepository, perspective_id: number, option: string): Promise<OptionsQuestionItem[]> {
-    return await repository.list(perspective_id, option)
+  static async list(repository: OptionsQuestionRepository, project_id: string): Promise<OptionsQuestionItem[]> {
+    return await repository.list(project_id)
   }
 }
 
@@ -58,10 +62,4 @@ export class QuestionTypeItem {
   static create(question_type: string): QuestionTypeItem {
     return new QuestionTypeItem(0, question_type)
   }
-
-  /*
-  static list(items: { id: number, question: string, answers: AnswerItem[] }[]): QuestionItem[] {
-    return items.map(item => new QuestionItem(item.id, item.question, item.answers))
-  }
-    */
 }

@@ -52,6 +52,10 @@ export class OptionsGroupApplicationService {
     const item = await this.repository.findByName(projectId, name)
     return new OptionsGroupDTO(item)
   }
+
+  public async list(project_id: string): Promise<OptionsGroupItem[]> {
+    return await this.repository.list(project_id)
+  }
 }
 
 export class OptionsQuestionApplicationService {
@@ -67,8 +71,8 @@ export class OptionsQuestionApplicationService {
     return new OptionsQuestionDTO(created)
   }
 
-  public async list(perspective_id: number, project_id: string): Promise<OptionsQuestionItem[]> {
-    return await this.repository.list(perspective_id, project_id)
+  public async list(project_id: string): Promise<OptionsQuestionItem[]> {
+    return await this.repository.list(project_id)
   }
 }
 
