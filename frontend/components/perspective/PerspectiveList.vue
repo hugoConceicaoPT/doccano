@@ -1,10 +1,30 @@
+
+
+
+
 <template>
   <div class="container">
-    <!-- Seleção da pergunta no topo -->
+    <!-- Seleção da pergunta -->
     <v-select
       v-model="selectedQuestion"
       :items="availableQuestions"
       label="Selecione a pergunta"
+      clearable
+      class="mb-4"
+    />
+    <!-- Seleção do utilizador -->
+    <v-select
+      v-model="selectedUser"
+      :items="availableUsers"
+      label="Selecione o utilizador"
+      clearable
+      class="mb-4"
+    />
+    <!-- Seleção da resposta -->
+    <v-select
+      v-model="selectedAnswer"
+      :items="availableAnswers"
+      label="Selecione a resposta"
       clearable
       class="mb-4"
     />
@@ -37,11 +57,14 @@
       <template #[`header.data-table-select`]>
         <!-- slot vazio -->
       </template>
-      <template #[`item.responses`]="{ item }">
-        <div style="white-space: pre-line;">{{ item.responsesText }}</div>
-      </template>
-      <template #[`item.members`]="{ item }">
+      <template #[`item.memberName`]="{ item }">
         <div>{{ item.memberName }}</div>
+      </template>
+      <template #[`item.question`]="{ item }">
+        <div>{{ item.question }}</div>
+      </template>
+      <template #[`item.answer`]="{ item }">
+        <div>{{ item.answer }}</div>
       </template>
     </v-data-table>
   </div>
@@ -61,7 +84,7 @@ export default Vue.extend({
       default: false,
       required: true
     },
-    // Os itens continuam vindo normalmente – estes contêm as respostas
+    // Os itens (perspectivas) devem já vir filtrados ou possuir um atributo project_id
     items: {
       type: Array as PropType<PerspectiveDTO[]>,
       default: () => [],
@@ -86,26 +109,34 @@ export default Vue.extend({
     return {
       search: '',
       mdiMagnify,
-      selectedQuestion: null as string | null,
+      // Selecção dos filtros: pergunta, utilizador e resposta
+      selectedQuestion: 'Todas as perguntas' as string | null,
+      selectedUser: 'Todos os utilizadores' as string | null,
+      selectedAnswer: 'Todas as respostas' as string | null,
       // Armazena os nomes carregados para os IDs de 0 a 100
       memberNames: {} as { [key: number]: string }
     }
   },
 
   computed: {
+    // Header com três colunas: Criador, Pergunta e Resposta
     headers() {
       return [
-        { text: this.$t('Created by'), value: 'members', sortable: false },
-        { text: this.$t('Answers'), value: 'responses', sortable: false }
+        { text: this.$t('Created by'), value: 'memberName', sortable: true },
+        { text: this.$t('Question'), value: 'question', sortable: true },
+        { text: this.$t('Answer'), value: 'answer', sortable: true }
       ]
     },
     projectId(): string {
       return this.$route.params.id
     },
-    // Extrai as perguntas disponíveis dos itens
+    // Extrai as perguntas disponíveis e adiciona a opção "Todas as perguntas"
     availableQuestions() {
       const questionsSet = new Set<string>()
-      this.items.forEach(item => {
+      const projectItems = this.items.filter(
+        item => Number(item.project_id) === Number(this.projectId)
+      )
+      projectItems.forEach(item => {
         if (Array.isArray(item.questions)) {
           item.questions.forEach(q => {
             if (q.question) {
@@ -114,64 +145,120 @@ export default Vue.extend({
           })
         }
       })
-      return Array.from(questionsSet)
+      return ['Todas as perguntas', ...Array.from(questionsSet)]
     },
-    // Computa os itens para a tabela a partir dos IDs de 0 a 100
-    processedItems() {
-      const result: Array<{ id: number; memberName: string; responsesText: string }> = []
-      // Percorre os IDs de 0 a 100
-      for (let memberId = 0; memberId <= 100; memberId++) {
-        const responses: string[] = []
-        // Para cada item, verifica todas as questões e respostas
-        this.items.forEach(item => {
-          if (Array.isArray(item.questions)) {
-            item.questions.forEach(q => {
-              // Se uma pergunta estiver selecionada, filtra apenas as que casam
-              if (this.selectedQuestion && q.question && q.question.toLowerCase() !== this.selectedQuestion.toLowerCase()) {
-                return // passa para a próxima questão
-              }
-              if (Array.isArray(q.answers)) {
-                q.answers.forEach((a: any) => {
-                  // Verifica se existe o membro e se o id bate com o memberId corrente
-                  if (a.member) {
-                    // Se o membro for um objeto com id
-                    if (typeof a.member === 'object' && a.member.id === memberId) {
-                      const answerText = (a.member.name ? a.member.name + ': ' : '') + (a.answer_text || a.answer_option || '')
-                      responses.push(answerText)
-                    }
-                    // Se o membro for um número (id)
-                    else if (typeof a.member === 'number' && a.member === memberId) {
-                      const answerText = a.answer_text || a.answer_option || ''
-                      responses.push(answerText)
-                    }
+    // Extrai os utilizadores disponíveis a partir das respostas e adiciona "Todos os utilizadores"
+    availableUsers() {
+      const usersSet = new Set<string>()
+      const projectItems = this.items.filter(
+        item => Number(item.project_id) === Number(this.projectId)
+      )
+      projectItems.forEach(item => {
+        if (Array.isArray(item.questions)) {
+          item.questions.forEach(q => {
+            if (Array.isArray(q.answers)) {
+              q.answers.forEach((a: any) => {
+                let memberName = ''
+                if (a.member) {
+                  if (typeof a.member === 'object' && a.member.name) {
+                    memberName = a.member.name
+                  } else if (typeof a.member === 'number') {
+                    memberName = this.memberNames[a.member] || a.member.toString()
                   }
-                })
-              }
-            })
-          }
-        })
-        // Log para indicar se o usuário possui respostas
-        if (responses.length > 0) {
-          console.log(`User ${memberId} tem respostas:`, responses)
-        } else {
-          console.log(`User ${memberId} não tem respostas.`)
-        }
-        // Se existirem respostas para esse memberId, aplica o filtro de busca (se houver) e adiciona ao resultado
-        if (responses.length > 0) {
-          const joinedResponses = responses.join('\n')
-          if (this.search) {
-            const searchLower = this.search.toLowerCase()
-            if (!joinedResponses.toLowerCase().includes(searchLower)) {
-              continue // passa para o próximo memberId
+                  if (memberName) {
+                    usersSet.add(memberName)
+                  }
+                }
+              })
             }
-          }
-          result.push({
-            id: memberId,
-            memberName: this.memberNames[memberId] || memberId.toString(),
-            responsesText: joinedResponses
           })
         }
-      }
+      })
+      return ['Todos os utilizadores', ...Array.from(usersSet)]
+    },
+    // Extrai as respostas disponíveis e adiciona "Todas as respostas"
+    availableAnswers() {
+      const answersSet = new Set<string>()
+      const projectItems = this.items.filter(
+        item => Number(item.project_id) === Number(this.projectId)
+      )
+      projectItems.forEach(item => {
+        if (Array.isArray(item.questions)) {
+          item.questions.forEach(q => {
+            if (Array.isArray(q.answers)) {
+              q.answers.forEach((a: any) => {
+                const answerText = a.answer_text || a.answer_option || ''
+                if (answerText) {
+                  answersSet.add(answerText)
+                }
+              })
+            }
+          })
+        }
+      })
+      return ['Todas as respostas', ...Array.from(answersSet)]
+    },
+    // Processa os itens gerando uma linha para cada resposta e aplicando os filtros selecionados
+    processedItems() {
+      const result: Array<{ id: number; memberName: string; question: string; answer: string }> = []
+      const projectItems = this.items.filter(
+        item => Number(item.project_id) === Number(this.projectId)
+      )
+      let counter = 0
+      projectItems.forEach(item => {
+        if (Array.isArray(item.questions)) {
+          item.questions.forEach(q => {
+            // Filtra pela pergunta, se selecionada e não for "Todas as perguntas"
+            if (this.selectedQuestion && this.selectedQuestion !== 'Todas as perguntas' && 
+                q.question && q.question.toLowerCase() !== this.selectedQuestion.toLowerCase()) {
+              return
+            }
+            if (Array.isArray(q.answers)) {
+              q.answers.forEach((a: any) => {
+                let memberId: number | undefined
+                let memberName = ''
+                if (a.member) {
+                  if (typeof a.member === 'object' && a.member.id != null) {
+                    memberId = a.member.id
+                    memberName = a.member.name || memberId.toString()
+                  } else if (typeof a.member === 'number') {
+                    memberId = a.member
+                    memberName = this.memberNames[memberId] || memberId.toString()
+                  }
+                }
+                if (memberId === undefined) return
+                const answerText = a.answer_text || a.answer_option || ''
+                // Cria um registro para cada resposta
+                const row = {
+                  id: counter++,
+                  memberName,
+                  question: q.question,
+                  answer: answerText
+                }
+                // Filtro de busca (buscando em todas as colunas)
+                if (this.search) {
+                  const searchLower = this.search.toLowerCase()
+                  const combinedText = `${row.memberName} ${row.question} ${row.answer}`.toLowerCase()
+                  if (!combinedText.includes(searchLower)) {
+                    return
+                  }
+                }
+                // Filtro por utilizador, se selecionado
+                if (this.selectedUser && this.selectedUser !== 'Todos os utilizadores' &&
+                    row.memberName.toLowerCase() !== this.selectedUser.toLowerCase()) {
+                  return
+                }
+                // Filtro por resposta, se selecionada
+                if (this.selectedAnswer && this.selectedAnswer !== 'Todas as respostas' &&
+                    row.answer.toLowerCase() !== this.selectedAnswer.toLowerCase()) {
+                  return
+                }
+                result.push(row)
+              })
+            }
+          })
+        }
+      })
       return result
     }
   },
@@ -179,6 +266,12 @@ export default Vue.extend({
   watch: {
     selectedQuestion(newVal) {
       console.log('selectedQuestion changed:', newVal)
+    },
+    selectedUser(newVal) {
+      console.log('selectedUser changed:', newVal)
+    },
+    selectedAnswer(newVal) {
+      console.log('selectedAnswer changed:', newVal)
     },
     // Quando os itens mudam, recarrega os nomes dos membros
     items: {
@@ -199,12 +292,11 @@ export default Vue.extend({
   },
 
   methods: {
-    // Verifica para cada ID de 0 a 100 se existe um membro e carrega o nome
+    // Exemplo de método para carregar os nomes dos membros (supondo um repositório para membros)
     loadMemberNames() {
       for (let memberId = 0; memberId <= 100; memberId++) {
         this.$repositories.member.findById(this.projectId, memberId)
           .then((response: any) => {
-            // Armazena o nome do membro conforme encontrado
             this.$set(this.memberNames, memberId, response.username)
             console.log(`Fetched member ${memberId}:`, response.username)
           })

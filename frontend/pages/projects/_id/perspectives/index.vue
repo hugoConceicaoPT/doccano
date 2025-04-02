@@ -119,6 +119,7 @@ export default Vue.extend({
         this.items = Array.isArray(response) ? response : [response]
       } catch (error) {
         console.error('Erro ao buscar perspectivas:', error)
+        alert('Erro ao buscar o papel ou perguntas')
       } finally {
         this.isLoading = false
       }
