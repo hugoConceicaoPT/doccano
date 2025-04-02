@@ -149,6 +149,7 @@ export default Vue.extend({
         const perspectives = await this.$services.perspective.list(this.projectId)
         const perspectiveId = perspectives.id
         const questions = await this.$services.question.list(perspectiveId, this.projectId)
+        this.questionsList = questions.filter((question) => question.perspective_id === perspectiveId)
         this.questionsList = questions
         
         // Cria um mapa onde a chave é o question id
@@ -227,6 +228,7 @@ export default Vue.extend({
           this.submitted = true
           this.$router.push(`/projects/${this.projectId}/perspectives`)
         }, 7000)
+        window.location.reload();
       } catch (error: any) {
         console.error('Erro ao submeter respostas:', error)
         if (error.response && error.response.status === 400) {

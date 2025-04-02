@@ -3,7 +3,7 @@
     <v-card-title> Não foram encontradas questões na perspectiva</v-card-title>
   </v-card>
   <v-card v-else>
-    <v-card-title>Responder Perspectiva</v-card-title>
+    <v-card-title>Definir Perspectiva Pessoal</v-card-title>
     <v-card-text>
       <v-form ref="form">
         <v-row v-for="question in questionsList" :key="question.id">
@@ -36,10 +36,13 @@
             </div>
           </v-col>
         </v-row>
-        <v-row>
-          <v-col cols="12">
+        <v-row class="d-flex align-center">
+          <v-col cols="12" class="d-flex justify-end">
             <v-btn :disabled="!isFormValid" color="primary" @click="openConfirmDialog">
               Submeter Respostas
+            </v-btn>
+            <v-btn color="warning" @click="clearAnswers" class="ml-2">
+              Limpar Respostas
             </v-btn>
           </v-col>
         </v-row>
@@ -85,7 +88,7 @@ export default Vue.extend({
       // Para perguntas de texto, será uma string; para escolha múltipla, um número.
       answers: {} as Record<number, any>,
       // Controle da janela de confirmação
-      confirmDialog: false
+      confirmDialog: false,
     };
   },
   computed: {
@@ -128,6 +131,17 @@ export default Vue.extend({
       this.$emit("submit-answers", formattedAnswers);
       console.log("Respostas enviadas:", formattedAnswers);
     },
+    clearAnswers() {
+      // Reinicia o objeto answers
+      this.answers = {} as Record<number, any>;
+      console.log("Respostas limpas.");
+    },
   },
 });
 </script>
+
+<style scoped>
+::v-deep .v-dialog {
+  width: 800px;
+}
+</style>
