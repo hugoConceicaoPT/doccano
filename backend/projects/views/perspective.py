@@ -71,7 +71,7 @@ class PerspectiveCreation(generics.CreateAPIView):
             return False
         try:
             send_mail(
-                subject=subject,
+               subject=subject,
                 message=message,
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=recipients,

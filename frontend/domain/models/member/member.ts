@@ -10,11 +10,15 @@ export class MemberItem {
     public perspectiveId?: number | null
   ) {}
 
+  get name(): string {
+    return this.username;
+  }
+
   get isProjectAdmin(): boolean {
-    return this.rolename === 'project_admin'
+    return this.rolename === 'project_admin';
   }
 
   get isAnnotator(): boolean {
-    return this.rolename === 'annotator'
+    return this.rolename === 'annotator';
   }
 }

@@ -12,5 +12,6 @@ export class PerspectiveDTO {
     this.project_id = item.project_id
     this.questions = item.questions.map((question) => new QuestionDTO(question))
     this.members = item.members
+    
   }
 }
