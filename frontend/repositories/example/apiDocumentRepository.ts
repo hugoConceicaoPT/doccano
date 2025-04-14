@@ -7,6 +7,7 @@ function toModel(item: { [key: string]: any }): ExampleItem {
     item.id,
     item.text,
     item.meta,
+    item.project_id,
     item.annotation_approver,
     item.comment_count,
     item.filename,
@@ -21,6 +22,7 @@ function toPayload(item: ExampleItem): { [key: string]: any } {
     id: item.id,
     text: item.text,
     meta: item.meta,
+    project_id: item.project_id,
     annotation_approver: item.annotationApprover,
     comment_count: item.commentCount
   }

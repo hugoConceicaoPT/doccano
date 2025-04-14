@@ -4,6 +4,7 @@ export class ExampleDTO {
   id: number
   text: string
   meta: object
+  project_id: number
   annotationApprover: boolean | null
   commentCount: number
   isApproved: boolean
@@ -17,6 +18,7 @@ export class ExampleDTO {
     this.id = item.id
     this.text = item.text
     this.meta = item.meta
+    this.project_id = item.project_id
     this.annotationApprover = item.annotationApprover
     this.commentCount = item.commentCount
     this.isApproved = !!item.annotationApprover

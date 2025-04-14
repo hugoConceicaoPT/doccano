@@ -1,5 +1,5 @@
 import ApiService from '@/services/api.service'
-import { Distribution, MyProgress, Progress } from '~/domain/models/metrics/metrics'
+import { Distribution, MyProgress, Percentage, Progress } from '~/domain/models/metrics/metrics'
 
 export class APIMetricsRepository {
   constructor(private readonly request = ApiService) {}
@@ -10,14 +10,33 @@ export class APIMetricsRepository {
     return response.data
   }
 
+  async fetchCategoryPercentage(projectId: string): Promise<Percentage> {
+    const url = `/projects/${projectId}/metrics/category-percentage`
+    const response = await this.request.get(url)
+    return response.data
+  }
+
+
   async fetchSpanDistribution(projectId: string): Promise<Distribution> {
     const url = `/projects/${projectId}/metrics/span-distribution`
     const response = await this.request.get(url)
     return response.data
   }
 
-  async fetchRelationDistribution(projectId: string): Promise<Distribution> {
+  async fetchSpanPercentage(projectId: string): Promise<Percentage> {
+    const url = `/projects/${projectId}/metrics/span-percentage`
+    const response = await this.request.get(url)
+    return response.data
+  }
+
+  async fetchRelationDistribution(projectId: string): Promise<Percentage> {
     const url = `/projects/${projectId}/metrics/relation-distribution`
+    const response = await this.request.get(url)
+    return response.data
+  }
+
+  async fetchRelationPercentage(projectId: string): Promise<Percentage> {
+    const url = `/projects/${projectId}/metrics/relation-percentage`
     const response = await this.request.get(url)
     return response.data
   }

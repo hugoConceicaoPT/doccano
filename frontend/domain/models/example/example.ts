@@ -9,6 +9,7 @@ export class ExampleItem {
     readonly id: number,
     readonly text: string,
     readonly meta: object,
+    readonly project_id: number,
     readonly annotationApprover: boolean | null,
     readonly commentCount: number,
     readonly fileUrl: string,

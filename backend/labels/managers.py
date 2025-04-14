@@ -32,6 +32,45 @@ class LabelManager(Manager):
             distribution[username][label] = count
         return distribution
 
+    def get_label_percentage(self, examples, labels):
+        """Calculate label distribution as percentages per example.
+
+        Args:
+            examples: example queryset.
+            labels: label queryset.
+
+        Returns:
+            Dictionary with percentage of each label per example.
+
+        Examples:
+            >>> self.get_label_percentage(examples, labels)
+            {'example_1': {'positive': 66.7, 'negative': 33.3}, 'example_2': {'positive': 50.0, 'negative': 50.0}}
+        """
+        percentage = {example: {label.text: 0.0 for label in labels} for example in examples}
+
+        items = (
+            self.filter(example_id__in=examples)
+            .values("example_id", f"{self.label_type_field}__text")
+            .annotate(count=Count(f"{self.label_type_field}__text"))
+        )
+
+        example_totals = {example: 0 for example in examples}
+
+        for item in items:
+            example_id = item["example_id"]
+            label = item[f"{self.label_type_field}__text"]
+            count = item["count"]
+            percentage[example_id][label] = count
+            example_totals[example_id] += count
+
+        # Convert counts to percentages
+        for example_id, labels in percentage.items():
+            total = example_totals[example_id]
+            if total > 0:
+                for label in labels:
+                    labels[label] = (labels[label] / total) * 100  # Calcula a percentagem
+        return percentage
+
     def get_labels(self, label, project):
         if project.collaborative_annotation:
             return self.filter(example=label.example)

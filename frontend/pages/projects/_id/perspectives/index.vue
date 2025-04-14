@@ -218,7 +218,6 @@ export default Vue.extend({
           }
         })
 
-        console.log('Dados enviados ao backend:', JSON.stringify(answersToSubmit, null, 2))
         for (const answer of answersToSubmit) {
           await this.$services.answer.create(this.projectId, answer)
         }

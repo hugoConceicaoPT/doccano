@@ -5,6 +5,7 @@ export class LabelItem {
     readonly prefixKey: string | null,
     readonly suffixKey: string | null,
     readonly backgroundColor: string,
+    readonly project_id: number,
     readonly textColor: string = '#ffffff'
   ) {}
 
@@ -12,8 +13,9 @@ export class LabelItem {
     text: string,
     prefixKey: string | null,
     suffixKey: string | null,
-    backgroundColor: string
+    backgroundColor: string,
+    project_id: number
   ): LabelItem {
-    return new LabelItem(0, text, prefixKey, suffixKey, backgroundColor)
+    return new LabelItem(0, text, prefixKey, suffixKey, backgroundColor, project_id)
   }
 }

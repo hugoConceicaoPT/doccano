@@ -5,6 +5,7 @@ import { APIProjectRepository, SearchQuery } from '~/repositories/project/apiPro
 
 type ProjectFields = {
   name: string
+  minPercentage: number
   description: string
   guideline: string
   projectType: string
@@ -44,6 +45,7 @@ export class ProjectApplicationService {
 
   public async create({
     name,
+    minPercentage,
     description,
     projectType,
     enableRandomOrder,
@@ -59,6 +61,7 @@ export class ProjectApplicationService {
     const project = Project.create(
       0,
       name,
+      minPercentage,
       description,
       guideline,
       projectType,
@@ -82,6 +85,7 @@ export class ProjectApplicationService {
     projectId: number,
     {
       name,
+      minPercentage,
       description,
       projectType,
       enableRandomOrder,
@@ -97,6 +101,7 @@ export class ProjectApplicationService {
     const project = Project.create(
       projectId,
       name,
+      minPercentage,
       description,
       guideline,
       projectType,

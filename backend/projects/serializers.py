@@ -172,6 +172,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "minPercentage",
             "description",
             "guideline",
             "project_type",

@@ -53,11 +53,13 @@ export const canDefineLabel = (projectType: ProjectType): boolean => {
 
 export class Project {
   name: string
+  minPercentage: number
   description: string
   projectType: ProjectType
   constructor(
     readonly id: number,
     readonly _name: string,
+    readonly _minPercentage: number,
     readonly _description: string,
     readonly guideline: string,
     readonly _projectType: string,
@@ -90,11 +92,13 @@ export class Project {
     this.name = _name.trim()
     this.description = _description.trim()
     this.projectType = _projectType as ProjectType
+    this.minPercentage = _minPercentage
   }
 
   static create(
     id: number,
     name: string,
+    minPercentage: number,
     description: string,
     guideline: string,
     projectType: string,
@@ -110,6 +114,7 @@ export class Project {
     return new Project(
       id,
       name,
+      minPercentage,
       description,
       guideline,
       projectType,

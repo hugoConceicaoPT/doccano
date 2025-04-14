@@ -38,7 +38,8 @@ import {
   mdiHome,
   mdiLabel,
   mdiPlayCircleOutline,
-  mdiCommentTextOutline
+  mdiCommentTextOutline,
+  mdiArrowCollapse
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
 
@@ -105,6 +106,12 @@ export default {
           text: 'Perspective',
           link: 'perspectives',
           isVisible: true
+        },
+        {
+          icon: mdiArrowCollapse,
+          text: 'Discrepancy',
+          link: 'discrepancies',
+          isVisible: this.isProjectAdmin
         },
         {
           icon: mdiCommentAccountOutline,

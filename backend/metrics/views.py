@@ -51,6 +51,17 @@ class LabelDistribution(abc.ABC, APIView):
         return Response(data=data, status=status.HTTP_200_OK)
 
 
+class LabelPercentage(abc.ABC, APIView):
+    permission_classes = [IsAuthenticated & (IsProjectAdmin | IsProjectStaffAndReadOnly)]
+    model = Label
+    label_type = LabelType
+
+    def get(self, request, *args, **kwargs):
+        labels = self.label_type.objects.filter(project=self.kwargs["project_id"])
+        examples = list(Example.objects.filter(project=self.kwargs["project_id"]).values_list("id", flat=True))
+        data = self.model.objects.get_label_percentage(examples,labels)
+        return Response(data=data, status=status.HTTP_200_OK)
+
 class CategoryTypeDistribution(LabelDistribution):
     model = Category
     label_type = CategoryType
@@ -62,5 +73,19 @@ class SpanTypeDistribution(LabelDistribution):
 
 
 class RelationTypeDistribution(LabelDistribution):
+    model = Relation
+    label_type = RelationType
+
+class CategoryTypePercentage(LabelPercentage):
+    model = Category
+    label_type = CategoryType
+
+
+class SpanTypePercentage(LabelPercentage):
+    model = Span
+    label_type = SpanType
+
+
+class RelationTypePercentage(LabelPercentage):
     model = Relation
     label_type = RelationType

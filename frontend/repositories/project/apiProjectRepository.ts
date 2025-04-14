@@ -28,6 +28,7 @@ function toModel(item: { [key: string]: any }): Project {
   return new Project(
     item.id,
     item.name,
+    item.minPercentage,
     item.description,
     item.guideline,
     item.project_type,
@@ -51,6 +52,7 @@ function toPayload(item: Project): { [key: string]: any } {
   return {
     id: item.id,
     name: item.name,
+    minPercentage: item.minPercentage,
     description: item.description,
     guideline: item.guideline,
     project_type: item.projectType,

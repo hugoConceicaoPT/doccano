@@ -215,7 +215,7 @@ export default Vue.extend({
             }
             if (Array.isArray(q.answers)) {
               q.answers.forEach((a: any) => {
-                let memberId: number | undefined
+                let memberId: number 
                 let memberName = ''
                 if (a.member) {
                   if (typeof a.member === 'object' && a.member.id != null) {
@@ -226,7 +226,6 @@ export default Vue.extend({
                     memberName = this.memberNames[memberId] || memberId.toString()
                   }
                 }
-                if (memberId === undefined) return
                 const answerText = a.answer_text || a.answer_option || ''
                 // Cria um registro para cada resposta
                 const row = {
