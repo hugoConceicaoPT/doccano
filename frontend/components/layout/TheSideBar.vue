@@ -39,7 +39,8 @@ import {
   mdiLabel,
   mdiPlayCircleOutline,
   mdiCommentTextOutline,
-  mdiArrowCollapse
+  mdiArrowCollapse,
+  mdiProgressPencil
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
 
@@ -111,6 +112,12 @@ export default {
           icon: mdiArrowCollapse,
           text: 'Discrepancy',
           link: 'discrepancies',
+          isVisible: this.isProjectAdmin
+        },
+        {
+          icon: mdiProgressPencil,
+          text: 'Annotations Rules',
+          link: 'rules',
           isVisible: this.isProjectAdmin
         },
         {

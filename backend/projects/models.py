@@ -26,7 +26,6 @@ class ProjectType(models.TextChoices):
 
 class Project(PolymorphicModel):
     name = models.CharField(max_length=100)
-    minPercentage = models.IntegerField(default=0)
     description = models.TextField(default="")
     guideline = models.TextField(default="", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -265,3 +264,38 @@ class Answer(models.Model):
     answer_option = models.ForeignKey(
         OptionQuestion, on_delete=models.CASCADE, null=True, blank=True, related_name="answer_option"
     )
+    
+class AnnotationRuleType(models.Model):
+    id = models.IntegerField(primary_key=True)
+    annotation_rule_type = models.TextField()
+
+class VotingCofiguration(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="voting_configurations")
+    annotation_rule_type = models.ForeignKey(
+        AnnotationRuleType, on_delete=models.CASCADE, related_name="voting_configurations"
+    )
+    voting_threshold = models.IntegerField(default=0)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    begin_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+
+
+class AnnotationRule(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="annotation_rules")
+    description = models.TextField(default="")
+    voting_configuration = models.ForeignKey(
+        VotingCofiguration, on_delete=models.CASCADE, related_name="annotation_rules"
+    )
+    annotation_rule_type = models.ForeignKey(
+        AnnotationRuleType, on_delete=models.CASCADE, related_name="annotation_rules_set"
+    )
+
+
+class AnnotationRuleAnswers(models.Model):
+    annotation_rule = models.ForeignKey(AnnotationRule, on_delete=models.CASCADE, related_name="annotation_rule_answers")
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="annotation_rule_answers")
+    answer = models.BooleanField(default=False)
+    annotation_rule_type = models.ForeignKey(
+        AnnotationRuleType, on_delete=models.CASCADE, related_name="annotation_rule_answers_set"
+    )
+

@@ -20,6 +20,10 @@ from .models import (
     Speech2textProject,
     Tag,
     TextClassificationProject,
+    AnnotationRuleType,
+    AnnotationRule,
+    VotingCofiguration,
+    AnnotationRuleAnswers,
 )
 
 
@@ -43,7 +47,6 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ("id", "user", "role", "username", "rolename", "perspective_id")
-
 
 class QuestionTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -172,7 +175,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "minPercentage",
             "description",
             "guideline",
             "project_type",
@@ -270,3 +272,36 @@ class PerspectiveListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Perspective
         fields = ("id", "project_id", "project_name", "creator_name", "created_at")
+
+
+class AnnotationRuleTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnnotationRuleType
+        fields = ['id', 'annotation_rule_type']
+
+class AnnotationRuleSerializer(serializers.ModelSerializer):
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    voting_configuration = serializers.PrimaryKeyRelatedField(queryset=VotingCofiguration.objects.all())
+    annotation_rule_type = serializers.PrimaryKeyRelatedField(queryset=AnnotationRuleType.objects.all())
+
+    class Meta:
+        model = AnnotationRule
+        fields = ['id', 'project', 'description', 'voting_configuration', 'annotation_rule_type']
+
+class VotingCofigurationSerializer(serializers.ModelSerializer):
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    annotation_rule_type = serializers.PrimaryKeyRelatedField(queryset=AnnotationRuleType.objects.all())
+    created_by = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), allow_null=True)
+
+    class Meta:
+        model = VotingCofiguration
+        fields = ['id', 'project', 'annotation_rule_type', 'voting_threshold', 'created_by', 'begin_date', 'end_date']
+
+class AnnotationRuleAnswersSerializer(serializers.ModelSerializer):
+    annotation_rule = serializers.PrimaryKeyRelatedField(queryset=AnnotationRule.objects.all())
+    member = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all())
+    annotation_rule_type = serializers.PrimaryKeyRelatedField(queryset=AnnotationRuleType.objects.all())
+
+    class Meta:
+        model = AnnotationRuleAnswers
+        fields = ['id', 'annotation_rule', 'member', 'answer', 'annotation_rule_type']

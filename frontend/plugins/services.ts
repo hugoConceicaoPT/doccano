@@ -12,6 +12,7 @@ import { UserApplicationService } from '~/services/application/user/userApplicat
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
 import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
+import { VotingConfigurationApplicationService, AnnotationRuleTypeApplicationService, AnnotationRuleApplicationService } from '~/services/application/rules/ruleApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService
@@ -31,6 +32,9 @@ export interface Services {
   questionType: QuestionTypeApplicationService
   question: QuestionApplicationService
   answer: AnswerApplicationService
+  votingConfiguration: VotingConfigurationApplicationService
+  annotationRuleType: AnnotationRuleTypeApplicationService
+  annotationRule: AnnotationRuleApplicationService
 }
 
 declare module 'vue/types/vue' {
@@ -60,7 +64,10 @@ const plugin: Plugin = (_, inject) => {
     optionsQuestion: new OptionsQuestionApplicationService(repositories.optionsQuestion),
     questionType: new QuestionTypeApplicationService(repositories.questionType),
     question: new QuestionApplicationService(repositories.question),
-    answer: new AnswerApplicationService(repositories.answer)
+    answer: new AnswerApplicationService(repositories.answer),
+    votingConfiguration: new VotingConfigurationApplicationService(repositories.votingConfiguration),
+    annotationRuleType: new AnnotationRuleTypeApplicationService(repositories.annotationRuleType),
+    annotationRule: new AnnotationRuleApplicationService(repositories.annotationRule),
   }
   inject('services', services)
 }

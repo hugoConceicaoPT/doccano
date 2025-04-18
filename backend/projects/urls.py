@@ -14,8 +14,21 @@ from .views.perspective import (
     Questions,
     QuestionsTypeCreation,
     QuestionsTypeDetail,
-    OptionsQuestion
+    OptionsQuestion,
 )
+from .views.rule import ( 
+    AnnotationRules, 
+    AnnotationRuleCreation, 
+    AnnotationRuleDetail,
+    AnnotationRuleTypes,
+    AnnotationRuleTypeCreation,
+    AnnotationRuleTypeDetail,
+    AnnotationRuleAnswersCreation,
+    AnnotationRuleAnswerDetail,
+    VotingConfigurations,
+    VotingConfigurationCreation,
+    VotingConfigurationDetail,
+    )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
 
@@ -41,4 +54,9 @@ urlpatterns = [
     path(route="projects/<int:project_id>/options-question/create",view=OptionsQuestionCreation.as_view(),name="options_question_create",),
     path(route="projects/<int:project_id>/question-type/create",view=QuestionsTypeCreation.as_view(),name="options_question_create",),
     path(route="projects/<int:project_id>/question-type/<int:question_type_id>",view=QuestionsTypeDetail.as_view(),name="question_type_detail",),
+    path(route="projects/<int:project_id>/annotation-rules/create",view=AnnotationRuleCreation.as_view(),name="annotation_rule_create",),
+    path(route="projects/<int:project_id>/annotation-rules/list",view=AnnotationRules.as_view(),name="annotation_rule_list",),
+    path(route="projects/<int:project_id>/annotation-rules/<int:annotation_rule_id>",view=AnnotationRuleDetail.as_view(),name="annotation_rule_detail",),
+    path(route="projects/<int:project_id>/annotation-rule-types",view=AnnotationRuleTypes.as_view(),name="annotation_rule_type_list",),
+    path(route="projects/<int:project_id>/rules/create",view=VotingConfigurationCreation.as_view(),name="voting-configuration",),
 ]
