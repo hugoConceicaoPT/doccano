@@ -1,6 +1,7 @@
 <template>
   <div>
-    <v-select v-model="selectedExample" :items="exampleOptions" label="Selecione a anotação" clearable class="mb-4 mx-4" />
+    <v-select v-model="selectedExample" :items="exampleOptions" label="Selecione a anotação" clearable
+      class="mb-4 mx-4" />
 
     <v-data-table class="mx-4" :items="flatItems" :headers="headers" :loading="isLoading"
       :loading-text="$t('generic.loading')" :no-data-text="$t('vuetify.noDataAvailable')" :footer-props="{
@@ -45,7 +46,6 @@ import type { PropType } from 'vue'
 import { Percentage } from '~/domain/models/metrics/metrics'
 
 export default Vue.extend({
-  name: 'PerspectiveList',
   props: {
     isLoading: {
       type: Boolean,
@@ -70,14 +70,7 @@ export default Vue.extend({
       mdiPencil,
       selectedExample: null as string | null,
       exampleNameMap: {} as Record<string, string>,
-    }
-  },
-
-  async mounted() {
-    for (const exampleName of Object.keys(this.items)) {
-      if (!this.exampleNameMap[exampleName]) {
-        await this.resolveExampleName(exampleName)
-      }
+      isReady: false
     }
   },
 
@@ -104,7 +97,6 @@ export default Vue.extend({
       const rows = [];
 
       const source = this.filteredItems;
-
       for (const [exampleName, labels] of Object.entries(source)) {
         const hasDiscrepancy = Object.values(labels).some(
           (percentage) => percentage > this.discrepancyThreshold
@@ -149,6 +141,15 @@ export default Vue.extend({
     }
   },
 
+  watch: {
+    items: {
+      immediate: true,
+      handler(newItems) {
+        this.loadExampleNames(newItems);
+      }
+    }
+  },
+
   methods: {
     matchesSearch(label: string): boolean {
       return label.toLowerCase().includes(this.search.toLowerCase())
@@ -157,8 +158,13 @@ export default Vue.extend({
       if (!this.exampleNameMap[id]) {
         const example = await this.$repositories.example.findById(this.projectId, Number(id))
         this.$set(this.exampleNameMap, id, example.filename.replace('.txt', ''))
+        console.log(this.exampleNameMap)
       }
       return this.exampleNameMap[id]
+    },
+    async loadExampleNames(items: Percentage) {
+      const exampleNames = Object.keys(items);
+      await Promise.all(exampleNames.map(this.resolveExampleName));
     }
   }
 })
