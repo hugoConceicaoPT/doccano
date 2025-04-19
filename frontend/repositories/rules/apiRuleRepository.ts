@@ -134,7 +134,7 @@ import {
     }
   
     async list(projectId: string): Promise<VotingConfigurationItem[]> {
-      const url = `/${this.baseUrl}/${projectId}/voting-configurations`;
+      const url = `/${this.baseUrl}/${projectId}/rules/list`;
       const response = await this.request.get(url);
       return response.data.map((item: { [key: string]: any }) => toVotingConfigurationModel(item));
     }

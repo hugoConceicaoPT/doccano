@@ -59,4 +59,5 @@ urlpatterns = [
     path(route="projects/<int:project_id>/annotation-rules/<int:annotation_rule_id>",view=AnnotationRuleDetail.as_view(),name="annotation_rule_detail",),
     path(route="projects/<int:project_id>/annotation-rule-types",view=AnnotationRuleTypes.as_view(),name="annotation_rule_type_list",),
     path(route="projects/<int:project_id>/rules/create",view=VotingConfigurationCreation.as_view(),name="voting-configuration",),
+    path(route="projects/<int:project_id>/rules/list",view=VotingConfigurations.as_view(),name="voting_configuration_list",),
 ]

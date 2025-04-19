@@ -2,12 +2,8 @@
   <div>
     <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
     <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
-    <form-create
-      v-slot="slotProps"
-      :editedItem.sync="editedItem"
-      :annotationRuleTypes="annotationRuleTypes"
-      :annotationRulesList.sync="annotationRulesList"
-    >
+    <form-create v-slot="slotProps" :editedItem.sync="editedItem" :annotationRuleTypes="annotationRuleTypes"
+      :annotationRulesList.sync="annotationRulesList">
       <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
       <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
         Guardar
@@ -68,10 +64,6 @@ export default Vue.extend({
 
   async fetch() {
     this.annotationRuleTypes = await this.$repositories.annotationRuleType.list(this.projectId);
-    const votingConfigs = await this.votingConfigurationService.list(this.projectId);
-    if (votingConfigs.length > 0) {
-      this.votingConfigurationId = votingConfigs[0].id; // Assuming only one voting config per project for now
-    }
   },
 
   methods: {
@@ -81,39 +73,39 @@ export default Vue.extend({
         const annotationRuleTypeId = this.editedItem.annotation_rule_type;
 
         // 1. Save Voting Configuration
-        // Ensure the editedItem has all necessary voting config fields filled from FormCreate
         const votingConfigPayload = {
-            project: projectId,
-            annotation_rule_type: annotationRuleTypeId,
-            voting_threshold: this.editedItem.voting_threshold,
-            begin_date: this.editedItem.begin_date,
-            end_date: this.editedItem.end_date,
+          project: projectId,
+          annotation_rule_type: annotationRuleTypeId,
+          voting_threshold: this.editedItem.voting_threshold,
+          created_by: null,
+          begin_date: this.editedItem.begin_date,
+          end_date: this.editedItem.end_date,
         };
 
-        // You might need to create the voting configuration first if it doesn't exist
-        // For simplicity here, we assume it might be created or updated via a single endpoint
-        // based on your backend implementation. If not, adjust this part.
-        // A more robust approach would check if a config exists and either create or update.
+        console.log("Enviando configuração de votação:", votingConfigPayload);
 
-        // Assuming votingConfigId is fetched in fetch() or create a new one if needed
-        if (this.votingConfigurationId === 0) {
-             const newVotingConfig = await this.votingConfigurationService.create(this.projectId, votingConfigPayload);
-             this.votingConfigurationId = newVotingConfig.id;
+        // Criar a configuração de votação
+        await this.votingConfigurationService.create(this.projectId, votingConfigPayload);
+
+        // Buscar o ID da configuração criada
+        const votingConfigs = await this.votingConfigurationService.list(this.projectId);
+        if (votingConfigs && votingConfigs.length > 0) {
+          this.votingConfigurationId = votingConfigs[votingConfigs.length - 1].id;
+          console.log("ID da configuração de votação:", this.votingConfigurationId);
         } else {
-            // If updating existing config, you might need an update method in your service/repository
-             // await this.votingConfigurationService.update(this.projectId, this.votingConfigurationId, votingConfigPayload);
-             // For now, we proceed assuming either a new one is created or the ID is valid.
+          throw new Error('Não foi possível obter o ID da configuração de votação');
         }
-
 
         // 2. Save Annotation Rules
         for (const rule of this.annotationRulesList) {
-          await this.annotationRuleService.create(this.projectId, {
+          const rulePayload = {
             project: projectId,
-            description: rule.description, // Description from the rule object
-            voting_configuration: this.votingConfigurationId, // Link to the saved voting config
-            annotation_rule_type: annotationRuleTypeId, // Link to the selected rule type
-          });
+            description: rule.description,
+            voting_configuration: this.votingConfigurationId,
+            annotation_rule_type: annotationRuleTypeId,
+          };
+          console.log("Enviando regra:", rulePayload);
+          await this.annotationRuleService.create(this.projectId, rulePayload);
         }
 
         this.sucessMessage = 'Regras de anotação guardadas com sucesso.';

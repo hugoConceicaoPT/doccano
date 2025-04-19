@@ -36,34 +36,63 @@
   
           <v-divider class="my-4"></v-divider>
   
-          <v-card-subtitle>Regras de Anotação</v-card-subtitle>
+          <v-card-subtitle>Adicionar Regras de Anotação</v-card-subtitle>
   
-          <v-textarea
-            v-if="ruleInputType === 'multiple'"
-            :value="globalRulesText"
-            label="Regras de Anotação (uma por linha)"
-            outlined
-            @input="$emit('update-global-rules', $event)"
-          ></v-textarea>
-          <v-text-field
-            v-else
-            :value="uniqueRules[0]"
-            label="Regra de Anotação Única"
-            outlined
-            @input="$emit('update-unique-rules', { index: 0, value: $event })"
-          ></v-text-field>
+          <!-- Campo único para tipo 1 -->
+          <v-row v-if="editedItem.annotation_rule_type === 1">
+            <v-col cols="12">
+              <v-text-field
+                v-model="newRuleText"
+                label="Regra de Anotação"
+                outlined
+                :rules="[rules.required]"
+                @input="handleSingleRuleInput"
+              ></v-text-field>
+            </v-col>
+          </v-row>
   
-          <v-list dense v-if="ruleInputType === 'multiple' && globalRulesArray.length">
-             <v-subheader>Regras Adicionadas:</v-subheader>
-             <v-list-item v-for="(rule, index) in globalRulesArray" :key="index">
-                <v-list-item-content>
-                   <v-list-item-title>{{ rule }}</v-list-item-title>
-                </v-list-item-content>
-             </v-list-item>
-          </v-list>
+          <!-- Múltiplos campos para tipo 2 -->
+          <template v-else-if="editedItem.annotation_rule_type === 2">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="newRuleText"
+                  label="Nova Regra de Anotação"
+                  outlined
+                  @keyup.enter="addRule"
+                ></v-text-field>
+              </v-col>
+            </v-row>
   
+            <v-row>
+              <v-col cols="12">
+                <v-btn color="primary" @click="addRule">Adicionar Regra</v-btn>
+              </v-col>
+            </v-row>
   
-          <slot :valid="valid && isRuleInputValid" />
+            <v-row v-if="annotationRulesList.length">
+              <v-col cols="12">
+                <v-list dense>
+                  <v-list-item-group>
+                    <v-list-item v-for="(rule, index) in annotationRulesList" :key="index">
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          {{ rule.description }}
+                        </v-list-item-title>
+                      </v-list-item-content>
+                      <v-list-item-action>
+                        <v-btn icon color="red" @click="removeRule(index)">
+                          <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </v-list-item-group>
+                </v-list>
+              </v-col>
+            </v-row>
+          </template>
+  
+          <slot :valid="isFormValid" />
         </v-form>
       </v-card-text>
     </v-card>
@@ -71,7 +100,7 @@
   
   <script lang="ts">
   import Vue from 'vue';
-  import { CreateVotingConfigurationCommand } from '~/services/application/rules/ruleCommand';
+  import { CreateVotingConfigurationCommand, CreateAnnotationRuleCommand } from '~/services/application/rules/ruleCommand';
   import { AnnotationRuleTypeDTO } from '~/services/application/rules/ruleData';
   
   export default Vue.extend({
@@ -84,13 +113,9 @@
         type: Array as () => AnnotationRuleTypeDTO[],
         required: true,
       },
-      globalRulesText: {
-        type: String,
-        default: '',
-      },
-      uniqueRules: {
-        type: Array as () => string[],
-        default: () => [''],
+      annotationRulesList: { // Prop to receive and sync the list of rules
+        type: Array as () => CreateAnnotationRuleCommand[],
+        required: true,
       },
     },
   
@@ -106,50 +131,60 @@
             return new Date(endDate).getTime() > new Date(startDate).getTime() || 'A data de fim deve ser posterior à data de início.';
           },
         },
-        ruleInputType: 'unique', // Default value for rule input
+        newRuleText: '', // Data property for the input field of a new rule
       };
     },
   
-    computed: {
-      isRuleInputValid(): boolean {
-        if (this.ruleInputType === 'multiple') {
-           // Check if globalRulesText is not empty and contains at least one non-empty line
-          return this.globalRulesText.trim().split('\n').some(line => line.trim().length > 0);
-        } else { // unique
-          return this.uniqueRules[0].trim().length > 0;
-        }
+    watch: {
+      editedItem: {
+        handler() {
+          (this.$refs.form as Vue & { validate: () => boolean })?.validate();
+        },
+        deep: true,
       },
-       globalRulesArray(): string[] {
-         if (this.ruleInputType === 'multiple' && this.globalRulesText) {
-           return this.globalRulesText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-         }
-         return [];
-       }
     },
   
-    watch: {
-      'editedItem.annotation_rule_type': {
-        handler(newVal) {
-          // Logic to determine rule input type based on selected annotation_rule_type
-          // You need to adjust this based on your specific annotation rule types
-          // Example: Assuming annotation_rule_type with ID 1 means Multiple rules
-          if (newVal === 1) {
-            this.ruleInputType = 'multiple';
-          } else { // Default to unique input for other types
-            this.ruleInputType = 'unique';
-          }
-          // Reset rule input fields when type changes
-          this.$emit('update-global-rules', '');
-          this.$emit('update-unique-rules', ['']);
-        },
-        immediate: true, // Run the handler immediately on component creation
-      },
+    computed: {
+      isFormValid(): boolean {
+        if (this.editedItem.annotation_rule_type === 1) {
+          return this.valid && this.newRuleText.trim() !== '';
+        } else {
+          return this.valid && this.annotationRulesList.length > 0;
+        }
+      }
     },
   
     methods: {
-      handleAnnotationRuleTypeChange(event: number) {
-        this.$emit('update:editedItem', { ...this.editedItem, annotation_rule_type: Number(event) });
-         // Watcher for editedItem.annotation_rule_type will handle ruleInputType update and reset
+      handleSingleRuleInput(value: string) {
+        if (value.trim()) {
+          const newRule: CreateAnnotationRuleCommand = {
+            project: this.editedItem.project,
+            description: value.trim(),
+            voting_configuration: 0,
+            annotation_rule_type: this.editedItem.annotation_rule_type,
+          };
+          this.$emit('update:annotationRulesList', [newRule]);
+        } else {
+          this.$emit('update:annotationRulesList', []);
+        }
+      },
+  
+      addRule() {
+        if (this.newRuleText.trim()) {
+          const newRule: CreateAnnotationRuleCommand = {
+            project: this.editedItem.project,
+            description: this.newRuleText.trim(),
+            voting_configuration: 0,
+            annotation_rule_type: this.editedItem.annotation_rule_type,
+          };
+          const updatedRulesList = [...this.annotationRulesList, newRule];
+          this.$emit('update:annotationRulesList', updatedRulesList);
+          this.newRuleText = '';
+        }
+      },
+      removeRule(index: number) {
+        const updatedRulesList = this.annotationRulesList.filter((_, i) => i !== index);
+        this.$emit('update:annotationRulesList', updatedRulesList); // Emit update to parent
       },
     },
   });
