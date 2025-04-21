@@ -84,7 +84,7 @@ class VotingConfigurationCreation(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(project_id=self.kwargs['project_id'], created_by=self.request.user)
 
-class AnnotationRuleAnswers(generics.ListAPIView):
+class AnnotationRuleAnswersList(generics.ListAPIView):
     serializer_class = AnnotationRuleAnswersSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None
@@ -93,8 +93,12 @@ class AnnotationRuleAnswers(generics.ListAPIView):
     search_fields = ("member__user__username", "answer")
 
     def get_queryset(self):
-        queryset = AnnotationRuleAnswers.objects.all()
-        return AnnotationRuleAnswers.objects.filter(annotation_rule__project_id=self.kwargs['project_id'])
+        project_id = self.kwargs['project_id']
+        annotation_rule_id = self.request.query_params.get('annotation_rule')
+        return AnnotationRuleAnswers.objects.filter(
+            annotation_rule__project_id=project_id,
+            annotation_rule_id=annotation_rule_id
+        )
 
 class AnnotationRuleAnswersCreation(generics.CreateAPIView):
     serializer_class = AnnotationRuleAnswersSerializer

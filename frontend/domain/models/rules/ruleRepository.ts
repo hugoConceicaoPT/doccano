@@ -31,4 +31,6 @@ import {
   export interface AnnotationRuleAnswerRepository {
     create(projectId: string, item: AnnotationRuleAnswerItem): Promise<AnnotationRuleAnswerItem>;
     list(projectId: string, annotationRuleId: number): Promise<AnnotationRuleAnswerItem[]>;
+    delete(projectId: string, id: number): Promise<void>;
+    update(projectId: string, id: number, data: Partial<AnnotationRuleAnswerItem>): Promise<AnnotationRuleAnswerItem>;
   }

@@ -94,7 +94,7 @@ import {
     }
   
     async list(projectId: string): Promise<AnnotationRuleItem[]> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rules`;
+      const url = `/${this.baseUrl}/${projectId}/annotation-rules/list`;
       const response = await this.request.get(url);
       return response.data.map((item: { [key: string]: any }) => toAnnotationRuleModel(item));
     }
@@ -159,5 +159,16 @@ import {
       const url = `/${this.baseUrl}/${projectId}/annotation-rule-answers?annotation_rule=${annotationRuleId}`;
       const response = await this.request.get(url);
       return response.data.map((item: { [key: string]: any }) => toAnnotationRuleAnswerModel(item));
+    }
+  
+    async delete(projectId: string, id: number): Promise<void> {
+      const url = `/${this.baseUrl}/${projectId}/annotation-rule-answers/${id}`;
+      await this.request.delete(url);
+    }
+  
+    async update(projectId: string, id: number, data: Partial<AnnotationRuleAnswerItem>): Promise<AnnotationRuleAnswerItem> {
+      const url = `/${this.baseUrl}/${projectId}/annotation-rule-answers/${id}`;
+      const response = await this.request.put(url, data);
+      return toAnnotationRuleAnswerModel(response.data);
     }
   }

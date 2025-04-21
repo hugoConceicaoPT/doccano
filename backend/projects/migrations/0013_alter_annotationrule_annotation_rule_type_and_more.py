@@ -15,7 +15,9 @@ class Migration(migrations.Migration):
             model_name="annotationrule",
             name="annotation_rule_type",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="rules", to="projects.annotationruletype"
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="annotation_rules_set",
+                to="projects.annotationruletype",
             ),
         ),
         migrations.AlterField(
@@ -23,7 +25,7 @@ class Migration(migrations.Migration):
             name="annotation_rule_type",
             field=models.ForeignKey(
                 on_delete=django.db.models.deletion.CASCADE,
-                related_name="rule_answers",
+                related_name="annotation_rule_answers_set",
                 to="projects.annotationruletype",
             ),
         ),

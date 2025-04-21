@@ -121,4 +121,13 @@ import {
     public async list(projectId: string, annotationRuleId: number): Promise<AnnotationRuleAnswerItem[]> {
       return await this.repository.list(projectId, annotationRuleId);
     }
+  
+    public async delete(projectId: string, id: number): Promise<void> {
+      await this.repository.delete(projectId, id);
+    }
+  
+    public async update(projectId: string, id: number, data: Partial<AnnotationRuleAnswerItem>): Promise<AnnotationRuleAnswerDTO> {
+      const updated = await this.repository.update(projectId, id, data);
+      return new AnnotationRuleAnswerDTO(updated);
+    }
   }

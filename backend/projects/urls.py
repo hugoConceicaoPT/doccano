@@ -24,6 +24,7 @@ from .views.rule import (
     AnnotationRuleTypeCreation,
     AnnotationRuleTypeDetail,
     AnnotationRuleAnswersCreation,
+    AnnotationRuleAnswersList,
     AnnotationRuleAnswerDetail,
     VotingConfigurations,
     VotingConfigurationCreation,
@@ -60,4 +61,7 @@ urlpatterns = [
     path(route="projects/<int:project_id>/annotation-rule-types",view=AnnotationRuleTypes.as_view(),name="annotation_rule_type_list",),
     path(route="projects/<int:project_id>/rules/create",view=VotingConfigurationCreation.as_view(),name="voting-configuration",),
     path(route="projects/<int:project_id>/rules/list",view=VotingConfigurations.as_view(),name="voting_configuration_list",),
+    path(route="projects/<int:project_id>/annotation-rule-answers/create", view=AnnotationRuleAnswersCreation.as_view(), name="annotation_rule_answers_create"),
+    path(route="projects/<int:project_id>/annotation-rule-answers", view=AnnotationRuleAnswersList.as_view(), name="annotation_rule_answers_list"),
+    path(route="projects/<int:project_id>/annotation-rule-answers/<int:annotation_rule_answer_id>", view=AnnotationRuleAnswerDetail.as_view(), name="annotation_rule_answer_detail"),
 ]

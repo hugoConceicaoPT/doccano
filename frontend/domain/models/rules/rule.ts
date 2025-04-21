@@ -179,4 +179,18 @@ import {
     async save(repository: AnnotationRuleAnswerRepository, projectId: string): Promise<void> {
       await repository.create(projectId, this); // Assuming create can handle existing IDs for update
     }
+  
+    async delete(repository: AnnotationRuleAnswerRepository, projectId: string): Promise<void> {
+      if (this.id === 0) {
+        throw new Error('Não é possível excluir uma resposta de regra sem ID válido.');
+      }
+      await repository.delete(projectId, this.id);
+    }
+  
+    async update(repository: AnnotationRuleAnswerRepository, projectId: string, data: Partial<AnnotationRuleAnswerItem>): Promise<void> {
+      if (this.id === 0) {
+        throw new Error('Não é possível atualizar uma resposta de regra sem ID válido.');
+      }
+      await repository.update(projectId, this.id, data);
+    }
   }
