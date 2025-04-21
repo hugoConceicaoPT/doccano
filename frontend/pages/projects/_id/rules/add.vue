@@ -2,24 +2,19 @@
   <div>
     <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
     <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
-    <v-alert v-if="hasExistingVotingConfig" type="info" dismissible>
-      Configuração de Votação já definida
-    </v-alert>
     <form-create 
-      v-if="!hasExistingVotingConfig"
       v-slot="slotProps" 
       :editedItem.sync="editedItem" 
       :annotationRuleTypes="annotationRuleTypes"
       :annotationRulesList.sync="annotationRulesList"
+      :examples="filteredExamples"
+      :loadingExamples="loadingExamples"
     >
       <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
       <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
         Guardar
       </v-btn>
     </form-create>
-    <div v-else>
-      <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
-    </div>
   </div>
 </template>
 
@@ -44,19 +39,23 @@ export default Vue.extend({
       errorMessage: '',
       editedItem: {
         project: 0,
-        description: '', // This description is for the voting configuration if needed
+        description: '',
         voting_configuration: 0,
         annotation_rule_type: 0,
-        voting_threshold: 0, // Default value for voting threshold
-        created_by: 0, // Default value for created_by
-        begin_date: '', // Default value for begin_date
-        end_date: '', // Default value for end_date
+        example: 0,
+        voting_threshold: 0,
+        percentage_threshold: 0.0,
+        boolean_threshold: false,
+        created_by: 0,
+        begin_date: '',
+        end_date: '',
       } as CreateVotingConfigurationCommand,
       annotationRuleTypes: [] as AnnotationRuleTypeDTO[],
-      annotationRulesList: [] as CreateAnnotationRuleCommand[], // Array to hold rules added in FormCreate
+      annotationRulesList: [] as CreateAnnotationRuleCommand[],
       votingConfigurationId: 0,
-      hasExistingVotingConfig: true, // Booleano para controlar a verificação
-      checkExistingConfig: true, // Booleano para ativar/desativar a verificação
+      usedExamples: [] as number[],
+      examples: [] as any[],
+      loadingExamples: false,
     };
   },
 
@@ -73,19 +72,40 @@ export default Vue.extend({
     votingConfigurationService(): any {
       return this.$services.votingConfiguration;
     },
+    filteredExamples(): any[] {
+      return this.examples.filter(example => !this.usedExamples.includes(example.id));
+    },
   },
 
   async fetch() {
     this.annotationRuleTypes = await this.$repositories.annotationRuleType.list(this.projectId);
     
-    // Verificar se já existe configuração de votação
-    if (this.checkExistingConfig) {
-      const votingConfigs = await this.votingConfigurationService.list(this.projectId);
-      this.hasExistingVotingConfig = votingConfigs && votingConfigs.length > 0;
-    }
+    // Buscar exemplos já utilizados em configurações de votação
+    const votingConfigs = await this.votingConfigurationService.list(this.projectId);
+    this.usedExamples = votingConfigs.map((config: { example: number | null }) => config.example).filter((example: number | null) => example !== null);
+
+    // Carregar exemplos
+    await this.loadExamples();
   },
 
   methods: {
+    async loadExamples() {
+      try {
+        this.loadingExamples = true;
+        const response = await this.$repositories.example.list(this.projectId, {
+          limit: '100',
+          offset: '0',
+          q: '',
+          isChecked: '',
+          ordering: ''
+        });
+        this.examples = response.items;
+      } catch (error) {
+        console.error('Erro ao carregar exemplos:', error);
+      } finally {
+        this.loadingExamples = false;
+      }
+    },
     async save() {
       try {
         const projectId = Number(this.projectId);
@@ -95,7 +115,10 @@ export default Vue.extend({
         const votingConfigPayload = {
           project: projectId,
           annotation_rule_type: annotationRuleTypeId,
+          example: this.editedItem.example,
           voting_threshold: this.editedItem.voting_threshold,
+          percentage_threshold: this.editedItem.percentage_threshold,
+          boolean_threshold: this.editedItem.boolean_threshold,
           created_by: null,
           begin_date: this.editedItem.begin_date,
           end_date: this.editedItem.end_date,

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
+from examples.models import Example
 
 from .models import (
     Answer,
@@ -298,11 +299,12 @@ class AnnotationRuleSerializer(serializers.ModelSerializer):
 class VotingCofigurationSerializer(serializers.ModelSerializer):
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
     annotation_rule_type = serializers.PrimaryKeyRelatedField(queryset=AnnotationRuleType.objects.all())
+    example = serializers.PrimaryKeyRelatedField(queryset=Example.objects.all(), allow_null=True)
     created_by = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), allow_null=True)
 
     class Meta:
         model = VotingCofiguration
-        fields = ['id', 'project', 'annotation_rule_type', 'voting_threshold', 'created_by', 'begin_date', 'end_date']
+        fields = ['id', 'project', 'annotation_rule_type', 'example', 'voting_threshold', 'percentage_threshold', 'boolean_threshold', 'created_by', 'begin_date', 'end_date']
 
 class AnnotationRuleAnswersSerializer(serializers.ModelSerializer):
     annotation_rule = serializers.PrimaryKeyRelatedField(queryset=AnnotationRule.objects.all())

@@ -13,12 +13,46 @@
             :value="editedItem.annotation_rule_type"
             @input="$emit('update:editedItem', { ...editedItem, annotation_rule_type: Number($event) })"
           ></v-select>
+
+          <v-select
+            :items="examples"
+            item-text="text"
+            item-value="id"
+            label="Exemplo"
+            :rules="[rules.required]"
+            :loading="loadingExamples"
+            :disabled="loadingExamples"
+            :value="editedItem.example"
+            @input="$emit('update:editedItem', { ...editedItem, example: Number($event) })"
+          ></v-select>
+
           <v-text-field
             label="Limite de Votos"
             type="number"
             :value="editedItem.voting_threshold"
             @input="$emit('update:editedItem', { ...editedItem, voting_threshold: Number($event) })"
           ></v-text-field>
+
+          <v-text-field
+            label="Limite de Percentagem"
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            :value="editedItem.percentage_threshold"
+            @input="$emit('update:editedItem', { ...editedItem, percentage_threshold: Number($event) })"
+          ></v-text-field>
+
+          <v-select
+            :items="[
+              { text: 'Verdadeiro', value: true },
+              { text: 'Falso', value: false }
+            ]"
+            label="Limite Booleano"
+            :value="editedItem.boolean_threshold"
+            @input="$emit('update:editedItem', { ...editedItem, boolean_threshold: $event })"
+          ></v-select>
+
           <v-text-field
             label="Data de Início"
             type="datetime-local"
@@ -45,14 +79,14 @@
                 v-model="newRuleName"
                 label="Nome da Regra"
                 outlined
-                :rules="[rules.required]"
+                :rules="[rules.requiredIf(newRuleText)]"
                 class="mb-4"
               ></v-text-field>
               <v-text-field
                 v-model="newRuleText"
                 label="Regra de Anotação"
                 outlined
-                :rules="[rules.required]"
+                :rules="[rules.requiredIf(newRuleName)]"
                 @input="handleSingleRuleInput"
               ></v-text-field>
             </v-col>
@@ -66,13 +100,14 @@
                   v-model="newRuleName"
                   label="Nome da Regra"
                   outlined
-                  :rules="[rules.required]"
+                  :rules="[rules.requiredIf(newRuleText)]"
                   class="mb-4"
                 ></v-text-field>
                 <v-text-field
                   v-model="newRuleText"
                   label="Nova Regra de Anotação"
                   outlined
+                  :rules="[rules.requiredIf(newRuleName)]"
                   @keyup.enter="addRule"
                 ></v-text-field>
               </v-col>
@@ -130,8 +165,16 @@
         type: Array as () => AnnotationRuleTypeDTO[],
         required: true,
       },
-      annotationRulesList: { // Prop to receive and sync the list of rules
+      annotationRulesList: {
         type: Array as () => CreateAnnotationRuleCommand[],
+        required: true,
+      },
+      examples: {
+        type: Array as () => any[],
+        required: true,
+      },
+      loadingExamples: {
+        type: Boolean,
         required: true,
       },
     },
@@ -141,6 +184,10 @@
         valid: false,
         rules: {
           required: (value: any) => !!value || 'Campo obrigatório.',
+          requiredIf: (otherValue: any) => (value: any) => {
+            if (otherValue && !value) return 'Campo obrigatório quando o outro campo está preenchido.';
+            return true;
+          },
           integer: (value: any) => Number.isInteger(value) || 'Deve ser um número inteiro.',
           min: (min: number) => (value: number) => value >= min || `Deve ser maior ou igual a ${min}.`,
           isAfter: (startDate: any) => (endDate: any) => {
@@ -148,8 +195,8 @@
             return new Date(endDate).getTime() > new Date(startDate).getTime() || 'A data de fim deve ser posterior à data de início.';
           },
         },
-        newRuleText: '', // Data property for the input field of a new rule
-        newRuleName: '', // Added newRuleName data property
+        newRuleText: '',
+        newRuleName: '',
       };
     },
   
@@ -205,7 +252,7 @@
       },
       removeRule(index: number) {
         const updatedRulesList = this.annotationRulesList.filter((_, i) => i !== index);
-        this.$emit('update:annotationRulesList', updatedRulesList); // Emit update to parent
+        this.$emit('update:annotationRulesList', updatedRulesList);
       },
     },
   });

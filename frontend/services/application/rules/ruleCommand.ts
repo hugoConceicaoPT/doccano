@@ -7,13 +7,7 @@ import {
   
   export type CreateAnnotationRuleTypeCommand = Omit<AnnotationRuleTypeDTO, 'id'>;
   
-  export interface CreateAnnotationRuleCommand {
-    project: number;
-    name: string;
-    description: string;
-    voting_configuration: number;
-    annotation_rule_type: number;
-  }
+  export type CreateAnnotationRuleCommand = Omit<AnnotationRuleDTO, 'id'>;
   
   export type CreateVotingConfigurationCommand = Omit<VotingConfigurationDTO, 'id'>;
   
