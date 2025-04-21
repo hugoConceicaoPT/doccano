@@ -2,13 +2,24 @@
   <div>
     <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
     <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
-    <form-create v-slot="slotProps" :editedItem.sync="editedItem" :annotationRuleTypes="annotationRuleTypes"
-      :annotationRulesList.sync="annotationRulesList">
+    <v-alert v-if="hasExistingVotingConfig" type="info" dismissible>
+      Configuração de Votação já definida
+    </v-alert>
+    <form-create 
+      v-if="!hasExistingVotingConfig"
+      v-slot="slotProps" 
+      :editedItem.sync="editedItem" 
+      :annotationRuleTypes="annotationRuleTypes"
+      :annotationRulesList.sync="annotationRulesList"
+    >
       <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
       <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
         Guardar
       </v-btn>
     </form-create>
+    <div v-else>
+      <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
+    </div>
   </div>
 </template>
 
@@ -44,6 +55,8 @@ export default Vue.extend({
       annotationRuleTypes: [] as AnnotationRuleTypeDTO[],
       annotationRulesList: [] as CreateAnnotationRuleCommand[], // Array to hold rules added in FormCreate
       votingConfigurationId: 0,
+      hasExistingVotingConfig: true, // Booleano para controlar a verificação
+      checkExistingConfig: true, // Booleano para ativar/desativar a verificação
     };
   },
 
@@ -64,6 +77,12 @@ export default Vue.extend({
 
   async fetch() {
     this.annotationRuleTypes = await this.$repositories.annotationRuleType.list(this.projectId);
+    
+    // Verificar se já existe configuração de votação
+    if (this.checkExistingConfig) {
+      const votingConfigs = await this.votingConfigurationService.list(this.projectId);
+      this.hasExistingVotingConfig = votingConfigs && votingConfigs.length > 0;
+    }
   },
 
   methods: {
