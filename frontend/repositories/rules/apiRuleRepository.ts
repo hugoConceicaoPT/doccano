@@ -21,6 +21,7 @@ import {
     return new AnnotationRuleItem(
       item.id,
       item.project,
+      item.name,
       item.description,
       item.voting_configuration,
       item.annotation_rule_type

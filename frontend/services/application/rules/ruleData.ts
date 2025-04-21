@@ -18,6 +18,7 @@ import {
   export class AnnotationRuleDTO {
     id: number;
     project: number;
+    name: string;
     description: string;
     voting_configuration: number;
     annotation_rule_type: number;
@@ -25,6 +26,7 @@ import {
     constructor(item: AnnotationRuleItem) {
       this.id = item.id;
       this.project = item.project;
+      this.name = item.name;
       this.description = item.description;
       this.voting_configuration = item.voting_configuration;
       this.annotation_rule_type = item.annotation_rule_type;

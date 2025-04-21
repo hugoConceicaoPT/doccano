@@ -119,6 +119,7 @@ export default Vue.extend({
         for (const rule of this.annotationRulesList) {
           const rulePayload = {
             project: projectId,
+            name: rule.name,
             description: rule.description,
             voting_configuration: this.votingConfigurationId,
             annotation_rule_type: annotationRuleTypeId,

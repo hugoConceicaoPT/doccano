@@ -42,6 +42,13 @@
           <v-row v-if="editedItem.annotation_rule_type === 1">
             <v-col cols="12">
               <v-text-field
+                v-model="newRuleName"
+                label="Nome da Regra"
+                outlined
+                :rules="[rules.required]"
+                class="mb-4"
+              ></v-text-field>
+              <v-text-field
                 v-model="newRuleText"
                 label="Regra de Anotação"
                 outlined
@@ -55,6 +62,13 @@
           <template v-else-if="editedItem.annotation_rule_type === 2">
             <v-row>
               <v-col cols="12">
+                <v-text-field
+                  v-model="newRuleName"
+                  label="Nome da Regra"
+                  outlined
+                  :rules="[rules.required]"
+                  class="mb-4"
+                ></v-text-field>
                 <v-text-field
                   v-model="newRuleText"
                   label="Nova Regra de Anotação"
@@ -77,8 +91,11 @@
                     <v-list-item v-for="(rule, index) in annotationRulesList" :key="index">
                       <v-list-item-content>
                         <v-list-item-title>
-                          {{ rule.description }}
+                          <strong>{{ rule.name }}</strong>
                         </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ rule.description }}
+                        </v-list-item-subtitle>
                       </v-list-item-content>
                       <v-list-item-action>
                         <v-btn icon color="red" @click="removeRule(index)">
@@ -132,6 +149,7 @@
           },
         },
         newRuleText: '', // Data property for the input field of a new rule
+        newRuleName: '', // Added newRuleName data property
       };
     },
   
@@ -159,6 +177,7 @@
         if (value.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
+            name: this.newRuleName.trim(),
             description: value.trim(),
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
@@ -173,6 +192,7 @@
         if (this.newRuleText.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
+            name: this.newRuleName.trim(),
             description: this.newRuleText.trim(),
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
@@ -180,6 +200,7 @@
           const updatedRulesList = [...this.annotationRulesList, newRule];
           this.$emit('update:annotationRulesList', updatedRulesList);
           this.newRuleText = '';
+          this.newRuleName = '';
         }
       },
       removeRule(index: number) {

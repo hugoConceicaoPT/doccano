@@ -286,7 +286,14 @@ class AnnotationRuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnnotationRule
-        fields = ['id', 'project', 'description', 'voting_configuration', 'annotation_rule_type']
+        fields = [
+            "id",
+            "project",
+            "name",
+            "description",
+            "voting_configuration",
+            "annotation_rule_type",
+        ]
 
 class VotingCofigurationSerializer(serializers.ModelSerializer):
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())

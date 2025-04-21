@@ -52,6 +52,7 @@ import {
       const annotationRule = new AnnotationRuleItem(
         0,
         item.project,
+        item.name,
         item.description,
         item.voting_configuration,
         item.annotation_rule_type

@@ -50,6 +50,7 @@ import {
     constructor(
       readonly id: number,
       readonly project: number,
+      readonly name: string,
       readonly description: string,
       readonly voting_configuration: number,
       readonly annotation_rule_type: number,
@@ -57,6 +58,7 @@ import {
   
     static create(
       project: number,
+      name: string,
       description: string,
       voting_configuration: number,
       annotation_rule_type: number,
@@ -64,6 +66,7 @@ import {
       return new AnnotationRuleItem(
         0,
         project,
+        name,
         description,
         voting_configuration,
         annotation_rule_type,
@@ -88,6 +91,7 @@ import {
   
       const updatedFields: Record<string, any> = {
         project: this.project,
+        name: this.name,
         description: this.description,
         voting_configuration: this.voting_configuration,
         annotation_rule_type: this.annotation_rule_type,
