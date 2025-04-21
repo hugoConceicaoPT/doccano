@@ -118,7 +118,7 @@ export default {
           icon: mdiProgressPencil,
           text: 'Annotations Rules',
           link: 'rules',
-          isVisible: this.isProjectAdmin
+          isVisible: true
         },
         {
           icon: mdiCommentAccountOutline,

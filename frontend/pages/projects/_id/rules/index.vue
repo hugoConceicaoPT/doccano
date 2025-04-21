@@ -11,7 +11,7 @@
     <v-card-text>
       <v-container>
         <!-- Botão para configurar regras de anotação -->
-        <v-row class="mb-4">
+        <v-row class="mb-4" v-if="isAdmin">
           <v-col cols="12">
             <v-btn color="primary" @click="goToConfig">
               Configurar
@@ -90,6 +90,7 @@ export default Vue.extend({
       votedRules: [] as number[],
       votingConfig: null as any,
       memberId: 0,
+      isAdmin: false,
     };
   },
   computed: {
@@ -130,6 +131,7 @@ export default Vue.extend({
       // Obtém o membro atual
       const member = await this.$repositories.member.fetchMyRole(projectId);
       this.memberId = member.id;
+      this.isAdmin = member.isProjectAdmin;
       // Carrega configurações de votação
       const configs = await this.$services.votingConfiguration.list(projectId);
       if (!configs.length) {
