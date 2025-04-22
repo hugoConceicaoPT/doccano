@@ -277,7 +277,6 @@ class VotingCofiguration(models.Model):
     example = models.ForeignKey('examples.Example', on_delete=models.CASCADE, related_name="voting_configurations", null=True)
     voting_threshold = models.IntegerField(default=0)
     percentage_threshold = models.FloatField(default=0.0)
-    boolean_threshold = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     begin_date = models.DateTimeField()
     end_date = models.DateTimeField()

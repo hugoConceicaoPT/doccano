@@ -118,7 +118,6 @@ export default Vue.extend({
           example: this.editedItem.example,
           voting_threshold: this.editedItem.voting_threshold,
           percentage_threshold: this.editedItem.percentage_threshold,
-          boolean_threshold: this.editedItem.boolean_threshold,
           created_by: null,
           begin_date: this.editedItem.begin_date,
           end_date: this.editedItem.end_date,

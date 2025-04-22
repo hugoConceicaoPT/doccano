@@ -304,7 +304,7 @@ class VotingCofigurationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = VotingCofiguration
-        fields = ['id', 'project', 'annotation_rule_type', 'example', 'voting_threshold', 'percentage_threshold', 'boolean_threshold', 'created_by', 'begin_date', 'end_date']
+        fields = ['id', 'project', 'annotation_rule_type', 'example', 'voting_threshold', 'percentage_threshold', 'created_by', 'begin_date', 'end_date']
 
 class AnnotationRuleAnswersSerializer(serializers.ModelSerializer):
     annotation_rule = serializers.PrimaryKeyRelatedField(queryset=AnnotationRule.objects.all())

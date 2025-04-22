@@ -36,7 +36,6 @@ import {
       item.example,
       item.voting_threshold,
       item.percentage_threshold,
-      item.boolean_threshold,
       item.created_by,
       item.begin_date,
       item.end_date

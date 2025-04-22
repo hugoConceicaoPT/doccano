@@ -43,7 +43,7 @@
                 >
                   <v-card outlined class="mb-4">
                     <v-card-title>
-                      {{ getRuleTypeName(rule.annotation_rule_type) }}
+                      {{ rule.name }}
                     </v-card-title>
                     <v-card-subtitle>
                       {{ rule.description }}
@@ -168,11 +168,6 @@ export default Vue.extend({
         this.errorMessage = 'Erro ao submeter votos.';
       }
     },
-    // Retorna o nome do tipo de regra pela ID
-    getRuleTypeName(typeId: number): string {
-      const t = this.annotationRuleTypes.find((t: any) => t.id === typeId);
-      return t ? t.annotation_rule_type : '';
-    }
   },
   async fetch() {
     this.loading = true;

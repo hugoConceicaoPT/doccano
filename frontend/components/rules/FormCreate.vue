@@ -45,16 +45,6 @@
             @input="$emit('update:editedItem', { ...editedItem, percentage_threshold: Number($event) })"
           ></v-text-field>
 
-          <v-select
-            :items="[
-              { text: 'Verdadeiro', value: true },
-              { text: 'Falso', value: false }
-            ]"
-            label="Limite Booleano"
-            :value="editedItem.boolean_threshold"
-            @input="$emit('update:editedItem', { ...editedItem, boolean_threshold: $event })"
-          ></v-select>
-
           <v-text-field
             label="Data de Início"
             type="datetime-local"
