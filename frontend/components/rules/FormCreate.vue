@@ -30,6 +30,7 @@
             label="Limite de Votos"
             type="number"
             :value="editedItem.voting_threshold"
+            :rules="[rules.required, rules.min(0)]"
             @input="$emit('update:editedItem', { ...editedItem, voting_threshold: Number($event) })"
           ></v-text-field>
 
@@ -40,6 +41,7 @@
             min="0"
             max="100"
             :value="editedItem.percentage_threshold"
+            :rules="[rules.required, rules.min(0), rules.max(100)]"
             @input="$emit('update:editedItem', { ...editedItem, percentage_threshold: Number($event) })"
           ></v-text-field>
 
@@ -190,6 +192,7 @@
           },
           integer: (value: any) => Number.isInteger(value) || 'Deve ser um número inteiro.',
           min: (min: number) => (value: number) => value >= min || `Deve ser maior ou igual a ${min}.`,
+          max: (max: number) => (value: number) => value <= max || `Deve ser menor ou igual a ${max}.`,
           isAfter: (startDate: any) => (endDate: any) => {
             if (!startDate || !endDate) return true;
             return new Date(endDate).getTime() > new Date(startDate).getTime() || 'A data de fim deve ser posterior à data de início.';
@@ -221,7 +224,7 @@
   
     methods: {
       handleSingleRuleInput(value: string) {
-        if (value.trim()) {
+        if (value.trim() && this.newRuleName.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
             name: this.newRuleName.trim(),
@@ -236,7 +239,7 @@
       },
   
       addRule() {
-        if (this.newRuleText.trim()) {
+        if (this.newRuleText.trim() && this.newRuleName.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
             name: this.newRuleName.trim(),
