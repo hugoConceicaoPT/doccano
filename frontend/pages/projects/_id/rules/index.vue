@@ -7,70 +7,143 @@
       {{ errorMessage }}
     </v-alert>
 
-    <v-card-title>Voting de Regras de Anotação</v-card-title>
     <v-card-text>
-      <v-container>
-        <!-- Configuração (admins) -->
-        <v-row class="mb-4" v-if="isAdmin">
-          <v-col cols="12">
-            <v-btn color="primary" @click="goToConfig">Configurar</v-btn>
-          </v-col>
-        </v-row>
+      <!-- Botão para configurar regras de anotação -->
+      <v-row class="mb-4" v-if="isAdmin">
+        <v-col cols="12">
+          <v-btn color="primary" class="mx-4" @click="goToConfig">
+            Configure
+          </v-btn>
+          <discussion-list :items="items" :isLoading="loading" />
+        </v-col>
+      </v-row>
 
-        <!-- Votação para não-admins -->
-        <div v-if="!isAdmin">
-          <div v-if="pendingRules.length > 0">
-            <v-row v-if="loading">
-              <v-col cols="12" class="text-center">
-                <v-progress-circular indeterminate color="primary" />
-              </v-col>
-            </v-row>
-            <div v-else>
-              <!-- Exibe apenas datasets com regras pendentes -->
-              <div v-for="cfg in availableConfigs" :key="cfg.id" class="mb-6">
-                <v-subheader>Dataset: {{ stripExtension(cfg.filename) }}</v-subheader>
-                <v-row>
-                  <v-col
-                    v-for="rule in pendingRules.filter(r => r.voting_configuration === cfg.id)"
-                    :key="rule.id"
-                    cols="12" sm="6" md="4"
-                  >
-                    <v-card outlined class="mb-4">
-                      <v-card-title>{{ rule.name }}</v-card-title>
-                      <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
-                      <v-card-actions>
-                        <v-btn small color="success" :disabled="rule.id in localVotes" @click="vote(rule.id, true)">Sim</v-btn>
-                        <v-btn small color="error" :disabled="rule.id in localVotes" @click="vote(rule.id, false)">Não</v-btn>
-                      </v-card-actions>
-                    </v-card>
-                  </v-col>
-                </v-row>
-              </div>
-              <!-- Botão global de submissão -->
+      <!-- Votação para não-admins -->
+      <div v-if="!isAdmin">
+        <div v-if="pendingRules.length > 0">
+          <v-row v-if="loading">
+            <v-col cols="12" class="text-center">
+              <v-progress-circular indeterminate color="primary" />
+            </v-col>
+          </v-row>
+          <div v-else>
+            <!-- Exibe apenas datasets com regras pendentes -->
+            <div v-for="cfg in availableConfigs" :key="cfg.id" class="mb-6">
+              <v-subheader>Dataset: {{ stripExtension(cfg.filename) }}</v-subheader>
               <v-row>
-                <v-col cols="12" class="text-center">
-                  <v-btn color="primary" @click="submitVotes" :disabled="!canSubmit">Submeter Votos</v-btn>
+                <v-col v-for="rule in pendingRules.filter(r => r.voting_configuration === cfg.id)" :key="rule.id"
+                  cols="12" sm="6" md="4">
+                  <v-card outlined class="mb-4">
+                    <v-card-title>{{ rule.name }}</v-card-title>
+                    <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
+                    <v-card-actions>
+                      <v-btn small color="success" :disabled="rule.id in localVotes"
+                        @click="vote(rule.id, true)">Sim</v-btn>
+                      <v-btn small color="error" :disabled="rule.id in localVotes"
+                        @click="vote(rule.id, false)">Não</v-btn>
+                    </v-card-actions>
+                  </v-card>
                 </v-col>
               </v-row>
             </div>
-          </div>
-          <div v-else>
+            <!-- Botão global de submissão -->
             <v-row>
               <v-col cols="12" class="text-center">
-                <p>Votação concluída com sucesso!</p>
+                <v-btn color="primary" @click="submitVotes" :disabled="!canSubmit">Submeter Votos</v-btn>
               </v-col>
             </v-row>
           </div>
         </div>
-      </v-container>
+        <div v-else>
+          <v-row>
+            <v-col cols="12" class="text-center">
+              <p>Votação concluída com sucesso!</p>
+            </v-col>
+          </v-row>
+        </div>
+      </div>
+      <!-- Sistema de votação para não-admins, não exibir após submissão -->
+      <template v-if="!isAdmin && !submittedVotes">
+        <v-card-title>Voting de Regras de Anotação</v-card-title>
+        <!-- Indicador de carregamento -->
+        <v-row v-if="loading">
+          <v-col cols="12" class="text-center">
+            <v-progress-circular indeterminate color="primary" />
+          </v-col>
+        </v-row>
+        <!-- Lista de regras com votação -->
+        <v-row v-else>
+          <v-col cols="12" v-if="!rules.length">
+            <p>Nenhuma regra disponível para votação.</p>
+          </v-col>
+          <v-col cols="12" v-else>
+            <v-row>
+              <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6" md="4">
+                <v-card outlined class="mb-4">
+                  <v-card-title>
+                    {{ rule.name }}
+                  </v-card-title>
+                  <v-card-subtitle>
+                    {{ rule.description }}
+                  </v-card-subtitle>
+                  <v-card-text>
+                    Sim: {{ votesYes[rule.id] || 0 }} | Não: {{ votesNo[rule.id] || 0 }}
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn small color="success" :disabled="rule.id in localVotes" @click="vote(rule.id, true)">
+                      Sim
+                    </v-btn>
+                    <v-btn small color="error" :disabled="rule.id in localVotes" @click="vote(rule.id, false)">
+                      Não
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
+            <!-- Botão de submissão: sempre visível, mas desabilitado até todas as regras votadas -->
+            <v-row>
+              <v-col cols="12" class="text-center">
+                <v-btn color="primary" @click="submitVotes" :disabled="loading || !canSubmit">
+                  Submeter Votos
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+      </template>
+      <!-- Mensagem após submissão de votos -->
+      <template v-else-if="!isAdmin && submittedVotes">
+        <v-row>
+          <v-col cols="12" class="text-center">
+            <p>Votação concluída com sucesso!</p>
+          </v-col>
+        </v-row>
+      </template>
     </v-card-text>
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
+import DiscussionList from '~/components/discussion/DiscussionList.vue';
+import { VotingConfigurationItem } from '~/domain/models/rules/rule';
+
+export type Discussion = {
+  exampleName: string;
+  ruleDiscussion: string;
+  percentageFavor: number;
+  percentageAgainst: number;
+  result: string;
+}
+
+export type VotingAnswer = {
+  fileName?: string
+} & VotingConfigurationItem
 
 export default Vue.extend({
+  components: {
+    DiscussionList,
+  },
   layout: 'project',
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
   data() {
@@ -85,11 +158,12 @@ export default Vue.extend({
       answeredRules: {} as Record<number, boolean>,
       // votos locais antes de enviar
       localVotes: {} as Record<number, boolean>,
-      votingConfigs: [] as any[],
+      votingConfigs: [] as VotingAnswer[],
       groupedRules: {} as Record<number, any[]>,
       memberId: 0,
       annotationRuleTypes: [] as any[],
       isAdmin: false,
+      items: [] as Discussion[]
     };
   },
   computed: {
@@ -164,6 +238,7 @@ export default Vue.extend({
       this.isAdmin = member.isProjectAdmin;
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId);
+      console.log(this.votingConfigs)
       this.rules = await this.$services.annotationRule.list(projectId);
       // agrupa e inicializa answeredRules
       this.groupedRules = {};
@@ -171,9 +246,9 @@ export default Vue.extend({
       for (const cfg of this.votingConfigs) {
         try {
           const ex = await this.$services.example.findById(projectId, cfg.example);
-          (cfg as any).filename = ex.filename;
+          cfg.fileName = ex.filename;
         } catch {
-          (cfg as any).filename = String(cfg.example);
+          cfg.fileName = String(cfg.example);
         }
         const list = this.rules.filter(r => r.voting_configuration === cfg.id);
         this.groupedRules[cfg.id] = list;
@@ -181,6 +256,29 @@ export default Vue.extend({
           const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
           this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length);
           this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length);
+          const yes = this.votesYes[r.id] || 0;
+          const no = this.votesNo[r.id] || 0;
+          const total = yes + no;
+          const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
+          const percentageAgainst = total ? Math.round((no / total) * 100) : 0;
+          let result = ''
+          if (percentageAgainst >= cfg.percentage_threshold) {
+            result = 'Rejected'
+          }
+          else if (percentageFavor >= cfg.percentage_threshold) {
+            result = 'Approved'
+          }
+          else {
+            result = 'Needs Discussion'
+          }
+          console.log(percentageFavor + " " + percentageAgainst)
+          this.items.push({
+            exampleName: cfg.fileName.replace(/\.[^/.]+$/, ''),
+            ruleDiscussion: r.description,
+            percentageFavor,
+            percentageAgainst,
+            result
+          })
           if (ans.some(a => a.member === this.memberId)) this.$set(this.answeredRules, r.id, true);
         }
       }

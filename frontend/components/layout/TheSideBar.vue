@@ -40,6 +40,7 @@ import {
   mdiPlayCircleOutline,
   mdiCommentTextOutline,
   mdiArrowCollapse,
+  mdiChartBoxOutline,
   mdiProgressPencil
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
@@ -136,6 +137,12 @@ export default {
           icon: mdiChartBar,
           text: this.$t('statistics.statistics'),
           link: 'metrics',
+          isVisible: this.isProjectAdmin
+        },
+        {
+          icon: mdiChartBoxOutline,
+          text: 'Statistics',
+          link: 'statistics',
           isVisible: this.isProjectAdmin
         },
         {

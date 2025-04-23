@@ -157,8 +157,7 @@ export default Vue.extend({
     async resolveExampleName(id: string) {
       if (!this.exampleNameMap[id]) {
         const example = await this.$repositories.example.findById(this.projectId, Number(id))
-        this.$set(this.exampleNameMap, id, example.filename.replace('.txt', ''))
-        console.log(this.exampleNameMap)
+        this.$set(this.exampleNameMap, id, example.filename.replace(/\.[^/.]+$/, ''))
       }
       return this.exampleNameMap[id]
     },

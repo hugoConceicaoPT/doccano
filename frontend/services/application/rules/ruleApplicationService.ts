@@ -16,12 +16,7 @@ import {
     AnnotationRuleAnswerRepository,
     VotingConfigurationRepository,
   } from '~/domain/models/rules/ruleRepository';
-  import { AnnotationRuleAnswerItem } from '~/domain/models/rules/rule';
-  import {
-    AnnotationRuleItem,
-    AnnotationRuleTypeItem,
-    VotingConfigurationItem,
-  } from '~/domain/models/rules/rule';
+  import { AnnotationRuleAnswerItem,  AnnotationRuleItem, AnnotationRuleTypeItem, VotingConfigurationItem, } from '~/domain/models/rules/rule';
   
   export class AnnotationRuleTypeApplicationService {
     constructor(private readonly repository: AnnotationRuleTypeRepository) {}

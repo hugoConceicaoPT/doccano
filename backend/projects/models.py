@@ -26,6 +26,7 @@ class ProjectType(models.TextChoices):
 
 class Project(PolymorphicModel):
     name = models.CharField(max_length=100)
+    minPercentage = models.IntegerField(default=0)
     description = models.TextField(default="")
     guideline = models.TextField(default="", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
