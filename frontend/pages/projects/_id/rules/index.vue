@@ -9,7 +9,7 @@
 
     <v-card-text>
       <!-- Botão para configurar regras de anotação -->
-      <v-row class="mb-4" v-if="isAdmin">
+      <v-row v-if="isAdmin" class="mb-4">
         <v-col cols="12">
           <v-btn color="primary" class="mx-4" @click="goToConfig">
             Configure
@@ -49,7 +49,7 @@
             <!-- Botão global de submissão -->
             <v-row>
               <v-col cols="12" class="text-center">
-                <v-btn color="primary" @click="submitVotes" :disabled="!canSubmit">Submeter Votos</v-btn>
+                <v-btn color="primary" :disabled="!canSubmit" @click="submitVotes">Submeter Votos</v-btn>
               </v-col>
             </v-row>
           </div>
@@ -63,7 +63,7 @@
         </div>
       </div>
       <!-- Sistema de votação para não-admins, não exibir após submissão -->
-      <template v-if="!isAdmin && !submittedVotes">
+      <template v-if="!isAdmin">
         <v-card-title>Voting de Regras de Anotação</v-card-title>
         <!-- Indicador de carregamento -->
         <v-row v-if="loading">
@@ -73,10 +73,10 @@
         </v-row>
         <!-- Lista de regras com votação -->
         <v-row v-else>
-          <v-col cols="12" v-if="!rules.length">
+          <v-col v-if="!rules.length" cols="12">
             <p>Nenhuma regra disponível para votação.</p>
           </v-col>
-          <v-col cols="12" v-else>
+          <v-col v-else cols="12">
             <v-row>
               <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6" md="4">
                 <v-card outlined class="mb-4">
@@ -103,22 +103,22 @@
             <!-- Botão de submissão: sempre visível, mas desabilitado até todas as regras votadas -->
             <v-row>
               <v-col cols="12" class="text-center">
-                <v-btn color="primary" @click="submitVotes" :disabled="loading || !canSubmit">
+                <v-btn color="primary" :disabled="loading || !canSubmit" @click="submitVotes">
                   Submeter Votos
                 </v-btn>
               </v-col>
             </v-row>
           </v-col>
         </v-row>
+        <template v-if="answeredRules">
+          <v-row>
+            <v-col cols="12" class="text-center">
+              <p>Votação concluída com sucesso!</p>
+            </v-col>
+          </v-row>
+        </template>
       </template>
       <!-- Mensagem após submissão de votos -->
-      <template v-else-if="!isAdmin && submittedVotes">
-        <v-row>
-          <v-col cols="12" class="text-center">
-            <p>Votação concluída com sucesso!</p>
-          </v-col>
-        </v-row>
-      </template>
     </v-card-text>
   </v-card>
 </template>
@@ -129,16 +129,14 @@ import DiscussionList from '~/components/discussion/DiscussionList.vue';
 import { VotingConfigurationItem } from '~/domain/models/rules/rule';
 
 export type Discussion = {
-  exampleName: string;
+  numberVersion: string;
   ruleDiscussion: string;
-  percentageFavor: number;
-  percentageAgainst: number;
   result: string;
 }
 
-export type VotingAnswer = {
-  fileName?: string
-} & VotingConfigurationItem
+export type VotingAnswer = VotingConfigurationItem & {
+  fileName?: string;
+}
 
 export default Vue.extend({
   components: {
@@ -165,6 +163,91 @@ export default Vue.extend({
       isAdmin: false,
       items: [] as Discussion[]
     };
+  },
+  async fetch() {
+    this.loading = true;
+    try {
+      const projectId = this.projectId;
+      // tipos e membro
+      this.annotationRuleTypes = await this.$services.annotationRuleType.list(projectId);
+      const member = await this.$repositories.member.fetchMyRole(projectId);
+      this.memberId = member.id;
+      this.isAdmin = member.isProjectAdmin;
+      // configs e regras
+      this.votingConfigs = await this.$services.votingConfiguration.list(projectId);
+      console.log(this.votingConfigs)
+      this.rules = await this.$services.annotationRule.list(projectId);
+      // agrupa e inicializa answeredRules
+      this.groupedRules = {};
+      this.answeredRules = {};
+      this.votingConfigs.forEach(async (cfg) => {
+        try {
+          const list = this.rules.filter(r => r.voting_configuration === cfg.id);
+          this.groupedRules[cfg.id] = list;
+
+          for (const r of list) {
+            const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
+            const rulesFilteredByName = this.rules.filter(rule => rule.name === r.name);
+            const votingConfigsOrderedByEndDate = this.votingConfigs.sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+
+            const sortedRules = rulesFilteredByName.sort((ruleA, ruleB) => {
+              const configA = this.votingConfigs.find(cfg => cfg.id === ruleA.voting_configuration);
+              const configB = this.votingConfigs.find(cfg => cfg.id === ruleB.voting_configuration);
+              if (!configA || !configB) return 0;
+
+              const indexA = votingConfigsOrderedByEndDate.indexOf(configA);
+              const indexB = votingConfigsOrderedByEndDate.indexOf(configB);
+
+              return indexA - indexB;
+            });
+
+            const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id);
+
+            let numberVersion = '';
+            if (index < 10) {
+              numberVersion = 'V_0' + (index + 1);
+            } else {
+              numberVersion = 'V_' + (index + 1);
+            }
+
+            this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length);
+            this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length);
+
+            const yes = this.votesYes[r.id] || 0;
+            const no = this.votesNo[r.id] || 0;
+            const total = yes + no;
+
+            const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
+            const percentageAgainst = total ? Math.round((no / total) * 100) : 0;
+
+            let result = '';
+            if (percentageAgainst >= cfg.percentage_threshold) {
+              result = 'Rejected';
+            } else if (percentageFavor >= cfg.percentage_threshold) {
+              result = 'Approved';
+            } else {
+              result = 'Needs Discussion';
+            }
+
+            this.items.push({
+              numberVersion,
+              ruleDiscussion: r.description,
+              result
+            });
+
+            if (ans.some(a => a.member === this.memberId)) {
+              this.$set(this.answeredRules, r.id, true);
+            }
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    } catch {
+      this.errorMessage = 'Erro ao carregar dados de votação.';
+    } finally {
+      this.loading = false;
+    }
   },
   computed: {
     projectId(): string {
@@ -225,67 +308,6 @@ export default Vue.extend({
     },
     stripExtension(filename: string): string {
       return filename.replace(/\.[^/.]+$/, '');
-    }
-  },
-  async fetch() {
-    this.loading = true;
-    try {
-      const projectId = this.projectId;
-      // tipos e membro
-      this.annotationRuleTypes = await this.$services.annotationRuleType.list(projectId);
-      const member = await this.$repositories.member.fetchMyRole(projectId);
-      this.memberId = member.id;
-      this.isAdmin = member.isProjectAdmin;
-      // configs e regras
-      this.votingConfigs = await this.$services.votingConfiguration.list(projectId);
-      console.log(this.votingConfigs)
-      this.rules = await this.$services.annotationRule.list(projectId);
-      // agrupa e inicializa answeredRules
-      this.groupedRules = {};
-      this.answeredRules = {};
-      for (const cfg of this.votingConfigs) {
-        try {
-          const ex = await this.$services.example.findById(projectId, cfg.example);
-          cfg.fileName = ex.filename;
-        } catch {
-          cfg.fileName = String(cfg.example);
-        }
-        const list = this.rules.filter(r => r.voting_configuration === cfg.id);
-        this.groupedRules[cfg.id] = list;
-        for (const r of list) {
-          const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
-          this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length);
-          this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length);
-          const yes = this.votesYes[r.id] || 0;
-          const no = this.votesNo[r.id] || 0;
-          const total = yes + no;
-          const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
-          const percentageAgainst = total ? Math.round((no / total) * 100) : 0;
-          let result = ''
-          if (percentageAgainst >= cfg.percentage_threshold) {
-            result = 'Rejected'
-          }
-          else if (percentageFavor >= cfg.percentage_threshold) {
-            result = 'Approved'
-          }
-          else {
-            result = 'Needs Discussion'
-          }
-          console.log(percentageFavor + " " + percentageAgainst)
-          this.items.push({
-            exampleName: cfg.fileName.replace(/\.[^/.]+$/, ''),
-            ruleDiscussion: r.description,
-            percentageFavor,
-            percentageAgainst,
-            result
-          })
-          if (ans.some(a => a.member === this.memberId)) this.$set(this.answeredRules, r.id, true);
-        }
-      }
-    } catch {
-      this.errorMessage = 'Erro ao carregar dados de votação.';
-    } finally {
-      this.loading = false;
     }
   },
 });

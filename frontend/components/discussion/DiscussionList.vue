@@ -1,6 +1,6 @@
 <template>
     <div>
-        <v-select v-model="selectedExample" :items="availableExamples" label="Select the dataset"
+        <v-select v-model="selectedVersion" :items="availableVersions" label="Select the version"
             clearable class="my-4 mx-4" />
 
         <v-select v-model="selectedRule" :items="availableRules" label="Select the rule" clearable
@@ -18,20 +18,14 @@
             </template>
             <template #[`header.data-table-select`]>
             </template>
-            <template #[`item.exampleName`]="{ item }">
-                {{ item.exampleName }}
+            <template #[`item.numberVersion`]="{ item }">
+                {{ item.numberVersion }}
             </template>
 
             <template #[`item.ruleDiscussion`]="{ item }">
                 {{ item.ruleDiscussion }}
             </template>
 
-            <template #[`item.percentageFavor`]="{ item }">
-                {{ item.percentageFavor + "%" }}
-            </template>
-            <template #[`item.percentageAgainst`]="{ item }">
-                {{ item.percentageAgainst + "%" }}
-            </template>
             <template #[`item.result`]="{ item }">
                 <v-chip :color="item.result === 'Approved' ? 'success' 
                             : item.result === 'Rejected' ? 'error'
@@ -67,7 +61,7 @@ export default Vue.extend({
             search: '',
             mdiMagnify,
             mdiPencil,
-            selectedExample: null as string | null,
+            selectedVersion: null as string | null,
             exampleNameMap: {} as Record<string, string>,
             selectedRule: null as string | null,
             isReady: false
@@ -77,10 +71,8 @@ export default Vue.extend({
     computed: {
         headers() {
             return [
-                { text: 'Example', value: 'exampleName', sortable: true },  
+                { text: 'Version', value: 'numberVersion', sortable: true },  
                 { text: 'Rule', value: 'ruleDiscussion', sortable: false },
-                { text: 'Favor', value: 'percentageFavor', sortable: true },
-                { text: 'Against', value: 'percentageAgainst', sortable: true },
                 { text: 'Result', value: 'result', sortable: true }
             ]
         },
@@ -89,11 +81,11 @@ export default Vue.extend({
         },
         filteredItems(): Discussion[] {
             let result = this.items.filter(item =>
-                item.exampleName.toLowerCase().includes(this.search.toLowerCase()) || item.ruleDiscussion.toLowerCase().includes(this.search.toLowerCase())
+                item.numberVersion.toLowerCase().includes(this.search.toLowerCase()) || item.ruleDiscussion.toLowerCase().includes(this.search.toLowerCase())
             )
 
-            if (this.selectedExample) {
-                result = result.filter(item => item.exampleName === this.selectedExample)
+            if (this.selectedVersion) {
+                result = result.filter(item => item.numberVersion === this.selectedVersion)
             }
             if (this.selectedRule) {
                 result = result.filter(item => item.ruleDiscussion === this.selectedRule)
@@ -101,50 +93,29 @@ export default Vue.extend({
 
             return result
         },
-        availableExamples(): string[] {
+        availableVersions(): string[] {
             if (!this.selectedRule) {
-                return [...new Set(this.items.map(item => item.exampleName))]
+                return [...new Set(this.items.map(item => item.numberVersion))]
             }
 
             return [...new Set(
                 this.items
                     .filter(item => item.ruleDiscussion === this.selectedRule)
-                    .map(item => item.exampleName)
+                    .map(item => item.numberVersion)
             )]
         },
         availableRules(): string[] {
-            if (!this.selectedExample) {
+            if (!this.selectedVersion) {
                 return [...new Set(this.items.map(item => item.ruleDiscussion))]
             }
 
             return [...new Set(
                 this.items
-                    .filter(item => item.exampleName === this.selectedExample)
+                    .filter(item => item.numberVersion === this.selectedVersion)
                     .map(item => item.ruleDiscussion)
             )]
         }
     },
-
-    watch: {
-        items: {
-            immediate: true,
-            handler() {
-                this.hasRuleBeenApproved();
-            }
-        }
-    },
-
-    methods: {
-        hasRuleBeenApproved() {
-            this.items.forEach(item => {
-                if (item.percentageFavor > item.percentageAgainst) {
-                    item.result = 'Approved'
-                } else {
-                    item.result = 'Rejected'
-                }
-            })
-        },
-    }
 })
 </script>
 
