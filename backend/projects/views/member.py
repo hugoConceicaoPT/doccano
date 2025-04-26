@@ -2,7 +2,7 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 
 from projects.exceptions import RoleAlreadyAssignedException, RoleConstraintException
@@ -17,7 +17,18 @@ class MemberList(generics.ListCreateAPIView):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
     pagination_class = None
-    permission_classes = [IsAuthenticated & IsProjectAdmin]
+
+    def get_permissions(self):
+        # GET /members: qualquer usuário autenticado pode listar membros
+        if self.request.method == 'GET':
+            permission_classes = [IsAuthenticated]
+        # POST (criar membro) e DELETE (bulk delete): apenas admins
+        elif self.request.method in ('POST', 'DELETE'):
+            permission_classes = [IsAuthenticated, IsProjectAdmin]
+        else:
+            # outros métodos (PATCH, etc.) não suportados
+            permission_classes = [IsAuthenticated, IsProjectAdmin]
+        return [permission() for permission in permission_classes]
 
     def filter_queryset(self, queryset):
         queryset = queryset.filter(project=self.kwargs["project_id"])
@@ -40,7 +51,6 @@ class MemberDetail(generics.RetrieveUpdateAPIView):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
     lookup_url_kwarg = "member_id"
-    permission_classes = [IsAuthenticated & IsProjectAdmin]
 
     def perform_update(self, serializer):
         project_id = self.kwargs["project_id"]

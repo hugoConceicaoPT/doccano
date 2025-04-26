@@ -11,6 +11,7 @@ Any setting that is configured via an environment variable may
 also be set in a `.env` file in the project base directory.
 """
 from os import path
+import os
 
 import dj_database_url
 from environs import Env, EnvError
@@ -113,7 +114,7 @@ TEMPLATES = [
 STATIC_URL = "/static/"
 STATIC_ROOT = path.join(BASE_DIR, "staticfiles")
 STATICFILES_DIRS = [
-    path.join(BASE_DIR, "client/dist/static"),
+    path.join(BASE_DIR, "..", "frontend", "static"),
 ]
 # STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
@@ -236,7 +237,16 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", ["http://192.168.56.1:30
 ALLOWED_HOSTS = ["*"]
 
 if DEBUG:
-    CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ORIGIN_ALLOW_ALL = False
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://0.0.0.0:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://0.0.0.0:8080",
+    ]
+    CORS_ALLOW_CREDENTIALS = True
     CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:3000", "http://0.0.0.0:3000", "http://localhost:3000", "http://192.168.56.1:3000"]
     CSRF_TRUSTED_ORIGINS += env.list("CSRF_TRUSTED_ORIGINS", [])
 
@@ -275,7 +285,8 @@ except EnvError:
     try:
         # quickfix for Heroku.
         # See https://github.com/doccano/doccano/issues/1327.
-        uri = env("DATABASE_URL")
+        uri = os.getenv("DATABASE_URL")
+        print(uri)
         if uri.startswith("postgres://"):
             uri = uri.replace("postgres://", "postgresql://", 1)
         CELERY_BROKER_URL = "sqla+{}".format(uri)

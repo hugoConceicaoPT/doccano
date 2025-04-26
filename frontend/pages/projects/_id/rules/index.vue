@@ -1,5 +1,6 @@
 <template>
   <v-card>
+    <v-card-title>Votação para regras de anotações</v-card-title>
     <v-alert v-if="successMessage" type="success" dismissible @click="successMessage = ''">
       {{ successMessage }}
     </v-alert>
@@ -27,25 +28,19 @@
             </v-col>
           </v-row>
           <div v-else>
-            <!-- Exibe apenas datasets com regras pendentes -->
-            <div v-for="cfg in availableConfigs" :key="cfg.id" class="mb-6">
-              <v-subheader>Dataset: {{ stripExtension(cfg.filename) }}</v-subheader>
-              <v-row>
-                <v-col v-for="rule in pendingRules.filter(r => r.voting_configuration === cfg.id)" :key="rule.id"
-                  cols="12" sm="6" md="4">
-                  <v-card outlined class="mb-4">
-                    <v-card-title>{{ rule.name }}</v-card-title>
-                    <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
-                    <v-card-actions>
-                      <v-btn small color="success" :disabled="rule.id in localVotes"
-                        @click="vote(rule.id, true)">Sim</v-btn>
-                      <v-btn small color="error" :disabled="rule.id in localVotes"
-                        @click="vote(rule.id, false)">Não</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-col>
-              </v-row>
-            </div>
+            <!-- Exibe todas as regras pendentes sem divisão por dataset -->
+            <v-row class="mb-6">
+              <v-col v-for="rule in pendingRules" :key="rule.id" cols="12" sm="6" md="4">
+                <v-card outlined class="mb-4">
+                  <v-card-title>{{ rule.name }}</v-card-title>
+                  <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
+                  <v-card-actions>
+                    <v-btn small color="success" :disabled="rule.id in localVotes" @click="vote(rule.id, true)">Sim</v-btn>
+                    <v-btn small color="error" :disabled="rule.id in localVotes" @click="vote(rule.id, false)">Não</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
             <!-- Botão global de submissão -->
             <v-row>
               <v-col cols="12" class="text-center">
@@ -62,62 +57,6 @@
           </v-row>
         </div>
       </div>
-      <!-- Sistema de votação para não-admins, não exibir após submissão -->
-      <template v-if="!isAdmin">
-        <v-card-title>Voting de Regras de Anotação</v-card-title>
-        <!-- Indicador de carregamento -->
-        <v-row v-if="loading">
-          <v-col cols="12" class="text-center">
-            <v-progress-circular indeterminate color="primary" />
-          </v-col>
-        </v-row>
-        <!-- Lista de regras com votação -->
-        <v-row v-else>
-          <v-col v-if="!rules.length" cols="12">
-            <p>Nenhuma regra disponível para votação.</p>
-          </v-col>
-          <v-col v-else cols="12">
-            <v-row>
-              <v-col v-for="rule in rules" :key="rule.id" cols="12" sm="6" md="4">
-                <v-card outlined class="mb-4">
-                  <v-card-title>
-                    {{ rule.name }}
-                  </v-card-title>
-                  <v-card-subtitle>
-                    {{ rule.description }}
-                  </v-card-subtitle>
-                  <v-card-text>
-                    Sim: {{ votesYes[rule.id] || 0 }} | Não: {{ votesNo[rule.id] || 0 }}
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn small color="success" :disabled="rule.id in localVotes" @click="vote(rule.id, true)">
-                      Sim
-                    </v-btn>
-                    <v-btn small color="error" :disabled="rule.id in localVotes" @click="vote(rule.id, false)">
-                      Não
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-col>
-            </v-row>
-            <!-- Botão de submissão: sempre visível, mas desabilitado até todas as regras votadas -->
-            <v-row>
-              <v-col cols="12" class="text-center">
-                <v-btn color="primary" :disabled="loading || !canSubmit" @click="submitVotes">
-                  Submeter Votos
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-        <template v-if="answeredRules">
-          <v-row>
-            <v-col cols="12" class="text-center">
-              <p>Votação concluída com sucesso!</p>
-            </v-col>
-          </v-row>
-        </template>
-      </template>
       <!-- Mensagem após submissão de votos -->
     </v-card-text>
   </v-card>
@@ -127,6 +66,7 @@
 import Vue from 'vue';
 import DiscussionList from '~/components/discussion/DiscussionList.vue';
 import { VotingConfigurationItem } from '~/domain/models/rules/rule';
+import { MemberItem } from '~/domain/models/member/member';
 
 export type Discussion = {
   numberVersion: string;
@@ -154,6 +94,8 @@ export default Vue.extend({
       votesNo: {} as Record<number, number>,
       // regras já votadas (dados do servidor ou após submit)
       answeredRules: {} as Record<number, boolean>,
+      // regras finalizadas quando atingem número mínimo de votos
+      finalizedRules: {} as Record<number, boolean>,
       // votos locais antes de enviar
       localVotes: {} as Record<number, boolean>,
       votingConfigs: [] as VotingAnswer[],
@@ -161,13 +103,18 @@ export default Vue.extend({
       memberId: 0,
       annotationRuleTypes: [] as any[],
       isAdmin: false,
-      items: [] as Discussion[]
+      items: [] as Discussion[],
+      // timestamp para expiração reativa das regras
+      currentTime: Date.now(),
     };
   },
   async fetch() {
     this.loading = true;
     try {
       const projectId = this.projectId;
+      // buscar todos os membros e filtrar apenas anotadores
+      const members: MemberItem[] = await this.$repositories.member.list(projectId);
+      const annotatorIds: number[] = members.filter(m => m.isAnnotator).map(m => m.id);
       // tipos e membro
       this.annotationRuleTypes = await this.$services.annotationRuleType.list(projectId);
       const member = await this.$repositories.member.fetchMyRole(projectId);
@@ -175,11 +122,12 @@ export default Vue.extend({
       this.isAdmin = member.isProjectAdmin;
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId);
-      console.log(this.votingConfigs)
       this.rules = await this.$services.annotationRule.list(projectId);
-      // agrupa e inicializa answeredRules
+      // inicializa agrupamentos e estados
       this.groupedRules = {};
       this.answeredRules = {};
+      this.finalizedRules = {};
+      // processa todas as configurações
       this.votingConfigs.forEach(async (cfg) => {
         try {
           const list = this.rules.filter(r => r.voting_configuration === cfg.id);
@@ -217,6 +165,12 @@ export default Vue.extend({
             const no = this.votesNo[r.id] || 0;
             const total = yes + no;
 
+            // marca finalizada quando todos os anotadores votaram
+            const votesFromAnnotators = ans.filter(a => annotatorIds.includes(a.member)).length;
+            if (votesFromAnnotators >= annotatorIds.length) {
+              this.$set(this.finalizedRules, r.id, true);
+            }
+
             const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
             const percentageAgainst = total ? Math.round((no / total) * 100) : 0;
 
@@ -249,13 +203,29 @@ export default Vue.extend({
       this.loading = false;
     }
   },
+  mounted() {
+    // atualiza currentTime a cada minuto para reavaliar expiração de regras
+    this._timer = setInterval(() => { this.currentTime = Date.now(); }, 60000);
+  },
+  beforeDestroy() {
+    clearInterval(this._timer);
+  },
   computed: {
     projectId(): string {
       return this.$route.params.id;
     },
-    // regras ainda não votadas
+    // regras que ainda precisam de voto (não votadas, não finalizadas e dentro do prazo)
     pendingRules(): any[] {
-      return this.rules.filter(r => !(r.id in this.answeredRules));
+      const now = this.currentTime;
+      return this.rules.filter(r => {
+        if (r.id in this.answeredRules) return false;
+        if (r.id in this.finalizedRules) return false;
+        const cfg = this.votingConfigs.find(c => c.id === r.voting_configuration);
+        if (!cfg) return false;
+        const endTime = new Date(cfg.end_date).getTime();
+        if (isNaN(endTime) || now > endTime) return false;
+        return true;
+      });
     },
     // habilita submit quando cada pendente tiver voto local
     canSubmit(): boolean {
@@ -306,8 +276,8 @@ export default Vue.extend({
       const t = this.annotationRuleTypes.find(t => t.id === typeId);
       return t ? t.annotation_rule_type : '';
     },
-    stripExtension(filename: string): string {
-      return filename.replace(/\.[^/.]+$/, '');
+    stripExtension(filename?: string): string {
+      return filename ? filename.replace(/\.[^/.]+$/, '') : '';
     }
   },
 });
