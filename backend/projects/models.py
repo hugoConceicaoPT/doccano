@@ -293,6 +293,8 @@ class AnnotationRule(models.Model):
     annotation_rule_type = models.ForeignKey(
         AnnotationRuleType, on_delete=models.CASCADE, related_name="annotation_rules_set"
     )
+    is_finalized = models.BooleanField(default=False)
+    final_result = models.CharField(max_length=20, blank=True)
 
 
 class AnnotationRuleAnswers(models.Model):

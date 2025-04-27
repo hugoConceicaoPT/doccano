@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.core.mail import send_mail
@@ -121,11 +121,14 @@ class AnnotationRuleTypeDetail(RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     lookup_url_kwarg = 'annotation_rule_type_id'
 
-class AnnotationRuleDetail(RetrieveAPIView):
+class AnnotationRuleDetail(RetrieveUpdateAPIView):
     queryset = AnnotationRule.objects.all()
     serializer_class = AnnotationRuleSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated & IsProjectAdmin]
     lookup_url_kwarg = 'annotation_rule_id'
+
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
 
 class VotingConfigurationDetail(RetrieveAPIView):
     queryset = VotingCofiguration.objects.all()

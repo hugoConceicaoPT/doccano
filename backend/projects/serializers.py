@@ -295,6 +295,8 @@ class AnnotationRuleSerializer(serializers.ModelSerializer):
             "description",
             "voting_configuration",
             "annotation_rule_type",
+            "is_finalized",
+            "final_result",
         ]
 
 class VotingCofigurationSerializer(serializers.ModelSerializer):

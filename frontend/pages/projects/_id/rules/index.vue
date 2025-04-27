@@ -15,7 +15,7 @@
           <v-btn color="primary" class="mx-4" @click="goToConfig">
             Configure
           </v-btn>
-          <discussion-list :items="items" :isLoading="loading" />
+          <discussion-list :items="items" :is-loading="loading" />
         </v-col>
       </v-row>
 
@@ -106,6 +106,8 @@ export default Vue.extend({
       items: [] as Discussion[],
       // timestamp para expiração reativa das regras
       currentTime: Date.now(),
+      // timer para atualização periódica
+      timerId: 0 as number,
     };
   },
   async fetch() {
@@ -183,6 +185,18 @@ export default Vue.extend({
               result = 'Needs Discussion';
             }
 
+            // persiste finalização e resultado no backend
+            if (votesFromAnnotators >= annotatorIds.length) {
+              try {
+                await this.$services.annotationRule.update(projectId, r.id, {
+                  is_finalized: true,
+                  final_result: result,
+                });
+              } catch (error) {
+                console.error('Erro ao finalizar regra:', error);
+              }
+            }
+
             this.items.push({
               numberVersion,
               ruleDiscussion: r.description,
@@ -205,10 +219,10 @@ export default Vue.extend({
   },
   mounted() {
     // atualiza currentTime a cada minuto para reavaliar expiração de regras
-    this._timer = setInterval(() => { this.currentTime = Date.now(); }, 60000);
+    this.timerId = window.setInterval(() => { this.currentTime = Date.now(); }, 60000);
   },
   beforeDestroy() {
-    clearInterval(this._timer);
+    window.clearInterval(this.timerId);
   },
   computed: {
     projectId(): string {

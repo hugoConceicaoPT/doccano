@@ -67,6 +67,11 @@ import {
       }
       return new AnnotationRuleDTO(item);
     }
+  
+    public async update(projectId: string, id: number, data: any): Promise<AnnotationRuleDTO> {
+      const updated = await this.repository.update(projectId, id, data as Partial<import('~/domain/models/rules/rule').AnnotationRuleItem>);
+      return new AnnotationRuleDTO(updated);
+    }
   }
   
   export class VotingConfigurationApplicationService {
