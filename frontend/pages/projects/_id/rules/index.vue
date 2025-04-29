@@ -54,7 +54,7 @@
         <div v-else>
           <v-row>
             <v-col cols="12" class="text-center">
-              <p>Votação concluída com sucesso!</p>
+              <p>Não existem regras para serem votadas.</p>
             </v-col>
           </v-row>
         </div>
