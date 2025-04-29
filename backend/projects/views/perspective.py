@@ -16,7 +16,6 @@ from projects.models import (
     QuestionType,
     Member
 )
-from projects.permissions import IsProjectAdmin
 from projects.serializers import (
     AnswerSerializer,
     OptionQuestionSerializer,

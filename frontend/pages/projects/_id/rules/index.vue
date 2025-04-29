@@ -35,8 +35,10 @@
                   <v-card-title>{{ rule.name }}</v-card-title>
                   <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
                   <v-card-actions>
-                    <v-btn small color="success" :disabled="rule.id in localVotes" @click="vote(rule.id, true)">Sim</v-btn>
-                    <v-btn small color="error" :disabled="rule.id in localVotes" @click="vote(rule.id, false)">Não</v-btn>
+                    <v-btn small color="success" :disabled="rule.id in localVotes"
+                      @click="vote(rule.id, true)">Sim</v-btn>
+                    <v-btn small color="error" :disabled="rule.id in localVotes"
+                      @click="vote(rule.id, false)">Não</v-btn>
                   </v-card-actions>
                 </v-card>
               </v-col>
@@ -71,6 +73,7 @@ import { MemberItem } from '~/domain/models/member/member';
 export type Discussion = {
   numberVersion: string;
   ruleDiscussion: string;
+  isFinalized: boolean;
   result: string;
 }
 
@@ -104,10 +107,8 @@ export default Vue.extend({
       annotationRuleTypes: [] as any[],
       isAdmin: false,
       items: [] as Discussion[],
-      // timestamp para expiração reativa das regras
       currentTime: Date.now(),
-      // timer para atualização periódica
-      timerId: 0 as number,
+      timerId: 0 as number
     };
   },
   async fetch() {
@@ -132,8 +133,8 @@ export default Vue.extend({
       // processa todas as configurações
       this.votingConfigs.forEach(async (cfg) => {
         try {
-          const list = this.rules.filter(r => r.voting_configuration === cfg.id);
-          this.groupedRules[cfg.id] = list;
+          const list = this.rules.filter(r => r.voting_configuration === cfg.id)
+          this.groupedRules[cfg.id] = list
 
           for (const r of list) {
             const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
@@ -151,8 +152,9 @@ export default Vue.extend({
               return indexA - indexB;
             });
 
-            const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id);
-
+            const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id)
+            const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
+            const isExpired = this.currentTime > endTime
             let numberVersion = '';
             if (index < 10) {
               numberVersion = 'V_0' + (index + 1);
@@ -169,7 +171,7 @@ export default Vue.extend({
 
             // marca finalizada quando todos os anotadores votaram
             const votesFromAnnotators = ans.filter(a => annotatorIds.includes(a.member)).length;
-            if (votesFromAnnotators >= annotatorIds.length) {
+            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
               this.$set(this.finalizedRules, r.id, true);
             }
 
@@ -186,7 +188,7 @@ export default Vue.extend({
             }
 
             // persiste finalização e resultado no backend
-            if (votesFromAnnotators >= annotatorIds.length) {
+            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
               try {
                 await this.$services.annotationRule.update(projectId, r.id, {
                   is_finalized: true,
@@ -197,12 +199,14 @@ export default Vue.extend({
               }
             }
 
-            this.items.push({
-              numberVersion,
-              ruleDiscussion: r.description,
-              result
-            });
-
+            if (r.is_finalized === true) {
+              this.items.push({
+                numberVersion,
+                ruleDiscussion: r.description,
+                isFinalized: r.is_finalized,
+                result
+              });
+            }
             if (ans.some(a => a.member === this.memberId)) {
               this.$set(this.answeredRules, r.id, true);
             }

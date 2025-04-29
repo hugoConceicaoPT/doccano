@@ -22,6 +22,8 @@ import {
     description: string;
     voting_configuration: number;
     annotation_rule_type: number;
+    final_result: string;
+    is_finalized: boolean;
   
     constructor(item: AnnotationRuleItem) {
       this.id = item.id;

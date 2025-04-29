@@ -31,6 +31,7 @@ import { APIOptionsQuestionRepository } from '~/repositories/perspective/questio
 import { APIQuestionTypeRepository } from '~/repositories/perspective/question/apiQuestionTypeReposity'
 import { APIAnswerRepository } from '~/repositories/perspective/answer/apiAnswerRepository'
 import { APIVotingConfigurationRepository, APIAnnotationRuleTypeRepository, APIAnnotationRuleRepository, APIAnnotationRuleAnswerRepository } from '~/repositories/rules/apiRuleRepository'
+import { APIStatisticsRepository } from '~/repositories/statistics/apiStatisticsRepository'
 
 export interface Repositories {
   // User
@@ -58,6 +59,7 @@ export interface Repositories {
   comment: APICommentRepository
   taskStatus: APITaskStatusRepository
   metrics: APIMetricsRepository
+  statistics: APIStatisticsRepository
   option: LocalStorageOptionRepository
   assignment: APIAssignmentRepository
 
@@ -119,6 +121,7 @@ const repositories: Repositories = {
   comment: new APICommentRepository(),
   taskStatus: new APITaskStatusRepository(),
   metrics: new APIMetricsRepository(),
+  statistics: new APIStatisticsRepository(),
   option: new LocalStorageOptionRepository(),
   assignment: new APIAssignmentRepository(),
 

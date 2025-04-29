@@ -54,6 +54,8 @@ import {
       readonly description: string,
       readonly voting_configuration: number,
       readonly annotation_rule_type: number,
+      readonly final_result: string,
+      readonly is_finalized: boolean
     ) {}
   
     static create(
@@ -70,6 +72,8 @@ import {
         description,
         voting_configuration,
         annotation_rule_type,
+        '',
+        false
       );
     }
   

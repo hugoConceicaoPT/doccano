@@ -117,6 +117,7 @@ export default Vue.extend({
         const projectId = this.$route.params.id
         const response = await this.$services.perspective.list(projectId)
         this.items = Array.isArray(response) ? response : [response]
+        console.log(this.items)
       } catch (error) {
         console.error('Erro ao buscar perspectivas:', error)
         alert('Erro ao buscar o papel ou perguntas')
@@ -129,12 +130,10 @@ export default Vue.extend({
       this.isLoading = true
       try {
         const response = await this.$services.answer.list()
-        console.log('Respostas:', response)
         this.AlreadyAnswered = response.some((answer: AnswerItem) => {
           return this.questionsList.some((question) => question.id === answer.question) &&
                  answer.member === this.myRole?.id;
         });
-        console.log('Respondeu?', this.AlreadyAnswered)
       } catch (error) {
         console.error('Erro ao buscar respostas:', error)
       } finally {
@@ -160,16 +159,12 @@ export default Vue.extend({
           this.multipleChoiceMap[index] = q.options_group !== null && q.options_group !== undefined
           if(this.multipleChoiceMap[index]) {
             if (q.options_group !== undefined && q.options_group !== null) {
-              console.log('Id das opções:', q.options_group)
               const options = await this.$services.optionsQuestion.list(this.projectId)
               this.optionsList = options
-              console.log('Opções:', options)
             }
           }
           index++
         }
-        console.log('Perguntas:', this.questionsList)
-        console.log('Multiple Choice Map:', this.multipleChoiceMap)
       } catch (error) {
         console.error('Erro ao buscar perguntas:', error)
       } finally {

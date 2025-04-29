@@ -34,15 +34,7 @@ export default Vue.extend({
 
     async fetch() {
         this.isLoading = true
-        if (this.project.canDefineCategory) {
-            this.items = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
-        }
-        if (this.project.canDefineSpan) {
-            this.items = await this.$repositories.metrics.fetchSpanPercentage(this.projectId)
-        }
-        if (this.project.canDefineRelation) {
-            this.items = await this.$repositories.metrics.fetchRelationPercentage(this.projectId)
-        }
+        this.items = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
         this.isLoading = false
     },
 
@@ -57,7 +49,7 @@ export default Vue.extend({
     watch: {
         project: {
             handler(newVal) {
-                if (newVal && (newVal.canDefineCategory || newVal.canDefineSpan || newVal.canDefineRelation)) {
+                if (newVal) {
                     this.$fetch();
                 }
             },

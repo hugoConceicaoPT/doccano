@@ -1,5 +1,9 @@
 <template>
     <v-row>
+        <v-col cols="12">
+            <perspective-percentage-distribution title="Perspective Distribution" :distribution="perspectiveDistribution"
+                 />
+        </v-col>
         <v-col v-if="!!project.canDefineCategory" cols="12">
             <non-discrepancy-progress :categoryPercentage="categoryPercentage" :project="this.project" />
         </v-col>
@@ -14,11 +18,13 @@
 import { mapGetters } from 'vuex'
 import NonDiscrepancyProgress from '~/components/statistics/NonDiscrepancyProgress.vue'
 import LabelPercentageDistribution from '~/components/statistics/LabelPercentageDistribution'
+import PerspectivePercentageDistribution from '~/components/statistics/PerspectivePercentageDistribution.vue'
 
 export default {
     components: {
         LabelPercentageDistribution,
-        NonDiscrepancyProgress
+        NonDiscrepancyProgress,
+        PerspectivePercentageDistribution
     },
 
     layout: 'project',
@@ -33,7 +39,8 @@ export default {
         return {
             categoryTypes: [],
             categoryPercentage: {},
-            examples: {}
+            examples: {},
+            perspectiveDistribution: {}
         }
     },
 
@@ -52,11 +59,10 @@ export default {
         }, 1000)
     },
     async created() {
-        if (this.project.canDefineCategory) {
-            this.categoryTypes = await this.$services.categoryType.list(this.projectId)
-            this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
-            this.examples = await this.$services.example.list(this.projectId, this.$route.query)
-        }
+        this.categoryTypes = await this.$services.categoryType.list(this.projectId)
+        this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+        this.perspectiveDistribution = await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(this.projectId)
+        this.examples = await this.$services.example.list(this.projectId, this.$route.query)
     }
 }
 </script>

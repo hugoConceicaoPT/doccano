@@ -50,7 +50,9 @@ import {
         item.name,
         item.description,
         item.voting_configuration,
-        item.annotation_rule_type
+        item.annotation_rule_type,
+        '',
+        false
       );
       const created = await this.repository.create(projectId, annotationRule);
       return new AnnotationRuleDTO(created);

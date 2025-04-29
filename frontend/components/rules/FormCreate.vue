@@ -221,6 +221,8 @@
             description: value.trim(),
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
+            final_result: '',
+            is_finalized: false
           };
           this.$emit('update:annotationRulesList', [newRule]);
         } else {
@@ -236,6 +238,8 @@
             description: this.newRuleText.trim(),
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
+            final_result: '',
+            is_finalized: false
           };
           const updatedRulesList = [...this.annotationRulesList, newRule];
           this.$emit('update:annotationRulesList', updatedRulesList);

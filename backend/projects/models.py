@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Manager
+from projects.managers import PerspectiveManager
 from polymorphic.models import PolymorphicModel
 
 from roles.models import Role
@@ -203,6 +204,7 @@ class MemberManager(Manager):
 class Perspective(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     project = models.OneToOneField(Project, on_delete=models.CASCADE)
+    objects = PerspectiveManager()
 
 
 class Member(models.Model):

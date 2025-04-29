@@ -21,14 +21,11 @@ from .views.rule import (
     AnnotationRuleCreation, 
     AnnotationRuleDetail,
     AnnotationRuleTypes,
-    AnnotationRuleTypeCreation,
-    AnnotationRuleTypeDetail,
     AnnotationRuleAnswersCreation,
     AnnotationRuleAnswersList,
     AnnotationRuleAnswerDetail,
     VotingConfigurations,
     VotingConfigurationCreation,
-    VotingConfigurationDetail,
     )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
