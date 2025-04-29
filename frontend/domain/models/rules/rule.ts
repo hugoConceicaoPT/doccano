@@ -110,7 +110,6 @@ import {
       readonly id: number,
       readonly project: number,
       readonly annotation_rule_type: number,
-      readonly example: number,
       readonly voting_threshold: number,
       readonly percentage_threshold: number,
       readonly created_by: number | null,
@@ -121,7 +120,6 @@ import {
     static create(
       project: number,
       annotation_rule_type: number,
-      example: number,
       voting_threshold: number,
       percentage_threshold: number,
       created_by: number | null,
@@ -132,7 +130,6 @@ import {
         0,
         project,
         annotation_rule_type,
-        example,
         voting_threshold,
         percentage_threshold,
         created_by,

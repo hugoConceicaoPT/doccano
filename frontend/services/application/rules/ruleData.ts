@@ -39,7 +39,6 @@ import {
     id: number;
     project: number;
     annotation_rule_type: number;
-    example: number;
     voting_threshold: number;
     percentage_threshold: number;
     created_by: number | null;
@@ -50,7 +49,6 @@ import {
       this.id = item.id;
       this.project = item.project;
       this.annotation_rule_type = item.annotation_rule_type;
-      this.example = item.example;
       this.voting_threshold = item.voting_threshold;
       this.percentage_threshold = item.percentage_threshold;
       this.created_by = item.created_by;

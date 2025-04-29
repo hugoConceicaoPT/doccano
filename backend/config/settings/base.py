@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "roles",
     "projects",
     "metrics",
+    "statistics",
     "users",
     #"groups",
     "data_import",
@@ -286,7 +287,6 @@ except EnvError:
         # quickfix for Heroku.
         # See https://github.com/doccano/doccano/issues/1327.
         uri = os.getenv("DATABASE_URL")
-        print(uri)
         if uri.startswith("postgres://"):
             uri = uri.replace("postgres://", "postgresql://", 1)
         CELERY_BROKER_URL = "sqla+{}".format(uri)

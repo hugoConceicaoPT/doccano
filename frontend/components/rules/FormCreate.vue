@@ -14,18 +14,6 @@
             @input="$emit('update:editedItem', { ...editedItem, annotation_rule_type: Number($event) })"
           ></v-select>
 
-          <v-select
-            :items="examples"
-            item-text="text"
-            item-value="id"
-            label="Exemplo"
-            :rules="[rules.required]"
-            :loading="loadingExamples"
-            :disabled="loadingExamples"
-            :value="editedItem.example"
-            @input="$emit('update:editedItem', { ...editedItem, example: Number($event) })"
-          ></v-select>
-
           <v-text-field
             label="Limite de Votos"
             type="number"
@@ -159,14 +147,6 @@
       },
       annotationRulesList: {
         type: Array as () => CreateAnnotationRuleCommand[],
-        required: true,
-      },
-      examples: {
-        type: Array as () => any[],
-        required: true,
-      },
-      loadingExamples: {
-        type: Boolean,
         required: true,
       },
     },
