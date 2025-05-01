@@ -8,9 +8,9 @@
       :annotationRuleTypes="annotationRuleTypes"
       :annotationRulesList.sync="annotationRulesList"
     >
-      <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancelar </v-btn>
+      <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancel </v-btn>
       <v-btn :disabled="!slotProps.valid" color="primary" class="text-capitalize" @click="save">
-        Guardar
+        Save
       </v-btn>
     </form-create>
   </div>
@@ -117,7 +117,7 @@ export default Vue.extend({
           await this.annotationRuleService.create(this.projectId, rulePayload);
         }
 
-        this.sucessMessage = 'Regras de anotação guardadas com sucesso.';
+        this.sucessMessage = 'Annotation rules saved successfully.';
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/rules`);
         }, 1000);
@@ -127,9 +127,9 @@ export default Vue.extend({
     },
     handleError(error: any) {
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Erro ao guardar as regras de anotação.';
+        this.errorMessage = 'Error saving annotation rules.';
       } else {
-        this.errorMessage = 'A base de dados está lenta ou indisponível. Por favor, tente novamente mais tarde.';
+        this.errorMessage = 'The database is slow or unavailable. Please try again later.';
       }
     },
   },

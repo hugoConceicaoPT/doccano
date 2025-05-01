@@ -1,13 +1,13 @@
 <template>
     <v-card>
-      <v-card-title>Configurar Votação e Adicionar Regras de Anotação</v-card-title>
+      <v-card-title>Configure Voting and Add Annotation Rules</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="valid">
           <v-select
             :items="annotationRuleTypes"
             item-text="annotation_rule_type"
             item-value="id"
-            label="Tipo de Regra de Anotação"
+            label="Annotation Rule Type"
             :rules="[rules.required]"
             :disabled="annotationRuleTypes.length === 0"
             :value="editedItem.annotation_rule_type"
@@ -15,7 +15,7 @@
           ></v-select>
 
           <v-text-field
-            label="Limite de Votos"
+            label="Vote Threshold"
             type="number"
             :value="editedItem.voting_threshold"
             :rules="[rules.required, rules.min(0)]"
@@ -23,7 +23,7 @@
           ></v-text-field>
 
           <v-text-field
-            label="Limite de Percentagem"
+            label="Percentage Threshold"
             type="number"
             step="0.01"
             min="0"
@@ -34,14 +34,14 @@
           ></v-text-field>
 
           <v-text-field
-            label="Data de Início"
+            label="Start Date"
             type="datetime-local"
             :rules="[rules.required]"
             :value="editedItem.begin_date"
             @input="$emit('update:editedItem', { ...editedItem, begin_date: $event })"
           ></v-text-field>
           <v-text-field
-            label="Data de Fim"
+            label="End Date"
             type="datetime-local"
             :rules="[rules.required, rules.isAfter(editedItem.begin_date)]"
             :value="editedItem.end_date"
@@ -50,56 +50,43 @@
   
           <v-divider class="my-4"></v-divider>
   
-          <v-card-subtitle>Adicionar Regras de Anotação</v-card-subtitle>
+          <v-card-subtitle>Add Annotation Rules</v-card-subtitle>
   
-          <!-- Campo único para tipo 1 -->
+          <!-- Single field for type 1 -->
           <v-row v-if="editedItem.annotation_rule_type === 1">
             <v-col cols="12">
               <v-text-field
                 v-model="newRuleName"
-                label="Nome da Regra"
+                label="Rule Name"
                 outlined
-                :rules="[rules.requiredIf(newRuleText)]"
+                :rules="[rules.requiredIfNoRules(annotationRulesList)]"
                 class="mb-4"
-              ></v-text-field>
-              <v-text-field
-                v-model="newRuleText"
-                label="Regra de Anotação"
-                outlined
-                :rules="[rules.requiredIf(newRuleName)]"
                 @input="handleSingleRuleInput"
               ></v-text-field>
             </v-col>
           </v-row>
   
-          <!-- Múltiplos campos para tipo 2 -->
+          <!-- Multiple fields for type 2 -->
           <template v-else-if="editedItem.annotation_rule_type === 2">
             <v-row>
               <v-col cols="12">
                 <v-text-field
                   v-model="newRuleName"
-                  label="Nome da Regra"
+                  label="Rule Name"
                   outlined
-                  :rules="[rules.requiredIf(newRuleText)]"
+                  :rules="[rules.requiredIfNoRules(annotationRulesList)]"
                   class="mb-4"
-                ></v-text-field>
-                <v-text-field
-                  v-model="newRuleText"
-                  label="Nova Regra de Anotação"
-                  outlined
-                  :rules="[rules.requiredIf(newRuleName)]"
-                  @keyup.enter="addRule"
                 ></v-text-field>
               </v-col>
             </v-row>
   
             <v-row>
               <v-col cols="12">
-                <v-btn color="primary" @click="addRule">Adicionar Regra</v-btn>
+                <v-btn color="primary" @click="addRule">Add Rule</v-btn>
               </v-col>
             </v-row>
   
-            <v-row v-if="annotationRulesList.length">
+            <v-row v-if="annotationRulesList.length > 0">
               <v-col cols="12">
                 <v-list dense>
                   <v-list-item-group>
@@ -108,13 +95,10 @@
                         <v-list-item-title>
                           <strong>{{ rule.name }}</strong>
                         </v-list-item-title>
-                        <v-list-item-subtitle>
-                          {{ rule.description }}
-                        </v-list-item-subtitle>
                       </v-list-item-content>
                       <v-list-item-action>
                         <v-btn icon color="red" @click="removeRule(index)">
-                          <v-icon>mdi-delete</v-icon>
+                          Delete
                         </v-btn>
                       </v-list-item-action>
                     </v-list-item>
@@ -155,17 +139,21 @@
       return {
         valid: false,
         rules: {
-          required: (value: any) => !!value || 'Campo obrigatório.',
+          required: (value: any) => !!value || 'Required field.',
           requiredIf: (otherValue: any) => (value: any) => {
-            if (otherValue && !value) return 'Campo obrigatório quando o outro campo está preenchido.';
+            if (otherValue && !value) return 'Required field when the other field is filled.';
             return true;
           },
-          integer: (value: any) => Number.isInteger(value) || 'Deve ser um número inteiro.',
-          min: (min: number) => (value: number) => value >= min || `Deve ser maior ou igual a ${min}.`,
-          max: (max: number) => (value: number) => value <= max || `Deve ser menor ou igual a ${max}.`,
+          requiredIfNoRules: (rulesList: any[]) => (value: any) => {
+            if (rulesList.length === 0 && !value) return 'Required field when there are no rules.';
+            return true;
+          },
+          integer: (value: any) => Number.isInteger(value) || 'Must be an integer.',
+          min: (min: number) => (value: number) => value >= min || `Must be greater than or equal to ${min}.`,
+          max: (max: number) => (value: number) => value <= max || `Must be less than or equal to ${max}.`,
           isAfter: (startDate: any) => (endDate: any) => {
             if (!startDate || !endDate) return true;
-            return new Date(endDate).getTime() > new Date(startDate).getTime() || 'A data de fim deve ser posterior à data de início.';
+            return new Date(endDate).getTime() > new Date(startDate).getTime() || 'End date must be after start date.';
           },
         },
         newRuleText: '',
@@ -185,7 +173,7 @@
     computed: {
       isFormValid(): boolean {
         if (this.editedItem.annotation_rule_type === 1) {
-          return this.valid && this.newRuleText.trim() !== '';
+          return this.valid && (this.annotationRulesList.length > 0 || this.newRuleName.trim() !== '');
         } else {
           return this.valid && this.annotationRulesList.length > 0;
         }
@@ -193,12 +181,12 @@
     },
   
     methods: {
-      handleSingleRuleInput(value: string) {
-        if (value.trim() && this.newRuleName.trim()) {
+      handleSingleRuleInput() {
+        if (this.newRuleName.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
             name: this.newRuleName.trim(),
-            description: value.trim(),
+            description: 'NULO',
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
             final_result: '',
@@ -211,11 +199,11 @@
       },
   
       addRule() {
-        if (this.newRuleText.trim() && this.newRuleName.trim()) {
+        if (this.newRuleName.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
             project: this.editedItem.project,
             name: this.newRuleName.trim(),
-            description: this.newRuleText.trim(),
+            description: 'NULO',
             voting_configuration: 0,
             annotation_rule_type: this.editedItem.annotation_rule_type,
             final_result: '',
@@ -223,7 +211,6 @@
           };
           const updatedRulesList = [...this.annotationRulesList, newRule];
           this.$emit('update:annotationRulesList', updatedRulesList);
-          this.newRuleText = '';
           this.newRuleName = '';
         }
       },
