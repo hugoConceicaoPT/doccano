@@ -3,20 +3,13 @@
     <v-card-title v-text="title" />
     <v-divider />
     <v-tabs show-arrows>
-      <v-tab
-        v-for="(value, questionId) in chartJSFormat"
-        :key="questionId"
-        class="text-capitalize"
-      >
+      <v-tab v-for="(value, questionId) in chartJSFormat" :key="questionId" class="text-capitalize">
         {{ value.question }}
       </v-tab>
 
-      <v-tab-item
-        v-for="(value, questionId) in chartJSFormat"
-        :key="questionId"
-      >
+      <v-tab-item v-for="(value, questionId) in chartJSFormat" :key="questionId">
         <v-card-text>
-          <chart-pie :chart-data="value" />
+          <chart-pie @chart-ready="onPerspectiveChartReady" :chart-data="value" />
         </v-card-text>
       </v-tab-item>
     </v-tabs>
@@ -78,6 +71,9 @@ export default Vue.extend({
     pickColor(index: number): string {
       const colors = ['#00d1b2', '#ff3860', '#ffdd57', '#3273dc', '#23d160', '#b86bff']
       return colors[index % colors.length]
+    },
+    onPerspectiveChartReady() {
+      this.$emit('chart-perspective-rendered')
     }
   }
 })

@@ -1,25 +1,24 @@
 <template>
   <v-card>
-    <v-card-title>Votação para regras de anotações</v-card-title>
-    <v-alert v-if="successMessage" type="success" dismissible @click="successMessage = ''">
+    <v-alert v-if="successMessage" class="mx-4 my-4" type="success" dismissible @click="successMessage = ''">
       {{ successMessage }}
     </v-alert>
-    <v-alert v-if="errorMessage" type="error" dismissible @click="errorMessage = ''">
+    <v-alert v-if="errorMessage" class="mx-4 my-4" type="error" dismissible @click="errorMessage = ''">
       {{ errorMessage }}
     </v-alert>
 
     <v-card-text>
       <!-- Botão para configurar regras de anotação -->
-      <v-row v-if="isAdmin" class="mb-4">
+      <v-row class="mb-4">
         <v-col cols="12">
           <v-btn color="primary" class="mx-4" @click="goToConfig">
             Configure
           </v-btn>
-          <discussion-list :items="items" :is-loading="loading" />
+          <rule-list :items="items" :is-loading="loading" />
         </v-col>
       </v-row>
 
-      <!-- Votação para não-admins -->
+      <!-- Votação para não-admins
       <div v-if="!isAdmin">
         <div v-if="pendingRules.length > 0">
           <v-row v-if="loading">
@@ -28,7 +27,6 @@
             </v-col>
           </v-row>
           <div v-else>
-            <!-- Exibe todas as regras pendentes sem divisão por dataset -->
             <v-row class="mb-6">
               <v-col v-for="rule in pendingRules" :key="rule.id" cols="12" sm="6" md="4">
                 <v-card outlined class="mb-4">
@@ -43,7 +41,6 @@
                 </v-card>
               </v-col>
             </v-row>
-            <!-- Botão global de submissão -->
             <v-row>
               <v-col cols="12" class="text-center">
                 <v-btn color="primary" :disabled="!canSubmit" @click="submitVotes">Submeter Votos</v-btn>
@@ -54,21 +51,22 @@
         <div v-else>
           <v-row>
             <v-col cols="12" class="text-center">
-              <p>Não existem regras para serem votadas.</p>
+              <p>Votação concluída com sucesso!</p>
             </v-col>
           </v-row>
         </div>
+      
       </div>
-      <!-- Mensagem após submissão de votos -->
+       -->
     </v-card-text>
   </v-card>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import DiscussionList from '~/components/discussion/DiscussionList.vue';
 import { VotingConfigurationItem } from '~/domain/models/rules/rule';
 import { MemberItem } from '~/domain/models/member/member';
+import RuleList from '~/components/rules/RuleList.vue';
 
 export type Discussion = {
   numberVersion: string;
@@ -83,10 +81,10 @@ export type VotingAnswer = VotingConfigurationItem & {
 
 export default Vue.extend({
   components: {
-    DiscussionList,
+    RuleList,
   },
   layout: 'project',
-  middleware: ['check-auth', 'auth', 'setCurrentProject'],
+  middleware: ['check-auth', 'auth'],
   data() {
     return {
       successMessage: '',
@@ -109,7 +107,7 @@ export default Vue.extend({
       items: [] as Discussion[],
       currentTime: Date.now(),
       timerId: 0 as number
-    };
+    }
   },
   async fetch() {
     this.loading = true;
@@ -132,7 +130,6 @@ export default Vue.extend({
       this.finalizedRules = {};
       // processa todas as configurações
       this.votingConfigs.forEach(async (cfg) => {
-        try {
           const list = this.rules.filter(r => r.voting_configuration === cfg.id)
           this.groupedRules[cfg.id] = list
 
@@ -154,7 +151,7 @@ export default Vue.extend({
 
             const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id)
             const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
-            const isExpired = this.currentTime > endTime
+            const isExpired = this.currentTime >= endTime
             let numberVersion = '';
             if (index < 10) {
               numberVersion = 'V_0' + (index + 1);
@@ -162,9 +159,8 @@ export default Vue.extend({
               numberVersion = 'V_' + (index + 1);
             }
 
-            this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length);
-            this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length);
-
+            this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length)
+            this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length)
             const yes = this.votesYes[r.id] || 0;
             const no = this.votesNo[r.id] || 0;
             const total = yes + no;
@@ -176,29 +172,20 @@ export default Vue.extend({
             }
 
             const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
-            const percentageAgainst = total ? Math.round((no / total) * 100) : 0;
 
             let result = '';
-            if (percentageAgainst >= cfg.percentage_threshold) {
-              result = 'Rejected';
-            } else if (percentageFavor >= cfg.percentage_threshold) {
+            if (percentageFavor >= cfg.percentage_threshold) {
               result = 'Approved';
             } else {
-              result = 'Needs Discussion';
+              result = 'Rejected';
             }
-
             // persiste finalização e resultado no backend
             if (votesFromAnnotators >= annotatorIds.length || isExpired) {
-              try {
                 await this.$services.annotationRule.update(projectId, r.id, {
                   is_finalized: true,
                   final_result: result,
-                });
-              } catch (error) {
-                console.error('Erro ao finalizar regra:', error);
-              }
-            }
-
+                })
+            }            
             if (r.is_finalized === true) {
               this.items.push({
                 numberVersion,
@@ -211,12 +198,9 @@ export default Vue.extend({
               this.$set(this.answeredRules, r.id, true);
             }
           }
-        } catch (error) {
-          console.error(error);
-        }
       });
-    } catch {
-      this.errorMessage = 'Erro ao carregar dados de votação.';
+    } catch(error) {
+      this.handleError(error)
     } finally {
       this.loading = false;
     }
@@ -265,6 +249,13 @@ export default Vue.extend({
       this.$set(this.localVotes, ruleId, answer);
       if (answer) this.$set(this.votesYes, ruleId, (this.votesYes[ruleId] || 0) + 1);
       else this.$set(this.votesNo, ruleId, (this.votesNo[ruleId] || 0) + 1);
+    },
+    handleError(error: any) {
+      if (error.response && error.response.status === 400) {
+        this.errorMessage = 'Error retrieving data.'
+      } else {
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
+      }
     },
     async submitVotes() {
       try {

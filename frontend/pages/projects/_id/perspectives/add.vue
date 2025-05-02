@@ -123,7 +123,6 @@ export default Vue.extend({
           })
         for (let i = 0; i < this.editedItem.questions.length; i++) {
           if (this.editedItem.questions[i].type === 2) {
-            console.log(this.optionsGroupItem[j])
             const existingOptionGroup = await this.$services.optionsGroup.findByName(
               this.projectId,
               this.optionsGroupItem[j].name

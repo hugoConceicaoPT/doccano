@@ -8,7 +8,7 @@
       </v-tab>
       <v-tab-item v-for="(value, user) in chartJSFormat" :key="user">
         <v-card-text>
-          <chart-pie :chart-data="value" />
+          <chart-pie  @chart-ready="onLabelChartReady" :chart-data="value" />
         </v-card-text>
       </v-tab-item>
     </v-tabs>
@@ -86,5 +86,10 @@ export default Vue.extend({
     }
 
   },
+  methods: {
+    onLabelChartReady() {
+      this.$emit('chart-label-rendered')
+    }
+  }
 })
 </script>

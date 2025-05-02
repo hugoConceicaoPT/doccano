@@ -72,7 +72,7 @@ export default Vue.extend({
         headers() {
             return [
                 { text: 'Version', value: 'numberVersion', sortable: true },  
-                { text: 'Rule', value: 'ruleDiscussion', sortable: false },
+                { text: 'Rule', value: 'ruleDiscussion', sortable: true },
                 { text: 'Result', value: 'result', sortable: true }
             ]
         },

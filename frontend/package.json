@@ -35,12 +35,16 @@
     "filepond": "^4.28.2",
     "filepond-plugin-file-validate-type": "^1.2.6",
     "fs-extra": "10.0.0",
+    "highlight.js": "^11.11.1",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^2.2.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "konva": "^8.3.10",
     "lodash": "^4.17.21",
     "nuxt": "^2.15.7",
     "nuxt-i18n": "^6.27.3",
-    "papaparse": "^5.3.1",
+    "papaparse": "^5.5.2",
     "reflect-metadata": "^0.1.13",
     "ts-loader": "^8.3.0",
     "tui-editor": "^1.4.10",
@@ -72,6 +76,7 @@
     "@nuxtjs/google-analytics": "^2.4.0",
     "@nuxtjs/google-fonts": "^2.0.0",
     "@types/lodash": "^4.14.171",
+    "@types/papaparse": "^5.3.15",
     "@types/uuid": "^8.3.4",
     "@types/wavesurfer.js": "^5.1.0",
     "@vue/test-utils": "^1.2.2",
@@ -104,6 +109,8 @@
     "minimist": "npm:minimist-lite@2.2.0",
     "nuxt-i18n/@babel/traverse": "^7.23.2",
     "@nuxtjs/eslint-config/**/@babel/traverse": "^7.23.2",
-    "@nuxtjs/eslint-config-typescript/**/@babel/traverse": "^7.23.2"
+    "@nuxtjs/eslint-config-typescript/**/@babel/traverse": "^7.23.2",
+    "Squire": "https://github.com/seonim-ryu/Squire.git",
+    "eve": "https://github.com/adobe-webplatform/eve.git"
   }
 }
