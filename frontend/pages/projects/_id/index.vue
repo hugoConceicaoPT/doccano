@@ -3,6 +3,10 @@
     <v-card-title>
       {{ $t('projectHome.welcome') }}
     </v-card-title>
+    <v-alert v-if="isProjectClosed" type="warning" class="mb-4">
+      Este projeto está fechado. Algumas funcionalidades estão bloqueadas.
+      <v-btn color="primary" class="ml-4" @click="reopenProject">Reabrir Projeto</v-btn>
+    </v-alert>
     <v-stepper v-model="e6" vertical non-linear>
       <div v-for="(item, index) in items" :key="index">
         <v-stepper-step :complete="e6 > index + 1" :step="index + 1" editable>
@@ -54,8 +58,14 @@ export default {
           videoId: 'kfRpa0mNQMY'
         },
         { title: this.$t('projectHome.exportDataset'), videoId: 'Pfy_QcHEeQ4' }
-      ]
+      ],
+      isProjectClosed: false
     }
+  },
+
+  mounted() {
+    const projectId = this.$route.params.id
+    this.isProjectClosed = localStorage.getItem(`project_closed_${projectId}`) === 'true'
   },
 
   methods: {
@@ -64,6 +74,12 @@ export default {
     },
     prev() {
       this.e6 = Math.max(1, this.e6 - 1)
+    },
+    reopenProject() {
+      const projectId = this.$route.params.id
+      localStorage.removeItem(`project_closed_${projectId}`)
+      this.isProjectClosed = false
+      this.$router.go()
     }
   }
 }

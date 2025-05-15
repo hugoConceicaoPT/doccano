@@ -14,6 +14,10 @@
           <v-btn color="primary" class="mx-4" @click="goToConfig">
             Configure
           </v-btn>
+          <v-btn color="secondary" @click="$router.push(localePath(`/projects/${projectId}`))">
+            <v-icon left>{{ mdiHome }}</v-icon>
+            Home
+          </v-btn>
           <rule-list :items="items" :is-loading="loading" />
         </v-col>
       </v-row>
@@ -64,6 +68,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
+import { mdiHome } from '@mdi/js';
 import { VotingConfigurationItem } from '~/domain/models/rules/rule';
 import { MemberItem } from '~/domain/models/member/member';
 import RuleList from '~/components/rules/RuleList.vue';
@@ -106,8 +112,15 @@ export default Vue.extend({
       isAdmin: false,
       items: [] as Discussion[],
       currentTime: Date.now(),
-      timerId: 0 as number
+      timerId: 0 as number,
+      mdiHome,
     }
+  },
+  computed: {
+    ...mapGetters('projects', ['project']),
+    projectId() {
+      return this.$route.params.id
+    },
   },
   async fetch() {
     this.loading = true;
@@ -130,76 +143,76 @@ export default Vue.extend({
       this.finalizedRules = {};
       // processa todas as configurações
       this.votingConfigs.forEach(async (cfg) => {
-          const list = this.rules.filter(r => r.voting_configuration === cfg.id)
-          this.groupedRules[cfg.id] = list
+        const list = this.rules.filter(r => r.voting_configuration === cfg.id)
+        this.groupedRules[cfg.id] = list
 
-          for (const r of list) {
-            const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
-            const rulesFilteredByName = this.rules.filter(rule => rule.name === r.name);
-            const votingConfigsOrderedByEndDate = this.votingConfigs.sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
+        for (const r of list) {
+          const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id);
+          const rulesFilteredByName = this.rules.filter(rule => rule.name === r.name);
+          const votingConfigsOrderedByEndDate = this.votingConfigs.sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime());
 
-            const sortedRules = rulesFilteredByName.sort((ruleA, ruleB) => {
-              const configA = this.votingConfigs.find(cfg => cfg.id === ruleA.voting_configuration);
-              const configB = this.votingConfigs.find(cfg => cfg.id === ruleB.voting_configuration);
-              if (!configA || !configB) return 0;
+          const sortedRules = rulesFilteredByName.sort((ruleA, ruleB) => {
+            const configA = this.votingConfigs.find(cfg => cfg.id === ruleA.voting_configuration);
+            const configB = this.votingConfigs.find(cfg => cfg.id === ruleB.voting_configuration);
+            if (!configA || !configB) return 0;
 
-              const indexA = votingConfigsOrderedByEndDate.indexOf(configA);
-              const indexB = votingConfigsOrderedByEndDate.indexOf(configB);
+            const indexA = votingConfigsOrderedByEndDate.indexOf(configA);
+            const indexB = votingConfigsOrderedByEndDate.indexOf(configB);
 
-              return indexA - indexB;
-            });
+            return indexA - indexB;
+          });
 
-            const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id)
-            const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
-            const isExpired = this.currentTime >= endTime
-            let numberVersion = '';
-            if (index < 10) {
-              numberVersion = 'V_0' + (index + 1);
-            } else {
-              numberVersion = 'V_' + (index + 1);
-            }
-
-            this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length)
-            this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length)
-            const yes = this.votesYes[r.id] || 0;
-            const no = this.votesNo[r.id] || 0;
-            const total = yes + no;
-
-            // marca finalizada quando todos os anotadores votaram
-            const votesFromAnnotators = ans.filter(a => annotatorIds.includes(a.member)).length;
-            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
-              this.$set(this.finalizedRules, r.id, true);
-            }
-
-            const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
-
-            let result = '';
-            if (percentageFavor >= cfg.percentage_threshold) {
-              result = 'Approved';
-            } else {
-              result = 'Rejected';
-            }
-            // persiste finalização e resultado no backend
-            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
-                await this.$services.annotationRule.update(projectId, r.id, {
-                  is_finalized: true,
-                  final_result: result,
-                })
-            }            
-            if (r.is_finalized === true) {
-              this.items.push({
-                numberVersion,
-                ruleDiscussion: r.description,
-                isFinalized: r.is_finalized,
-                result
-              });
-            }
-            if (ans.some(a => a.member === this.memberId)) {
-              this.$set(this.answeredRules, r.id, true);
-            }
+          const index = sortedRules.findIndex(sortedRule => sortedRule.id === r.id)
+          const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
+          const isExpired = this.currentTime >= endTime
+          let numberVersion = '';
+          if (index < 10) {
+            numberVersion = 'V_0' + (index + 1);
+          } else {
+            numberVersion = 'V_' + (index + 1);
           }
+
+          this.$set(this.votesYes, r.id, ans.filter(a => a.answer).length)
+          this.$set(this.votesNo, r.id, ans.filter(a => !a.answer).length)
+          const yes = this.votesYes[r.id] || 0;
+          const no = this.votesNo[r.id] || 0;
+          const total = yes + no;
+
+          // marca finalizada quando todos os anotadores votaram
+          const votesFromAnnotators = ans.filter(a => annotatorIds.includes(a.member)).length;
+          if (votesFromAnnotators >= annotatorIds.length || isExpired) {
+            this.$set(this.finalizedRules, r.id, true);
+          }
+
+          const percentageFavor = total ? Math.round((yes / total) * 100) : 0;
+
+          let result = '';
+          if (percentageFavor >= cfg.percentage_threshold) {
+            result = 'Approved';
+          } else {
+            result = 'Rejected';
+          }
+          // persiste finalização e resultado no backend
+          if (votesFromAnnotators >= annotatorIds.length || isExpired) {
+            await this.$services.annotationRule.update(projectId, r.id, {
+              is_finalized: true,
+              final_result: result,
+            })
+          }
+          if (r.is_finalized === true) {
+            this.items.push({
+              numberVersion,
+              ruleDiscussion: r.description,
+              isFinalized: r.is_finalized,
+              result
+            });
+          }
+          if (ans.some(a => a.member === this.memberId)) {
+            this.$set(this.answeredRules, r.id, true);
+          }
+        }
       });
-    } catch(error) {
+    } catch (error) {
       this.handleError(error)
     } finally {
       this.loading = false;
@@ -211,35 +224,6 @@ export default Vue.extend({
   },
   beforeDestroy() {
     window.clearInterval(this.timerId);
-  },
-  computed: {
-    projectId(): string {
-      return this.$route.params.id;
-    },
-    // regras que ainda precisam de voto (não votadas, não finalizadas e dentro do prazo)
-    pendingRules(): any[] {
-      const now = this.currentTime;
-      return this.rules.filter(r => {
-        if (r.id in this.answeredRules) return false;
-        if (r.id in this.finalizedRules) return false;
-        const cfg = this.votingConfigs.find(c => c.id === r.voting_configuration);
-        if (!cfg) return false;
-        const endTime = new Date(cfg.end_date).getTime();
-        if (isNaN(endTime) || now > endTime) return false;
-        return true;
-      });
-    },
-    // habilita submit quando cada pendente tiver voto local
-    canSubmit(): boolean {
-      return this.pendingRules.length > 0 &&
-        this.pendingRules.every(r => r.id in this.localVotes);
-    },
-    // configurações com regras pendentes
-    availableConfigs(): any[] {
-      return this.votingConfigs.filter(cfg =>
-        (this.groupedRules[cfg.id] || []).some(r => !(r.id in this.answeredRules))
-      );
-    }
   },
   methods: {
     goToConfig() {

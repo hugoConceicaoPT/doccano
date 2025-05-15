@@ -58,7 +58,7 @@ export default Vue.extend({
 
   layout: 'project',
 
-  middleware: ['check-auth', 'auth', 'setCurrentProject'],
+  middleware: ['check-auth', 'auth', 'setCurrentProject', 'project-closed'],
 
   validate({ params, app, store }) {
     if (/^\d+$/.test(params.id)) {

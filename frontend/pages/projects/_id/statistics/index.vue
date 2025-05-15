@@ -13,11 +13,11 @@
             <!-- Pergunta -->
             <v-col cols="12" md="4">
               <v-select v-model="selectedPerspectiveQuestion" :items="perspectiveQuestions" label="Perspective Question"
-                dense outlined hide-details placeholder="Select" />
+                multiple dense outlined hide-details placeholder="Select" />
             </v-col>
 
             <!-- Resposta -->
-            <v-col cols="12" md="4" v-if="selectedPerspectiveQuestion">
+            <v-col v-if="selectedPerspectiveQuestion" cols="12" md="4">
               <v-select v-model="selectedPerspectiveAnswer" :items="possibleAnswers" label="Perspective Answer" dense
                 outlined multiple hide-details placeholder="Select" />
             </v-col>
@@ -39,6 +39,13 @@
               <v-select v-model="exportOption" :items="['None', 'PDF', 'CSV', 'PDF & CSV']" label="Export" dense
                 outlined hide-details placeholder="Format" />
             </v-col>
+            <v-col cols="12" md="4">
+              <v-select v-model="selectedDiscrepancy" :items="[
+                { text: 'All', value: 'all' },
+                { text: 'Discrepancy', value: 'yes' },
+                { text: 'Non Discrepancy', value: 'no' }
+              ]" label="Discrepancy" dense outlined hide-details />
+            </v-col>
 
             <!-- Botões -->
             <v-col cols="12" md="4" class="d-flex align-center">
@@ -46,9 +53,9 @@
                 <v-icon left small>{{ mdiFilterCheck }}</v-icon>
                 Apply Filters
               </v-btn>
-              <v-btn color="grey" small outlined @click="resetFilters" :disabled="!hasActiveFilters">
+              <v-btn color="grey" small :disabled="!hasActiveFilters" @click="resetFilters">
                 <v-icon left small>{{ mdiClose }}</v-icon>
-                Clean
+                Clear All
               </v-btn>
               <v-btn color="secondary" class="ms-2" small @click="$router.push(localePath(`/projects/${projectId}`))">
                 <v-icon left small>{{ mdiHome }}</v-icon>
@@ -61,16 +68,16 @@
     </v-col>
 
     <!-- Resultados filtrados -->
-    <v-col cols="12" v-if="filtersApplied">
+    <v-col v-if="filtersApplied" cols="12">
       <perspective-percentage-distribution title="Perspective Distribution"
-        :distribution="filteredPerspectiveDistribution" @chart-perspective-rendered="onPerspectiveChartReady"
-        class="perspective-distribution" />
+        :distribution="filteredPerspectiveDistribution" class="perspective-distribution"
+        @chart-perspective-rendered="onPerspectiveChartReady" />
     </v-col>
 
     <v-col v-if="!!project.canDefineCategory && filtersApplied" cols="12">
       <label-percentage-distribution title="Label Discrepancy Percentage" :distribution="filteredCategoryPercentage"
-        @chart-label-rendered="onLabelChartReady" :label-types="categoryTypes" :examples="examples"
-        class="label-distribution" />
+        class="label-distribution" :examples="examples" :label-types="categoryTypes"
+        @chart-label-rendered="onLabelChartReady" />
     </v-col>
   </v-row>
 </template>
@@ -96,10 +103,10 @@ export default Vue.extend({
 
   layout: 'project',
 
-  middleware: ['check-auth', 'auth', 'isProjectAdmin'],
+  middleware: ['check-auth', 'auth'],
   data() {
     return {
-      selectedPerspectiveQuestion: '' as string,
+      selectedPerspectiveQuestion: [] as string[],
       selectedPerspectiveAnswer: [] as string[],
       selectedAnnotations: [] as number[],
       selectedAnnotators: [] as string[],
@@ -117,7 +124,7 @@ export default Vue.extend({
       errorMessage: '',
       isPerspectiveChartReady: false,
       isLabelChartReady: false,
-
+      selectedDiscrepancy: 'all' as string,
       filtersApplied: false
     }
   },
@@ -130,7 +137,7 @@ export default Vue.extend({
     },
 
     filteredPerspectiveDistribution() {
-      if (!this.selectedPerspectiveQuestion || !this.selectedPerspectiveAnswer.length) {
+      if (!this.selectedPerspectiveQuestion.length || !this.selectedPerspectiveAnswer.length) {
         return this.perspectiveDistribution
       }
 
@@ -139,7 +146,7 @@ export default Vue.extend({
       for (const key in this.perspectiveDistribution) {
         const entry = this.perspectiveDistribution[key]
 
-        if (entry.question === this.selectedPerspectiveQuestion) {
+        if (this.selectedPerspectiveQuestion.includes(entry.question)) {
           const matchingAnswers = Object.keys(entry.answers).filter(answer =>
             this.selectedPerspectiveAnswer.includes(answer)
           )
@@ -177,7 +184,7 @@ export default Vue.extend({
 
     hasActiveFilters(): boolean {
       return (
-        this.selectedPerspectiveQuestion !== '' ||
+        this.selectedPerspectiveQuestion.length > 0 ||
         this.selectedPerspectiveAnswer.length > 0 ||
         this.selectedAnnotations.length > 0 ||
         this.selectedAnnotators.length > 0 ||
@@ -189,10 +196,18 @@ export default Vue.extend({
       return Object.values(this.perspectiveDistribution).map(q => q.question);
     },
     possibleAnswers() {
-      const entry = Object.values(this.perspectiveDistribution).find(
-        q => q.question === this.selectedPerspectiveQuestion
-      );
-      return entry ? Object.keys(entry.answers) : [];
+      // Permitir que selectedPerspectiveQuestion seja array
+      const questions = Array.isArray(this.selectedPerspectiveQuestion)
+        ? this.selectedPerspectiveQuestion
+        : [];
+      // Coletar todas as respostas possíveis para as perguntas selecionadas
+      const answersSet = new Set<string>();
+      Object.values(this.perspectiveDistribution).forEach((entry: any) => {
+        if (questions.includes(entry.question)) {
+          Object.keys(entry.answers).forEach(answer => answersSet.add(answer));
+        }
+      });
+      return Array.from(answersSet);
     },
     formattedAnnotations(): { text: string; value: number }[] {
       if (!this.examples || !this.examples.items) return []
@@ -235,7 +250,7 @@ export default Vue.extend({
       }
     },
     resetFilters() {
-      this.selectedPerspectiveQuestion = '';
+      this.selectedPerspectiveQuestion = [];
       this.selectedPerspectiveAnswer = [];
       this.selectedAnnotations = [];
       this.selectedAnnotators = [];

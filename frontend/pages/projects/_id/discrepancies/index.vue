@@ -1,10 +1,16 @@
 <template>
-    <v-card>
-        <v-card-title>
-            Discrepancy Threshold: {{ this.project.minPercentage }} %
-        </v-card-title>
-        <discrepancy-list v-model="selected" :items="items" :isLoading="isLoading" :discrepancyThreshold="this.project.minPercentage" />
-    </v-card>
+    <div>
+        <v-card>
+            <v-alert v-if="errorMessage" class="mx-4 my-4" type="error" dismissible @click="errorMessage = ''">
+                {{ errorMessage }}
+            </v-alert>
+            <v-card-title>
+                Discrepancy Threshold: {{ this.project && this.project.minPercentage !== undefined ? this.project.minPercentage : '-' }} %
+            </v-card-title>
+            <discrepancy-list v-model="selected" :items="items" :isLoading="isLoading"
+                :discrepancyThreshold="this.project && this.project.minPercentage !== undefined ? this.project.minPercentage : 0" />
+        </v-card>
+    </div>
 </template>
 
 <script lang="ts">
@@ -20,7 +26,7 @@ export default Vue.extend({
 
     layout: 'project',
 
-    middleware: ['check-auth', 'auth', 'isSuperUser', 'setCurrentProject'],
+    middleware: ['check-auth', 'auth'],
 
 
     data() {
@@ -28,18 +34,23 @@ export default Vue.extend({
             items: {} as Percentage,
             isLoading: false,
             drawerLeft: null,
-            selected: {} as Percentage
+            selected: {} as Percentage,
+            errorMessage: '',
         }
     },
 
     async fetch() {
         this.isLoading = true
-        this.items = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+        try {
+            this.items = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+        } catch (error) {
+            this.handleError(error)
+        }
         this.isLoading = false
     },
 
     computed: {
-        ...mapGetters('projects', ['project']),
+        ...mapGetters('projects',   ['project']),
 
         projectId(): string {
             return this.$route.params.id
@@ -56,6 +67,15 @@ export default Vue.extend({
             immediate: true,
             deep: true
         }
+    },
+    methods: {
+        handleError(error: any) {
+            if (error.response && error.response.status === 400) {
+                this.errorMessage = 'Error retrieving data.'
+            } else {
+                this.errorMessage = 'Database is slow or unavailable. Please try again later.'
+            }
+        },
     }
 })
 </script>

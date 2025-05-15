@@ -116,7 +116,7 @@ export default Vue.extend({
 
   layout: 'project',
 
-  middleware: ['check-auth', 'auth', 'setCurrentProject'],
+  middleware: ['check-auth', 'auth', 'setCurrentProject', 'project-closed'],
 
   validate({ params, query }: NuxtAppOptions) {
     return /^\d+$/.test(params.id) && /^\d+|$/.test(query.limit) && /^\d+|$/.test(query.offset)

@@ -7,11 +7,8 @@
       {{ $t('home.startAnnotation') }}
     </v-btn>
     <v-list-item-group v-model="selected" mandatory>
-      <v-list-item
-        v-for="(item, i) in filteredItems"
-        :key="i"
-        @click="$router.push(localePath(`/projects/${$route.params.id}/${item.link}`))"
-      >
+      <v-list-item v-for="(item, i) in filteredItems" :key="i"
+        @click="$router.push(localePath(`/projects/${$route.params.id}/${item.link}`))">
         <v-list-item-action>
           <v-icon>
             {{ item.icon }}
@@ -54,14 +51,14 @@ export default {
     },
     project: {
       type: Object,
-      default: () => {},
+      default: () => { },
       required: true
     }
   },
 
   data() {
     return {
-      selected: 0,
+      selected: null,
       mdiPlayCircleOutline
     }
   },
@@ -155,7 +152,6 @@ export default {
       return items.filter((item) => item.isVisible)
     }
   },
-
   methods: {
     toLabeling() {
       const query = this.$services.option.findOption(this.$route.params.id)
