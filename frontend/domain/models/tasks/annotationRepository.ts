@@ -5,9 +5,10 @@ export abstract class AnnotationRepository<T> {
 
   constructor(readonly request = ApiService) {}
 
-  public async list(projectId: string, exampleId: number): Promise<T[]> {
+  public async list(projectId: string, exampleId: number, allUsers: boolean = false): Promise<T[]> {
     const url = this.baseUrl(projectId, exampleId)
-    const response = await this.request.get(url)
+    const params = allUsers ? { all_users: 'true' } : {}
+    const response = await this.request.get(url, { params })
     return response.data.map((item: { [key: string]: any }) => this.toModel(item))
   }
 

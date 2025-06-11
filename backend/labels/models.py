@@ -30,6 +30,24 @@ class Label(models.Model):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.uuid
+
+
+class ManualDiscrepancy(models.Model):
+    """Track manual discrepancy flags on annotations."""
+    example = models.ForeignKey(to=Example, on_delete=models.CASCADE, related_name="manual_discrepancies")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="manual_discrepancies")
+    reason = models.TextField(blank=True, help_text="Optional reason for flagging as discrepancy")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['example', 'user']
+
+    def __str__(self):
+        return f"Manual discrepancy for example {self.example.id} by {self.user.username}"
+
 
 class Category(Label):
     objects = CategoryManager()

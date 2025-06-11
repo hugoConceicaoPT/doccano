@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import BoundingBox, Category, Relation, Segmentation, Span, TextLabel
+from .models import BoundingBox, Category, ManualDiscrepancy, Relation, Segmentation, Span, TextLabel
 from examples.models import Example
 from label_types.models import CategoryType, RelationType, SpanType
 
@@ -109,5 +109,21 @@ class SegmentationSerializer(serializers.ModelSerializer):
             "updated_at",
             "label",
             "points",
+        )
+        read_only_fields = ("user",)
+
+
+class ManualDiscrepancySerializer(serializers.ModelSerializer):
+    example = serializers.PrimaryKeyRelatedField(queryset=Example.objects.all())
+
+    class Meta:
+        model = ManualDiscrepancy
+        fields = (
+            "id",
+            "example",
+            "user",
+            "reason",
+            "created_at",
+            "updated_at",
         )
         read_only_fields = ("user",)

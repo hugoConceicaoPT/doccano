@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BoundingBox, Category, Segmentation, Span, TextLabel
+from .models import BoundingBox, Category, ManualDiscrepancy, Segmentation, Span, TextLabel
 
 
 class SpanAdmin(admin.ModelAdmin):
@@ -28,8 +28,16 @@ class SegmentationAdmin(admin.ModelAdmin):
     ordering = ("example",)
 
 
+class ManualDiscrepancyAdmin(admin.ModelAdmin):
+    list_display = ("example", "user", "reason", "created_at")
+    list_filter = ("created_at", "user")
+    search_fields = ("example__text", "user__username", "reason")
+    ordering = ("-created_at",)
+
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Span, SpanAdmin)
 admin.site.register(TextLabel, TextLabelAdmin)
 admin.site.register(BoundingBox, BoundingBoxAdmin)
 admin.site.register(Segmentation, SegmentationAdmin)
+admin.site.register(ManualDiscrepancy, ManualDiscrepancyAdmin)

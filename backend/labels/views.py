@@ -15,6 +15,7 @@ from .serializers import (
     SegmentationSerializer,
     SpanSerializer,
     TextLabelSerializer,
+    ManualDiscrepancySerializer,
 )
 from labels.models import (
     BoundingBox,
@@ -24,9 +25,11 @@ from labels.models import (
     Segmentation,
     Span,
     TextLabel,
+    ManualDiscrepancy,
 )
 from projects.models import Project
-from projects.permissions import IsProjectMember
+from projects.permissions import IsProjectMember, IsProjectAdmin
+from examples.models import Example
 
 
 class BaseListAPI(generics.ListCreateAPIView):
@@ -41,8 +44,18 @@ class BaseListAPI(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = self.label_class.objects.filter(example=self.kwargs["example_id"])
-        if not self.project.collaborative_annotation:
+        
+        # Check if 'all_users' parameter is provided and user is admin
+        all_users_param = self.request.query_params.get('all_users')
+        is_admin = self.request.user.has_perm('projects.admin_project', self.project)
+        
+        if all_users_param == 'true' and is_admin:
+            # Return all annotations from all users (no user filter)
+            pass
+        elif not self.project.collaborative_annotation:
+            # Default behavior: filter by current user for non-collaborative projects
             queryset = queryset.filter(user=self.request.user)
+            
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -141,3 +154,68 @@ class SegmentationListAPI(BaseListAPI):
 class SegmentationDetailAPI(BaseDetailAPI):
     queryset = Segmentation.objects.all()
     serializer_class = SegmentationSerializer
+
+
+class ManualDiscrepancyListAPI(generics.ListCreateAPIView):
+    serializer_class = ManualDiscrepancySerializer
+    pagination_class = None
+    permission_classes = [IsAuthenticated & IsProjectMember]
+
+    def get_queryset(self):
+        project_id = self.kwargs["project_id"]
+        # Get all manual discrepancies for examples in this project
+        examples = Example.objects.filter(project=project_id)
+        return ManualDiscrepancy.objects.filter(example__in=examples)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class ManualDiscrepancyDetailAPI(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ManualDiscrepancySerializer
+    permission_classes = [IsAuthenticated & IsProjectMember]
+    lookup_url_kwarg = "discrepancy_id"
+
+    def get_queryset(self):
+        project_id = self.kwargs["project_id"]
+        examples = Example.objects.filter(project=project_id)
+        return ManualDiscrepancy.objects.filter(example__in=examples)
+
+
+class ManualDiscrepancyToggleAPI(generics.GenericAPIView):
+    """API to toggle manual discrepancy flag for an example."""
+    permission_classes = [IsAuthenticated & IsProjectMember]
+
+    def post(self, request, *args, **kwargs):
+        project_id = self.kwargs["project_id"]
+        example_id = self.kwargs["example_id"]
+        
+        example = get_object_or_404(Example, pk=example_id, project=project_id)
+        
+        try:
+            # Try to get existing manual discrepancy
+            discrepancy = ManualDiscrepancy.objects.get(
+                example=example,
+                user=request.user
+            )
+            # If exists, delete it (toggle off)
+            discrepancy.delete()
+            return Response(
+                {"is_flagged": False, "message": "Discrepancy flag removed"},
+                status=status.HTTP_200_OK
+            )
+        except ManualDiscrepancy.DoesNotExist:
+            # If doesn't exist, create it (toggle on)
+            reason = request.data.get('reason', '')
+            ManualDiscrepancy.objects.create(
+                example=example,
+                user=request.user,
+                reason=reason
+            )
+            return Response(
+                {"is_flagged": True, "message": "Discrepancy flag added"},
+                status=status.HTTP_201_CREATED
+            )
+
+
+
