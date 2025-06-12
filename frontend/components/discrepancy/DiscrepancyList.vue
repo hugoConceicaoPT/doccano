@@ -55,8 +55,6 @@
           {{ item.discrepancyBool }}
         </v-chip>
       </template>
-
-
     </v-data-table>
   </div>
 </template>
@@ -100,7 +98,6 @@ export default Vue.extend({
       perspectiveDistribution: {} as Distribution,
       example: {} as ExampleDTO,
       showWarningDialog: false,
-
     }
   },
 
@@ -197,9 +194,6 @@ export default Vue.extend({
     matchesSearch(label: string): boolean {
       return label.toLowerCase().includes(this.search.toLowerCase())
     },
-    
-
-
     async resolveExampleName(id: string) {
       if (!this.exampleNameMap[id]) {
         const example = await this.$repositories.example.findById(this.projectId, Number(id))

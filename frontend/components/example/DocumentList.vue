@@ -74,39 +74,17 @@
         <v-btn small color="primary text-capitalize" @click="toLabeling(row)">
           {{ $t('dataset.annotate') }}
         </v-btn>
-        <v-btn 
-          v-if="isAdmin"
-          small 
-          outlined 
-          :color="getReviewButtonColor(row)" 
-          :disabled="isReviewed(row)"
-          class="ms-1" 
-          @click="openReportDialog(row)"
-        >
-          <v-icon left small>{{ getReviewButtonIcon(row) }}</v-icon>
-          {{ getReviewButtonText(row) }}
+        <v-btn small outlined :color="isReported(row) ? 'success' : 'primary text-capitalize'" class="ms-1" @click="openReportDialog(row)">
+          <v-icon left small>{{ isReported(row) ? require('@mdi/js').mdiCheckCircle : require('@mdi/js').mdiClipboardCheck }}</v-icon>
+          {{ isReported(row) ? 'Reviewed' : 'Review' }}
         </v-btn>
       </template>
     </v-data-table>
     <v-dialog v-model="showReportDialog" max-width="800">
       <v-card>
         <v-card-title class="headline d-flex align-center">
-          <v-icon 
-            class="mr-2" 
-            :color="itemToReport && isManuallyFlagged(itemToReport) ? 'error' : 'primary'"
-          >
-            {{ itemToReport && isManuallyFlagged(itemToReport) ? require('@mdi/js').mdiAlert : require('@mdi/js').mdiClipboardCheck }}
-          </v-icon>
+          <v-icon class="mr-2" color="primary">{{ require('@mdi/js').mdiClipboardCheck }}</v-icon>
           Revisão de Concordância entre Anotadores
-          <v-chip 
-            v-if="itemToReport && isManuallyFlagged(itemToReport)" 
-            color="error" 
-            text-color="white" 
-            small 
-            class="ml-2"
-          >
-            Discrepante
-          </v-chip>
         </v-card-title>
         <v-card-text>
           <div class="mb-4">
@@ -129,14 +107,14 @@
           </div>
           
           <div v-else>
-
-            <div class="label-agreements">
-              <div
-                v-for="label in datasetLabels"
-                :key="label.name"
-                class="label-agreement-item mb-3"
-              >
-                <div class="d-flex align-center">
+            <v-card
+              v-for="label in datasetLabels"
+              :key="label.name"
+              class="mb-3"
+              outlined
+            >
+              <v-card-text class="py-3">
+                <div class="d-flex align-center justify-space-between">
                   <div class="flex-grow-1">
                     <div class="d-flex align-center mb-2">
                       <v-chip
@@ -150,6 +128,14 @@
                       <span class="font-weight-bold">{{ label.percentage }}%</span>
                     </div>
                     
+                    <v-progress-linear
+                      :value="label.percentage"
+                      :color="label.color || 'primary'"
+                      height="8"
+                      rounded
+                      class="mb-2"
+                    ></v-progress-linear>
+                    
                     <div class="caption grey--text">
                       {{ label.agreementDetails }}
                     </div>
@@ -157,69 +143,47 @@
                       <strong>Anotadores:</strong> {{ label.annotators.join(', ') }}
                     </div>
                   </div>
+                  
+                  <div class="ml-4">
+                    <v-btn-toggle
+                      v-model="labelApprovals[label.name]"
+                      mandatory
+                      dense
+                    >
+                      <v-btn
+                        small
+                        :value="true"
+                        color="success"
+                        outlined
+                      >
+                        <v-icon small>{{ require('@mdi/js').mdiCheck }}</v-icon>
+                        Concordância OK
+                      </v-btn>
+                      <v-btn
+                        small
+                        :value="false"
+                        color="error"
+                        outlined
+                      >
+                        <v-icon small>{{ require('@mdi/js').mdiAlert }}</v-icon>
+                        Discrepância
+                      </v-btn>
+                    </v-btn-toggle>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <v-divider class="my-4"></v-divider>
-
-            <h3 class="mb-3">Decisão sobre o Dataset:</h3>
-            <v-card outlined class="pa-4">
-              <v-radio-group 
-                v-model="datasetDecision" 
-                mandatory
-                class="mt-0"
-              >
-                <v-radio 
-                  :value="false" 
-                  color="success"
-                >
-                  <template #label>
-                    <div class="d-flex align-items-center">
-                      <v-icon color="success" class="mr-2">{{ require('@mdi/js').mdiCheckCircle }}</v-icon>
-                      <span>Dataset está correto (sem discrepâncias)</span>
-                    </div>
-                  </template>
-                </v-radio>
-                <v-radio 
-                  :value="true" 
-                  color="error"
-                >
-                  <template #label>
-                    <div class="d-flex align-items-center">
-                      <v-icon color="error" class="mr-2">{{ require('@mdi/js').mdiAlert }}</v-icon>
-                      <span>Dataset tem discrepâncias</span>
-                    </div>
-                  </template>
-                </v-radio>
-              </v-radio-group>
-
-              <v-textarea
-                v-if="datasetDecision === true"
-                v-model="datasetComment"
-                label="Comentário sobre a discrepância (opcional)"
-                placeholder="Descreva as discrepâncias identificadas no dataset..."
-                outlined
-                dense
-                rows="3"
-                class="mt-3"
-              ></v-textarea>
+                
+                <v-textarea
+                  v-if="labelApprovals[label.name] === false"
+                  v-model="labelComments[label.name]"
+                  label="Comentário sobre discrepância (opcional)"
+                  placeholder="Descreva a discrepância identificada..."
+                  outlined
+                  dense
+                  rows="2"
+                  class="mt-3"
+                ></v-textarea>
+              </v-card-text>
             </v-card>
-            
-            <!-- Mensagem informativa quando não há anotadores suficientes -->
-            <v-alert 
-              v-if="totalAnnotators < 2"
-              type="warning" 
-              dense 
-              text 
-              class="mt-4"
-            >
-              <small>
-                <v-icon small class="mr-1">{{ require('@mdi/js').mdiInformationOutline }}</v-icon>
-                É necessário pelo menos 2 anotadores para submeter análise de concordância. 
-                Atualmente: {{ totalAnnotators }} anotador{{ totalAnnotators === 1 ? '' : 'es' }}.
-              </small>
-            </v-alert>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -304,7 +268,6 @@ export default Vue.extend({
       showReportDialog: false,
       itemToReport: null as ExampleDTO | null,
       reportedIds: [] as number[],
-      manuallyFlaggedIds: [] as number[],
       reportForm: {
         discrepancyType: null,
         description: '',
@@ -315,10 +278,9 @@ export default Vue.extend({
       snackbarMessage: '',
       loadingLabels: true,
       datasetLabels: [] as { name: string; percentage: number; count: number; total: number; color?: string }[],
-      submittingReview: false,
-      datasetDecision: false,
-      datasetComment: '',
-      totalAnnotators: 0
+      labelApprovals: {} as Record<string, boolean>,
+      labelComments: {} as Record<string, string>,
+      submittingReview: false
     }
   },
 
@@ -361,8 +323,17 @@ export default Vue.extend({
     },
 
     isReviewFormValid() {
-      // Verifica apenas se há pelo menos 2 anotadores
-      return this.totalAnnotators >= 2
+      // Verifica se todas as labels foram aprovadas ou rejeitadas
+      const allLabelsReviewed = this.datasetLabels.every(label => 
+        this.labelApprovals[label.name] !== undefined
+      )
+      
+      // Verifica se todas as labels rejeitadas têm comentários (opcional)
+      const rejectedLabelsHaveComments = this.datasetLabels
+        .filter(_label => this.labelApprovals[_label.name] === false)
+        .every(_label => true) // Comentários são opcionais
+      
+      return allLabelsReviewed && rejectedLabelsHaveComments
     },
 
     projectId() {
@@ -392,13 +363,6 @@ export default Vue.extend({
         }
       })
       this.options.page = 1
-    }
-  },
-
-  async created() {
-    // Load manual discrepancies if user is admin
-    if (this.isAdmin) {
-      await this.loadManualDiscrepancies()
     }
   },
 
@@ -436,14 +400,6 @@ export default Vue.extend({
     },
 
     async openReportDialog(item: ExampleDTO) {
-      // Não permitir abrir dialog para itens já analisados
-      if (this.isReviewed(item)) {
-        this.showSnackbar = true
-        this.snackbarColor = 'warning'
-        this.snackbarMessage = 'Este dataset já foi analisado e não pode ser alterado.'
-        return
-      }
-      
       this.itemToReport = item
       this.resetReviewForm()
       this.showReportDialog = true
@@ -462,34 +418,13 @@ export default Vue.extend({
         description: '',
         severity: null
       }
-      this.datasetDecision = false
-      this.datasetComment = ''
+      this.labelApprovals = {}
+      this.labelComments = {}
       this.datasetLabels = []
-      this.totalAnnotators = 0
     },
 
     isReported(item: ExampleDTO) {
       return this.reportedIds.includes(item.id)
-    },
-
-    isManuallyFlagged(item: ExampleDTO) {
-      return this.manuallyFlaggedIds.includes(item.id)
-    },
-
-    isReviewed(item: ExampleDTO) {
-      // Um item está "reviewed" se foi reportado (tem análise submetida)
-      return this.isReported(item)
-    },
-
-    async loadManualDiscrepancies() {
-      try {
-        const response = await this.$axios.get(`/api/projects/${this.projectId}/labels/manual-discrepancies`)
-        this.manuallyFlaggedIds = response.data.map((discrepancy: any) => 
-          parseInt(discrepancy.example)
-        )
-      } catch (error) {
-        console.error('Error loading manual discrepancies:', error)
-      }
     },
 
     async fetchDatasetLabels(_datasetId: number) {
@@ -502,41 +437,14 @@ export default Vue.extend({
         let labelTypes = []
         let allAnnotations = []
         
-        // Temporary solution: Get annotations from current user and simulate multiple users
-        // This is a pragmatic approach until we can solve the API issues
+        // Determinar que tipo de labels buscar baseado no tipo de projeto
         if (project.canDefineCategory) {
           labelTypes = await this.$services.categoryType.list(this.projectId)
-          console.log('Getting categories for example:', _datasetId)
-          
-          // Get annotations from ALL users (admin only)
-          allAnnotations = await this.$repositories.category.list(this.projectId, _datasetId, true)
-          console.log('Got annotations from all users:', allAnnotations.length)
-          
-          // Multi-user annotations now working!
-          if (allAnnotations.length > 0) {
-            console.log('Successfully loaded annotations from all users for review.')
-          }
+          allAnnotations = await this.$repositories.category.list(this.projectId, _datasetId)
         } else if (project.canDefineSpan) {
           labelTypes = await this.$services.spanType.list(this.projectId)
-          console.log('Getting spans for example:', _datasetId)
-          
-          // Get annotations from ALL users (admin only)
-          allAnnotations = await this.$repositories.span.list(this.projectId, _datasetId, true)
-          console.log('Got annotations from all users:', allAnnotations.length)
-          
-          // Multi-user annotations now working!
-          if (allAnnotations.length > 0) {
-            console.log('Successfully loaded annotations from all users for review.')
-          }
+          allAnnotations = await this.$repositories.span.list(this.projectId, _datasetId)
         } else {
-          this.datasetLabels = []
-          return
-        }
-        
-        // Verificar se temos um array válido
-        console.log('All annotations type:', typeof allAnnotations, 'Is array:', Array.isArray(allAnnotations), 'Length:', allAnnotations?.length)
-        if (!Array.isArray(allAnnotations)) {
-          console.error('allAnnotations is not an array:', allAnnotations)
           this.datasetLabels = []
           return
         }
@@ -556,9 +464,9 @@ export default Vue.extend({
         })
         
         const userIds = Object.keys(annotationsByUser)
-        this.totalAnnotators = userIds.length
+        const totalAnnotators = userIds.length
         
-        if (this.totalAnnotators === 0) {
+        if (totalAnnotators === 0) {
           this.datasetLabels = labelTypes.map(label => ({
             name: label.text,
             percentage: 0,
@@ -588,16 +496,16 @@ export default Vue.extend({
             }
           })
           
-          const agreementPercentage = this.totalAnnotators > 0 
-            ? (usersWhoAnnotatedThisLabel / this.totalAnnotators) * 100 
+          const agreementPercentage = totalAnnotators > 0 
+            ? (usersWhoAnnotatedThisLabel / totalAnnotators) * 100 
             : 0
           
           labelAgreements[label.text] = {
             percentage: Math.round(agreementPercentage * 10) / 10,
             count: usersWhoAnnotatedThisLabel,
-            total: this.totalAnnotators,
+            total: totalAnnotators,
             annotators: annotatorsWithLabel,
-            agreementDetails: `${usersWhoAnnotatedThisLabel} de ${this.totalAnnotators} anotadores concordam`
+            agreementDetails: `${usersWhoAnnotatedThisLabel} de ${totalAnnotators} anotadores concordam`
           }
         })
         
@@ -614,32 +522,27 @@ export default Vue.extend({
           }))
           .sort((a, b) => b.percentage - a.percentage) // Ordenar por percentagem decrescente
         
-        // Initialize dataset decision (check if already flagged)
-        this.datasetDecision = this.isManuallyFlagged(this.itemToReport)
-        this.datasetComment = ''
+        // Inicializar os formulários com valores padrão
+        this.labelApprovals = {}
+        this.labelComments = {}
+        this.datasetLabels.forEach(label => {
+          this.labelApprovals[label.name] = undefined
+          this.labelComments[label.name] = ''
+        })
         
       } catch (error) {
         console.error('Erro ao carregar concordância de labels:', error)
-        console.error('Full error details:', error.response || error)
         this.datasetLabels = []
         this.showSnackbar = true
         this.snackbarColor = 'error'
-        this.snackbarMessage = `Erro ao carregar concordância entre anotadores: ${error.message || error}`
+        this.snackbarMessage = 'Erro ao carregar concordância entre anotadores.'
       } finally {
         this.loadingLabels = false
       }
     },
 
-    async submitReview() {
+    submitReview() {
       if (!this.itemToReport || !this.isReviewFormValid) return
-      
-      // Verificar se uma decisão foi tomada
-      if (this.datasetDecision === undefined || this.datasetDecision === null) {
-        this.showSnackbar = true
-        this.snackbarColor = 'warning'
-        this.snackbarMessage = 'Por favor, tome uma decisão sobre o dataset antes de submeter.'
-        return
-      }
       
       this.submittingReview = true
       try {
@@ -647,50 +550,14 @@ export default Vue.extend({
           dataset_id: this.itemToReport.id,
           reviewed_by: this.$auth?.user?.id || 'anonymous',
           reviewed_at: new Date().toISOString(),
-          is_discrepant: this.datasetDecision,
-          comment: this.datasetComment || null,
-          label_percentages: this.datasetLabels.map(label => ({
+          label_approvals: this.datasetLabels.map(label => ({
             label_name: label.name,
+            approved: this.labelApprovals[label.name],
             percentage: label.percentage,
             count: label.count,
-            total: label.total
+            total: label.total,
+            comment: this.labelComments[label.name] || null
           }))
-        }
-
-        // Se foi marcado como discrepante, usar nossa API para marcar
-        if (this.datasetDecision) {
-          try {
-            const response = await this.$axios.post(
-              `/v1/projects/${this.projectId}/examples/${this.itemToReport.id}/manual-discrepancy-toggle`,
-              { reason: `Review: ${this.datasetComment || 'Dataset marcado como discrepante'}` }
-            )
-            
-            // Update local state based on API response
-            if (response.data.is_flagged) {
-              if (!this.manuallyFlaggedIds.includes(this.itemToReport.id)) {
-                this.manuallyFlaggedIds.push(this.itemToReport.id)
-              }
-            }
-          } catch (error) {
-            console.error('Erro ao marcar discrepância manual:', error)
-            // Continuar mesmo se esta parte falhar
-          }
-        } else {
-          // Se foi marcado como correto, remover flag se existir
-          try {
-            const response = await this.$axios.post(
-              `/v1/projects/${this.projectId}/examples/${this.itemToReport.id}/manual-discrepancy-toggle`,
-              { reason: 'Review: Dataset marcado como correto' }
-            )
-            
-            // Update local state - remove from flagged if it was unflagged
-            if (!response.data.is_flagged) {
-              this.manuallyFlaggedIds = this.manuallyFlaggedIds.filter(id => id !== this.itemToReport.id)
-            }
-          } catch (error) {
-            // Se não conseguiu remover o flag, continuar
-            console.error('Erro ao remover flag de discrepância:', error)
-          }
         }
 
         // Chamada ao backend - descomentar quando implementado
@@ -707,9 +574,7 @@ export default Vue.extend({
         
         this.showSnackbar = true
         this.snackbarColor = 'success'
-        this.snackbarMessage = this.datasetDecision 
-          ? 'Dataset marcado como discrepante!' 
-          : 'Dataset marcado como correto!'
+        this.snackbarMessage = 'Revisão submetida com sucesso!'
         
         this.closeReportDialog()
         
@@ -720,48 +585,6 @@ export default Vue.extend({
         this.snackbarMessage = 'Erro ao submeter revisão. Tente novamente.'
       } finally {
         this.submittingReview = false
-      }
-    },
-
-    getReviewButtonColor(item: ExampleDTO) {
-      if (this.isManuallyFlagged(item)) return 'error' // Red for discrepant
-      if (this.isReported(item)) return 'grey' // Grey for reviewed (disabled)
-      return 'primary' // Blue for not reviewed
-    },
-
-    getReviewButtonIcon(item: ExampleDTO) {
-      if (this.isManuallyFlagged(item)) return require('@mdi/js').mdiAlert
-      if (this.isReported(item)) return require('@mdi/js').mdiCheckCircle
-      return require('@mdi/js').mdiClipboardCheck
-    },
-
-    getReviewButtonText(item: ExampleDTO) {
-      if (this.isManuallyFlagged(item)) return 'Discrepante'
-      if (this.isReported(item)) return 'Analisado'
-      return 'Review'
-    },
-
-    async getAdminAnnotations(type: string, datasetId: number) {
-      // Try to get all annotations from all users using authenticated requests
-      try {
-        // Use the same pattern as other authenticated API calls in the app
-        const url = `/v1/projects/${this.projectId}/labels/admin/examples/${datasetId}/${type}`
-        console.log('Making authenticated request to:', url)
-        
-        // The $axios instance should already have authentication configured
-        const response = await this.$axios.get(url)
-        
-        if (Array.isArray(response.data)) {
-          return response.data
-        } else if (response.data.results && Array.isArray(response.data.results)) {
-          return response.data.results
-        } else {
-          console.warn('Unexpected response format from admin API:', response.data)
-          return []
-        }
-      } catch (error) {
-        console.error(`Failed to get ${type} annotations for dataset ${datasetId}:`, error)
-        throw error // Re-throw to trigger fallback
       }
     }
   }

@@ -156,7 +156,7 @@ export default Vue.extend({
     handleError(error: any) {
       this.editedItem = Object.assign({}, this.defaultItem)
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Already has a perspective with that name.'
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.\nEste projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
       } else {
         this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }

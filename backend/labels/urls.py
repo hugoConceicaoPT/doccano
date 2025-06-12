@@ -5,9 +5,6 @@ from .views import (
     BoundingBoxListAPI,
     CategoryDetailAPI,
     CategoryListAPI,
-    ManualDiscrepancyDetailAPI,
-    ManualDiscrepancyListAPI,
-    ManualDiscrepancyToggleAPI,
     RelationDetail,
     RelationList,
     SegmentationDetailAPI,
@@ -19,20 +16,6 @@ from .views import (
 )
 
 urlpatterns = [
-    # Manual discrepancy endpoints
-    path(route="manual-discrepancies", view=ManualDiscrepancyListAPI.as_view(), name="manual_discrepancy_list"),
-    path(
-        route="manual-discrepancies/<int:discrepancy_id>",
-        view=ManualDiscrepancyDetailAPI.as_view(),
-        name="manual_discrepancy_detail",
-    ),
-    path(
-        route="examples/<int:example_id>/manual-discrepancy-toggle",
-        view=ManualDiscrepancyToggleAPI.as_view(),
-        name="manual_discrepancy_toggle",
-    ),
-    
-    # Existing endpoints
     path(route="examples/<int:example_id>/relations", view=RelationList.as_view(), name="relation_list"),
     path(
         route="examples/<int:example_id>/relations/<int:annotation_id>",
