@@ -1,7 +1,6 @@
 <template>
   <div>
     <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
-    <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
     <form-create
       v-slot="slotProps"
       v-bind.sync="editedItem"
@@ -15,6 +14,7 @@
         Save
       </v-btn>
     </form-create>
+    <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
   </div>
 </template>
 
@@ -26,8 +26,7 @@ import { PerspectiveDTO } from '~/services/application/perspective/perspectiveDa
 import { CreateOptionsGroupCommand } from '~/services/application/perspective/question/questionCommand'
 import {
   OptionsGroupDTO,
-  QuestionDTO,
-  QuestionTypeDTO
+  QuestionDTO
 } from '~/services/application/perspective/question/questionData'
 
 export default Vue.extend({
@@ -55,16 +54,7 @@ export default Vue.extend({
         }
       ] as CreateOptionsGroupCommand[],
 
-      questionTypeItem: [
-        {
-          id: 1,
-          question_type: 'Open Question'
-        },
-        {
-          id: 2,
-          question_type: 'Closed Question'
-        }
-      ] as QuestionTypeDTO[],
+
 
       defaultItem: {
         id: null,
@@ -102,44 +92,10 @@ export default Vue.extend({
       try {
         this.editedItem.project_id = Number(this.projectId)
         this.editedItem.members = await this.getAnnotatorIds();
-        let j = 0
-        const questionTypeOpen = await this.$services.questionType.findById(
-          this.projectId,
-          this.questionTypeItem[0].id
-        )
-        const questionTypeClosed = await this.$services.questionType.findById(
-          this.projectId,
-          this.questionTypeItem[1].id
-        )
-        if (!questionTypeOpen || !questionTypeOpen.id)
-          await this.$services.questionType.create(this.projectId, {
-            id: this.questionTypeItem[0].id,
-            question_type: this.questionTypeItem[0].question_type
-          })
-        if (!questionTypeClosed || !questionTypeClosed.id)
-          await this.$services.questionType.create(this.projectId, {
-            id: this.questionTypeItem[1].id,
-            question_type: this.questionTypeItem[1].question_type
-          })
-        for (let i = 0; i < this.editedItem.questions.length; i++) {
-          if (this.editedItem.questions[i].type === 2) {
-            const existingOptionGroup = await this.$services.optionsGroup.findByName(
-              this.projectId,
-              this.optionsGroupItem[j].name
-            )
-
-            if (existingOptionGroup && existingOptionGroup.id) {
-              this.editedItem.questions[i].options_group = existingOptionGroup.id
-            } else {
-              const optionGroup = await this.$services.optionsGroup.create(
-                this.projectId,
-                this.optionsGroupItem[j]
-              )
-              this.editedItem.questions[i].options_group = optionGroup.id
-            }
-            j++
-          }
-        }
+        
+        // Agora todas as perguntas são "Open Questions" com answer_type
+        // Não precisamos mais de lógica para QuestionType ou OptionsGroup
+        
         await this.service.create(this.projectId, this.editedItem)
         this.sucessMessage = 'A perspective has been successfully added to this project and an email has been sent to all annotators of the project'
         setTimeout(() => {
@@ -155,8 +111,9 @@ export default Vue.extend({
     },
     handleError(error: any) {
       this.editedItem = Object.assign({}, this.defaultItem)
+      console.error('Error creating perspective:', error)
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Already has a perspective with that name.'
+        this.errorMessage = 'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
       } else {
         this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }

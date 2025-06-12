@@ -4,11 +4,25 @@
             <v-alert v-if="errorMessage" class="mx-4 my-4" type="error" dismissible @click="errorMessage = ''">
                 {{ errorMessage }}
             </v-alert>
+            <v-alert 
+                v-if="message.text" 
+                class="mx-4 my-4" 
+                :type="message.type" 
+                dismissible 
+                @click="message = { type: '', text: '' }"
+            >
+                {{ message.text }}
+            </v-alert>
             <v-card-title>
                 Discrepancy Threshold: {{ this.project && this.project.minPercentage !== undefined ? this.project.minPercentage : '-' }} %
             </v-card-title>
-            <discrepancy-list v-model="selected" :items="items" :isLoading="isLoading"
-                :discrepancyThreshold="this.project && this.project.minPercentage !== undefined ? this.project.minPercentage : 0" />
+            <discrepancy-list 
+                v-model="selected" 
+                :items="items" 
+                :isLoading="isLoading"
+                :discrepancyThreshold="this.project && this.project.minPercentage !== undefined ? this.project.minPercentage : 0"
+                @message="handleMessage" 
+            />
         </v-card>
     </div>
 </template>
@@ -36,6 +50,10 @@ export default Vue.extend({
             drawerLeft: null,
             selected: {} as Percentage,
             errorMessage: '',
+            message: {
+                type: '',
+                text: '',
+            },
         }
     },
 
@@ -75,6 +93,9 @@ export default Vue.extend({
             } else {
                 this.errorMessage = 'Database is slow or unavailable. Please try again later.'
             }
+        },
+        handleMessage(message: { type: string; text: string }) {
+            this.message = message;
         },
     }
 })

@@ -7,20 +7,20 @@ export class QuestionItem {
   constructor(
     readonly id: number,
     readonly question: string,
-    readonly type: number,
     readonly answers: AnswerItem[],
     readonly perspective_id: number,
-    readonly options_group?: number
+    readonly options_group?: number,
+    readonly answer_type?: string
   ) {}
 
   static create(
     question: string,
-    type: number,
     answers: AnswerItem[] = [],
     perspective_id: number,
-    options_group?: number
+    options_group?: number,
+    answer_type?: string
   ): QuestionItem {
-    return new QuestionItem(0, question, type, answers, perspective_id, options_group)
+    return new QuestionItem(0, question, answers, perspective_id, options_group, answer_type)
   }
 
   static list(repository: QuestionRepository, perspectiveId: number, project_id: string): Promise<QuestionItem[]> {
@@ -56,10 +56,4 @@ export class OptionsQuestionItem {
   }
 }
 
-export class QuestionTypeItem {
-  constructor(readonly id: number, readonly question_type: string) {}
 
-  static create(question_type: string): QuestionTypeItem {
-    return new QuestionTypeItem(0, question_type)
-  }
-}

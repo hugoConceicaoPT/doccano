@@ -10,7 +10,7 @@ import { SegmentationApplicationService } from '@/services/application/tasks/seg
 import { SequenceLabelingApplicationService } from '@/services/application/tasks/sequenceLabeling/sequenceLabelingApplicationService'
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
-import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService, QuestionTypeApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService } from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
 import { VotingConfigurationApplicationService, AnnotationRuleTypeApplicationService, AnnotationRuleApplicationService, AnnotationRuleAnswerApplicationService } from '~/services/application/rules/ruleApplicationService'
 
@@ -29,7 +29,6 @@ export interface Services {
   perspective: PerspectiveApplicationService
   optionsGroup: OptionsGroupApplicationService
   optionsQuestion: OptionsQuestionApplicationService
-  questionType: QuestionTypeApplicationService
   question: QuestionApplicationService
   answer: AnswerApplicationService
   votingConfiguration: VotingConfigurationApplicationService
@@ -63,7 +62,6 @@ const plugin: Plugin = (_, inject) => {
     perspective: new PerspectiveApplicationService(repositories.perspective),
     optionsGroup: new OptionsGroupApplicationService(repositories.optionsGroup),
     optionsQuestion: new OptionsQuestionApplicationService(repositories.optionsQuestion),
-    questionType: new QuestionTypeApplicationService(repositories.questionType),
     question: new QuestionApplicationService(repositories.question),
     answer: new AnswerApplicationService(repositories.answer),
     votingConfiguration: new VotingConfigurationApplicationService(repositories.votingConfiguration),

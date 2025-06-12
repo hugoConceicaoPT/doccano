@@ -1,5 +1,5 @@
 <template>
-  <action-menu :items="items" :text="$t('dataset.actions')" @create="$emit('create')" />
+  <action-menu v-if="showCreateButton" :items="items" :text="$t('dataset.actions')" @create="$emit('create')" />
 </template>
 
 <script lang="ts">
@@ -10,6 +10,13 @@ import ActionMenu from '~/components/utils/ActionMenu.vue'
 export default Vue.extend({
   components: {
     ActionMenu
+  },
+
+  props: {
+    showCreateButton: {
+      type: Boolean,
+      default: true
+    }
   },
 
   computed: {

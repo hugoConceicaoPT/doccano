@@ -12,15 +12,16 @@
     <template v-else>
       <template v-if="isAdmin">
         <v-card-title>
-          <action-menu @create="$router.push('perspectives/add')" />
-          <v-btn class="text-capitalize ms-2" outlined @click.stop="dialogDelete = true">
-            {{ $t('generic.delete') }}
+          <v-btn 
+            v-if="!hasPerspective"
+            color="primary" 
+            class="text-capitalize" 
+            @click="$router.push('perspectives/add')"
+          >
+            Create Perspective
           </v-btn>
-          <v-dialog v-model="dialogDelete">
-            <form-delete :selected="selected" @remove="handleDelete" @cancel="dialogDelete = false" />
-          </v-dialog>
         </v-card-title>
-        <perspective-list v-model="selected" :items="items" :is-loading="isLoading" />
+        <perspective-list :items="items" :is-loading="isLoading" />
       </template>
       <template v-else>
         <!-- O componente form-answer deverá interpretar as perguntas e renderizar as opções de escolha múltipla -->
@@ -38,7 +39,6 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import ActionMenu from '@/components/perspective/ActionMenu.vue'
 import PerspectiveList from '@/components/perspective/PerspectiveList.vue'
 import FormAnswer from '~/components/perspective/FormAnswer.vue'
 import { MemberItem } from '~/domain/models/member/member'
@@ -49,7 +49,6 @@ import { CreateAnswerCommand } from '~/services/application/perspective/answer/a
 
 export default Vue.extend({
   components: {
-    ActionMenu,
     PerspectiveList,
     FormAnswer
   },
@@ -60,12 +59,8 @@ export default Vue.extend({
 
   data() {
     return {
-      dialogDelete: false,
       items: [] as PerspectiveDTO[],
-      selected: [] as PerspectiveDTO[],
       isLoading: false,
-      tab: 0,
-      drawerLeft: null,
       myRole: null as MemberItem | null,
       questionsList: [] as QuestionItem[],
       optionsList: [] as OptionsQuestionItem[], // Lista de perguntas para o FormAnswer
@@ -92,6 +87,9 @@ export default Vue.extend({
     },
     isAnswered(): boolean {
       return this.AlreadyAnswered
+    },
+    hasPerspective(): boolean {
+      return this.items && this.items.length > 0
     }
   },
 
@@ -117,10 +115,14 @@ export default Vue.extend({
         const projectId = this.$route.params.id
         const response = await this.$services.perspective.list(projectId)
         this.items = Array.isArray(response) ? response : [response]
-        console.log(this.items)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erro ao buscar perspectivas:', error)
-        alert('Erro ao buscar o papel ou perguntas')
+        // Se o erro é porque não há perspectivas, mantém items vazio para mostrar o botão create
+        if (error.message === 'Nenhuma perspectiva encontrada.') {
+          this.items = []
+        } else {
+          this.items = []
+        }
       } finally {
         this.isLoading = false
       }
@@ -172,25 +174,9 @@ export default Vue.extend({
       }
     },
 
-    async handleDelete() {
-      this.isLoading = true
-      try {
-        for (const user of this.selected) {
-          await this.$services.user.delete(user.id)
-        }
-        this.items = this.items.filter(
-          (user) => !this.selected.some((selectedUser) => selectedUser.id === user.id)
-        )
-        this.selected = []
-        this.dialogDelete = false
-      } catch (error) {
-        console.error('Erro ao excluir perspectivas:', error)
-      } finally {
-        this.isLoading = false
-      }
-    },
 
-    async submitAnswers(formattedAnswers: { questionId: number; answer: string; questionType: number }[]) {
+
+    async submitAnswers(formattedAnswers: { questionId: number; answer: string; answerType: string }[]) {
       console.log('Respostas submetidas:', formattedAnswers)
       try {
         // Mapeia as respostas com base no multipleChoiceMap, usando o question id como chave

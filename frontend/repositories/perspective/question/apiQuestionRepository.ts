@@ -5,10 +5,10 @@ function toModel(item: { [key: string]: any }): QuestionItem {
   return new QuestionItem(
     item.id,
     item.question,
-    item.type_id,
     item.answers,
     item.perspective_id ?? null,
-    item.options_group ?? null
+    item.options_group ?? null,
+    item.answer_type ?? null
   )
 }
 
@@ -19,10 +19,10 @@ export class APIQuestionRepository {
     const url = `/projects/${projectId}/perspectives/${this.baseUrl}s/create`
     const payload = {
       question: item.question,
-      type: item.type,
       answers: item.answers,
       perspective_id: item.perspective_id,
-      options_group: item.options_group
+      options_group: item.options_group,
+      answer_type: item.answer_type
     }
     const response = await this.request.post(url, payload)
     return toModel(response.data)
