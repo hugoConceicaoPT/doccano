@@ -14,7 +14,6 @@ from .models import (
     Perspective,
     Project,
     Question,
-    QuestionType,
     SegmentationProject,
     Seq2seqProject,
     SequenceLabelingProject,
@@ -48,12 +47,6 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ("id", "user", "role", "username", "rolename", "perspective_id")
-
-class QuestionTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = QuestionType
-        fields = ["id", "question_type"]
-
 
 class OptionQuestionSerializer(serializers.ModelSerializer):
     options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
@@ -103,11 +96,12 @@ class QuestionSerializer(serializers.ModelSerializer):
     perspective = serializers.PrimaryKeyRelatedField(
         queryset=Perspective.objects.all(), required=False
     )
-    type = serializers.PrimaryKeyRelatedField(queryset=QuestionType.objects.all())
     options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
+    answer_type = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+
     class Meta:
         model = Question
-        fields = ("id", "question", "perspective", "answers", "type", "options_group")
+        fields = ("id", "question", "perspective", "answers", "options_group", "answer_type")
 
 
 class PerspectiveSerializer(serializers.ModelSerializer):

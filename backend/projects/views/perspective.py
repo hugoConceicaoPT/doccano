@@ -13,7 +13,6 @@ from projects.models import (
     OptionsGroup,
     Perspective,
     Question,
-    QuestionType,
     Member
 )
 from projects.serializers import (
@@ -22,7 +21,6 @@ from projects.serializers import (
     OptionsGroupSerializer,
     PerspectiveSerializer,
     QuestionSerializer,
-    QuestionTypeSerializer,
 )
 
 
@@ -216,47 +214,4 @@ class OptionsGroupDetail(generics.RetrieveAPIView):
         return Response(serializer.data)
 
 
-class QuestionsType(generics.ListAPIView):
-    queryset = QuestionType.objects.all()
-    serializer_class = QuestionTypeSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ("question_type",)
 
-
-class QuestionsTypeCreation(generics.CreateAPIView):
-    queryset = QuestionType.objects.all()
-    serializer_class = QuestionTypeSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        option_question = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(QuestionTypeSerializer(option_question).data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def perform_create(self, serializer):
-        return serializer.save()
-
-
-class QuestionsTypeDetail(generics.RetrieveAPIView):
-    serializer_class = QuestionTypeSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        question_type_id = self.kwargs["question_type_id"]
-        try:
-            return QuestionType.objects.get(id=question_type_id)
-        except QuestionType.DoesNotExist:
-            return None
-
-    def retrieve(self, request, *args, **kwargs):
-        obj = self.get_object()
-
-        if obj is None:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        serializer = self.get_serializer(obj)
-        return Response(serializer.data)

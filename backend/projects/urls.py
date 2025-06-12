@@ -12,8 +12,6 @@ from .views.perspective import (
     PerspectiveDetail,
     Perspectives,
     Questions,
-    QuestionsTypeCreation,
-    QuestionsTypeDetail,
     OptionsQuestion,
 )
 from .views.rule import ( 
@@ -50,8 +48,6 @@ urlpatterns = [
     path(route="projects/<int:project_id>/options-group",view=OptionsGroups.as_view(),name="options_group_list",),
     path(route="projects/<int:project_id>/options-group/<str:group_name>",view=OptionsGroupDetail.as_view(),name="options_group_detail",),
     path(route="projects/<int:project_id>/options-question/create",view=OptionsQuestionCreation.as_view(),name="options_question_create",),
-    path(route="projects/<int:project_id>/question-type/create",view=QuestionsTypeCreation.as_view(),name="options_question_create",),
-    path(route="projects/<int:project_id>/question-type/<int:question_type_id>",view=QuestionsTypeDetail.as_view(),name="question_type_detail",),
     path(route="projects/<int:project_id>/annotation-rules/create",view=AnnotationRuleCreation.as_view(),name="annotation_rule_create",),
     path(route="projects/<int:project_id>/annotation-rules/list",view=AnnotationRules.as_view(),name="annotation_rule_list",),
     path(route="projects/<int:project_id>/annotation-rules/<int:annotation_rule_id>",view=AnnotationRuleDetail.as_view(),name="annotation_rule_detail",),

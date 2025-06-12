@@ -41,7 +41,7 @@
                   <v-list-item v-for="(question, index) in questionsList" :key="index">
                     <v-list-item-content>
                       <v-list-item-title>{{ question.question }} ({{
-                        getAnswerTypeLabel(answerType)
+                        getAnswerTypeLabel(question.answer_type)
                       }})</v-list-item-title>
                     </v-list-item-content>
                     <v-list-item-action>
@@ -121,7 +121,7 @@ export default Vue.extend({
       }
       const questionData: CreateQuestionCommand = {
         question: this.newQuestion.trim(),
-        type: 1, // Sempre Open Question
+        answer_type: this.answerType, // Tipo de resposta selecionado
         options_group: undefined,
         answers: []
       }
