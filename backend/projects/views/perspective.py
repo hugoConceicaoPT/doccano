@@ -56,30 +56,7 @@ class PerspectiveCreation(generics.CreateAPIView):
                 question_serializer = QuestionSerializer(data=question_data)
                 question_serializer.is_valid(raise_exception=True)
                 question_serializer.save()
-            members_ids = request.data.get("members", [])
-            members = Member.objects.filter(id__in=members_ids).select_related("user")
-            recipients = [member.user.email for member in members if member.user.email]
-            if recipients:
-                subject = 'Perspective of the project created'
-                message = 'You have to add your perspective to the project'
-                self.send_notification_email(recipients, subject, message)
             return Response(PerspectiveSerializer(perspective).data, status=status.HTTP_201_CREATED)
-        
-    def send_notification_email(self, recipients, subject, message):
-        if not recipients:
-            return False
-        try:
-            send_mail(
-               subject=subject,
-                message=message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=recipients,
-                fail_silently=False,
-        )
-            return True
-        except Exception as e:
-            print(f"Erro ao enviar e-mail: {e}")
-            return False   
      
 
     def perform_create(self, serializer):

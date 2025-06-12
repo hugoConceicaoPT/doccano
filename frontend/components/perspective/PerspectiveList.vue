@@ -1,57 +1,21 @@
-
-
-
-
 <template>
   <div class="container">
     <!-- Seleção da pergunta -->
-    <v-select
-      v-model="selectedQuestion"
-      :items="availableQuestions"
-      label="Selecione a pergunta"
-      clearable
-      class="mb-4"
-    />
+    <v-select v-model="selectedQuestion" :items="availableQuestions" label="Selecione a pergunta" clearable
+      class="mb-4" multiple/>
     <!-- Seleção do utilizador -->
-    <v-select
-      v-model="selectedUser"
-      :items="availableUsers"
-      label="Selecione o utilizador"
-      clearable
-      class="mb-4"
-    />
+    <v-select v-model="selectedUser" :items="availableUsers" label="Selecione o utilizador" clearable class="mb-4" multiple/>
     <!-- Seleção da resposta -->
-    <v-select
-      v-model="selectedAnswer"
-      :items="availableAnswers"
-      label="Selecione a resposta"
-      clearable
-      class="mb-4"
-    />
-    <v-data-table
-      :items="processedItems"
-      :headers="headers"
-      :loading="isLoading"
-      :loading-text="$t('generic.loading')"
-      :no-data-text="$t('vuetify.noDataAvailable')"
-      :footer-props="{
+    <v-select v-model="selectedAnswer" :items="availableAnswers" label="Selecione a resposta" clearable class="mb-4" multiple/>
+    <v-data-table :items="processedItems" :headers="headers" :loading="isLoading" :loading-text="$t('generic.loading')"
+      :no-data-text="$t('vuetify.noDataAvailable')" :footer-props="{
         showFirstLastPage: true,
         'items-per-page-text': $t('vuetify.itemsPerPageText'),
         'page-text': $t('dataset.pageText')
-      }"
-      item-key="id"
-      show-select
-      @input="$emit('input', $event)"
-    >
+      }" item-key="id" show-select @input="$emit('input', $event)">
       <template #top>
-        <v-text-field
-          v-model="search"
-          :prepend-inner-icon="mdiMagnify"
-          :label="$t('generic.search')"
-          single-line
-          hide-details
-          filled
-        />
+        <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" :label="$t('generic.search')" single-line
+          hide-details filled />
       </template>
       <!-- Oculta o checkbox do header -->
       <template #[`header.data-table-select`]>
@@ -110,9 +74,9 @@ export default Vue.extend({
       search: '',
       mdiMagnify,
       // Selecção dos filtros: pergunta, utilizador e resposta
-      selectedQuestion: 'Todas as perguntas' as string | null,
-      selectedUser: 'Todos os utilizadores' as string | null,
-      selectedAnswer: 'Todas as respostas' as string | null,
+      selectedQuestion: [] as string[],
+      selectedUser: [] as string[],
+      selectedAnswer: [] as string[],
       // Armazena os nomes carregados para os IDs de 0 a 100
       memberNames: {} as { [key: number]: string }
     }
@@ -130,7 +94,7 @@ export default Vue.extend({
     projectId(): string {
       return this.$route.params.id
     },
-    // Extrai as perguntas disponíveis e adiciona a opção "Todas as perguntas"
+    // Extrai as perguntas disponíveis
     availableQuestions() {
       const questionsSet = new Set<string>()
       const projectItems = this.items.filter(
@@ -145,9 +109,9 @@ export default Vue.extend({
           })
         }
       })
-      return ['Todas as perguntas', ...Array.from(questionsSet)]
+      return Array.from(questionsSet)
     },
-    // Extrai os utilizadores disponíveis a partir das respostas e adiciona "Todos os utilizadores"
+    // Extrai os utilizadores disponíveis a partir das respostas
     availableUsers() {
       const usersSet = new Set<string>()
       const projectItems = this.items.filter(
@@ -174,9 +138,9 @@ export default Vue.extend({
           })
         }
       })
-      return ['Todos os utilizadores', ...Array.from(usersSet)]
+      return Array.from(usersSet)
     },
-    // Extrai as respostas disponíveis e adiciona "Todas as respostas"
+    // Extrai as respostas disponíveis
     availableAnswers() {
       const answersSet = new Set<string>()
       const projectItems = this.items.filter(
@@ -196,7 +160,7 @@ export default Vue.extend({
           })
         }
       })
-      return ['Todas as respostas', ...Array.from(answersSet)]
+      return Array.from(answersSet)
     },
     // Processa os itens gerando uma linha para cada resposta e aplicando os filtros selecionados
     processedItems() {
@@ -208,14 +172,15 @@ export default Vue.extend({
       projectItems.forEach(item => {
         if (Array.isArray(item.questions)) {
           item.questions.forEach(q => {
-            // Filtra pela pergunta, se selecionada e não for "Todas as perguntas"
-            if (this.selectedQuestion && this.selectedQuestion !== 'Todas as perguntas' && 
-                q.question && q.question.toLowerCase() !== this.selectedQuestion.toLowerCase()) {
+            // Filtra pela pergunta, se houver seleções
+            if (this.selectedQuestion.length > 0 && 
+                q.question && 
+                !this.selectedQuestion.includes(q.question)) {
               return
             }
             if (Array.isArray(q.answers)) {
               q.answers.forEach((a: any) => {
-                let memberId: number 
+                let memberId: number
                 let memberName = ''
                 if (a.member) {
                   if (typeof a.member === 'object' && a.member.id != null) {
@@ -242,14 +207,14 @@ export default Vue.extend({
                     return
                   }
                 }
-                // Filtro por utilizador, se selecionado
-                if (this.selectedUser && this.selectedUser !== 'Todos os utilizadores' &&
-                    row.memberName.toLowerCase() !== this.selectedUser.toLowerCase()) {
+                // Filtro por utilizador, se houver seleções
+                if (this.selectedUser.length > 0 && 
+                    !this.selectedUser.includes(row.memberName)) {
                   return
                 }
-                // Filtro por resposta, se selecionada
-                if (this.selectedAnswer && this.selectedAnswer !== 'Todas as respostas' &&
-                    row.answer.toLowerCase() !== this.selectedAnswer.toLowerCase()) {
+                // Filtro por resposta, se houver seleções
+                if (this.selectedAnswer.length > 0 && 
+                    !this.selectedAnswer.includes(row.answer)) {
                   return
                 }
                 result.push(row)
@@ -263,15 +228,6 @@ export default Vue.extend({
   },
 
   watch: {
-    selectedQuestion(newVal) {
-      console.log('selectedQuestion changed:', newVal)
-    },
-    selectedUser(newVal) {
-      console.log('selectedUser changed:', newVal)
-    },
-    selectedAnswer(newVal) {
-      console.log('selectedAnswer changed:', newVal)
-    },
     // Quando os itens mudam, recarrega os nomes dos membros
     items: {
       handler() {
@@ -293,16 +249,25 @@ export default Vue.extend({
   methods: {
     // Exemplo de método para carregar os nomes dos membros (supondo um repositório para membros)
     loadMemberNames() {
-      for (let memberId = 0; memberId <= 100; memberId++) {
-        this.$repositories.member.findById(this.projectId, memberId)
-          .then((response: any) => {
-            this.$set(this.memberNames, memberId, response.username)
-            console.log(`Fetched member ${memberId}:`, response.username)
-          })
-          .catch(() => {
-            console.log(`Member not found for ID ${memberId}`)
-          })
-      }
+      // Garante que a estrutura de nomes de membros está vazia/inicializada
+      this.memberNames = {}
+
+      // Itera por todos os items
+      this.items.forEach(item => {
+        // Itera por todos os member IDs do item
+        item.members.forEach(memberId => {
+          // Verifica se ainda não carregou esse membro
+          if (!this.memberNames[memberId]) {
+            this.$repositories.member.findById(this.projectId, memberId)
+              .then((response: any) => {
+                this.$set(this.memberNames, memberId, response.username)
+              })
+              .catch(() => {
+                console.log(`Member not found for ID ${memberId}`)
+              })
+          }
+        })
+      })
     }
   }
 })

@@ -111,16 +111,18 @@ export default Vue.extend({
           this.projectId,
           this.questionTypeItem[1].id
         )
-        if (!questionTypeOpen || !questionTypeOpen.id)
+        if (!questionTypeOpen || !questionTypeOpen.id) {
           await this.$services.questionType.create(this.projectId, {
             id: this.questionTypeItem[0].id,
             question_type: this.questionTypeItem[0].question_type
           })
-        if (!questionTypeClosed || !questionTypeClosed.id)
+        }
+        if (!questionTypeClosed || !questionTypeClosed.id) {
           await this.$services.questionType.create(this.projectId, {
             id: this.questionTypeItem[1].id,
             question_type: this.questionTypeItem[1].question_type
           })
+        }
         for (let i = 0; i < this.editedItem.questions.length; i++) {
           if (this.editedItem.questions[i].type === 2) {
             const existingOptionGroup = await this.$services.optionsGroup.findByName(
@@ -155,6 +157,7 @@ export default Vue.extend({
     },
     handleError(error: any) {
       this.editedItem = Object.assign({}, this.defaultItem)
+      console.error('Error creating perspective:', error)
       if (error.response && error.response.status === 400) {
         this.errorMessage = 'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
       } else {
