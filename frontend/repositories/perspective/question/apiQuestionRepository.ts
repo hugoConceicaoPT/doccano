@@ -5,7 +5,7 @@ function toModel(item: { [key: string]: any }): QuestionItem {
   return new QuestionItem(
     item.id,
     item.question,
-    item.type_id,
+    item.type,
     item.answers,
     item.perspective_id ?? null,
     item.options_group ?? null

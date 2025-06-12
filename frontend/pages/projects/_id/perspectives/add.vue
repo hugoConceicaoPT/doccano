@@ -1,7 +1,6 @@
 <template>
   <div>
     <v-alert v-if="sucessMessage" type="success" dismissible>{{ sucessMessage }}</v-alert>
-    <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
     <form-create
       v-slot="slotProps"
       v-bind.sync="editedItem"
@@ -15,6 +14,7 @@
         Save
       </v-btn>
     </form-create>
+    <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
   </div>
 </template>
 
@@ -156,7 +156,7 @@ export default Vue.extend({
     handleError(error: any) {
       this.editedItem = Object.assign({}, this.defaultItem)
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Database is slow or unavailable. Please try again later.\nEste projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
+        this.errorMessage = 'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
       } else {
         this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }

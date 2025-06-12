@@ -105,7 +105,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     )
     type = serializers.PrimaryKeyRelatedField(queryset=QuestionType.objects.all())
     options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
-
     class Meta:
         model = Question
         fields = ("id", "question", "perspective", "answers", "type", "options_group")
