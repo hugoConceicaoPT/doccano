@@ -3,19 +3,17 @@ import {
   CreateOptionsQuestionCommand,
   CreateQuestionCommand
 } from './questionCommand'
-import { OptionsGroupDTO, OptionsQuestionDTO, QuestionDTO, QuestionTypeDTO } from './questionData'
+import { OptionsGroupDTO, OptionsQuestionDTO, QuestionDTO } from './questionData'
 import { AnswerItem } from '~/domain/models/perspective/answer/answer'
 import {
   OptionsGroupItem,
   OptionsQuestionItem,
-  QuestionItem,
-  QuestionTypeItem
+  QuestionItem
 } from '~/domain/models/perspective/question/question'
 import {
   OptionsGroupRepository,
   OptionsQuestionRepository,
-  QuestionRepository,
-  QuestionTypeRepository
+  QuestionRepository
 } from '~/domain/models/perspective/question/questionRepository'
 
 
@@ -24,7 +22,7 @@ export class QuestionApplicationService {
 
   public async create(projectId: string, item: CreateQuestionCommand): Promise<QuestionDTO> {
     const answers = item.answers.map((a) => new AnswerItem(0, a.member, a.question, a.answer_text, a.answer_option))
-    const question = new QuestionItem(0, item.question, item.type, answers, item.perspective_id ?? 0, item.options_group ?? 0)
+    const question = new QuestionItem(0, item.question, answers, item.perspective_id ?? 0, item.options_group ?? 0, item.answer_type)
 
     const created = await this.repository.create(projectId, question)
     return new QuestionDTO(created)
@@ -76,18 +74,4 @@ export class OptionsQuestionApplicationService {
   }
 }
 
-export class QuestionTypeApplicationService {
-  constructor(private readonly repository: QuestionTypeRepository) {}
 
-  public async create(project_id: string, item: QuestionTypeDTO): Promise<QuestionTypeDTO> {
-    const questionType = new QuestionTypeItem(item.id, item.question_type)
-
-    const created = await this.repository.create(project_id, questionType)
-    return new QuestionTypeDTO(created)
-  }
-
-  public async findById(projectId: string, id: number): Promise<QuestionTypeDTO> {
-    const item = await this.repository.findById(projectId, id)
-    return new QuestionTypeDTO(item)
-  }
-}

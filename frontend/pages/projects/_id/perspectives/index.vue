@@ -176,7 +176,7 @@ export default Vue.extend({
 
 
 
-    async submitAnswers(formattedAnswers: { questionId: number; answer: string; questionType: number }[]) {
+    async submitAnswers(formattedAnswers: { questionId: number; answer: string; answerType: string }[]) {
       console.log('Respostas submetidas:', formattedAnswers)
       try {
         // Mapeia as respostas com base no multipleChoiceMap, usando o question id como chave

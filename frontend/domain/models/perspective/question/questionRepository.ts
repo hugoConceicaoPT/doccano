@@ -1,4 +1,4 @@
-import { OptionsQuestionItem, OptionsGroupItem, QuestionItem, QuestionTypeItem } from './question'
+import { OptionsQuestionItem, OptionsGroupItem, QuestionItem } from './question'
 
 export interface QuestionRepository {
   create(projectId: string, item: QuestionItem): Promise<QuestionItem>
@@ -16,7 +16,4 @@ export interface OptionsQuestionRepository {
   list(projectId: string): Promise<OptionsQuestionItem[]>
 }
 
-export interface QuestionTypeRepository {
-  create(projectId: string, item: QuestionTypeItem): Promise<QuestionTypeItem>
-  findById(projectId: string, id: number): Promise<QuestionTypeItem>
-}
+

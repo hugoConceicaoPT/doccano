@@ -126,7 +126,7 @@ export default Vue.extend({
       const formattedAnswers = this.questionsList.map((question) => ({
         questionId: question.id,
         answer: this.answers[question.id],
-        questionType: question.type, // assume que question.type é informado
+        answerType: question.answer_type, // usar answer_type em vez de type
       }));
       this.$emit("submit-answers", formattedAnswers);
       console.log("Respostas enviadas:", formattedAnswers);
