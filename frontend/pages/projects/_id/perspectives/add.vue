@@ -7,6 +7,7 @@
       :perspective-id="null"
       :items="items"
       @update-questions="updateQuestions"
+      @update-name="updateName"
       @update-options-group="updateOptionsGroup"
     >
       <v-btn color="error" class="text-capitalize" @click="$router.back()"> Cancel </v-btn>
@@ -42,6 +43,7 @@ export default Vue.extend({
     return {
       editedItem: {
         id: null,
+        name: '',
         project_id: 0,
         questions: [],
         members: []
@@ -58,6 +60,7 @@ export default Vue.extend({
 
       defaultItem: {
         id: null,
+        name: '',
         project_id: 0,
         questions: [],
         members: []
@@ -82,6 +85,10 @@ export default Vue.extend({
   methods: {
     updateQuestions(questions: QuestionDTO[]) {
       this.editedItem.questions = questions
+    },
+
+    updateName(name: string) {
+      this.editedItem.name = name
     },
 
     updateOptionsGroup(optionsGroup: OptionsGroupDTO[]) {
