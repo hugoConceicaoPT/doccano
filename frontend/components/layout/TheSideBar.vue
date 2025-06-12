@@ -119,6 +119,12 @@ export default {
           isVisible: true
         },
         {
+          icon: mdiAccount,
+          text: 'Discrepancies side to side',
+          link: 'discrepancies-side-to-side',
+          isVisible: this.isProjectAdmin
+        },
+        {
           icon: mdiCommentAccountOutline,
           text: 'Comments',
           link: 'comments',
