@@ -44,8 +44,11 @@ class PerspectiveManager(Manager):
                     distribution[key] = 0
                 distribution[key] += 1
 
-            # Calcular percentagens
-            distribution_percent = {k: (v / total_answers) * 100 for k, v in distribution.items()}
+            # Calcular percentagens (evitar divisão por zero)
+            if total_answers > 0:
+                distribution_percent = {k: (v / total_answers) * 100 for k, v in distribution.items()}
+            else:
+                distribution_percent = {}
 
             result[question.id] = {
                 "question": question.question,

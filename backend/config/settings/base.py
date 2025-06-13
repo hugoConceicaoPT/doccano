@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "labels",
     "label_types",
     "examples",
+    "reports",
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
@@ -236,6 +237,9 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", ["http://192.168.56.1:30
 
 # Allow all host headers
 ALLOWED_HOSTS = ["*"]
+
+# URL configuration
+APPEND_SLASH = True
 
 if DEBUG:
     CORS_ORIGIN_ALLOW_ALL = False
