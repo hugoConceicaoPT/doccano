@@ -3,13 +3,7 @@
     <form @submit.prevent="submitForm">
       <div class="form-group">
         <label for="name">Nome da Regra</label>
-        <input
-          type="text"
-          id="name"
-          v-model="form.name"
-          class="form-control"
-          required
-        />
+        <input id="name" v-model="form.name" type="text" class="form-control" required />
       </div>
       <div class="form-group">
         <label for="description">Descrição</label>
@@ -31,11 +25,11 @@ export default {
     return {
       form: {
         name: '',
-        description: '',
+        description: ''
         // ... existing code ...
       }
     }
   }
 }
 </script>
-// ... existing code ... 
+// ... existing code ...

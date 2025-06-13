@@ -1,9 +1,6 @@
 import { AnswerDTO } from '../answer/answerData'
 import { CreateOptionsQuestionCommand } from './questionCommand'
-import {
-  OptionsGroupItem,
-  QuestionItem
-} from '~/domain/models/perspective/question/question'
+import { OptionsGroupItem, QuestionItem } from '~/domain/models/perspective/question/question'
 
 export class QuestionDTO {
   id: number
@@ -46,5 +43,3 @@ export class OptionsGroupDTO {
     this.options_questions = item.options_questions
   }
 }
-
-

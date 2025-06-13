@@ -8,12 +8,10 @@ export interface QuestionRepository {
 export interface OptionsGroupRepository {
   create(projectId: string, item: OptionsGroupItem): Promise<OptionsGroupItem>
   findByName(projectId: string, name: string): Promise<OptionsGroupItem>
-  list(project_id: string) : Promise<OptionsGroupItem[]>
+  list(project_id: string): Promise<OptionsGroupItem[]>
 }
 
 export interface OptionsQuestionRepository {
   create(projectId: string, item: OptionsQuestionItem): Promise<OptionsQuestionItem>
   list(projectId: string): Promise<OptionsQuestionItem[]>
 }
-
-

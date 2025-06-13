@@ -9,7 +9,7 @@
 
       <v-tab-item v-for="(value, questionId) in chartJSFormat" :key="questionId">
         <v-card-text>
-          <chart-pie @chart-ready="onPerspectiveChartReady" :chart-data="value" />
+          <chart-pie :chart-data="value" @chart-ready="onPerspectiveChartReady" />
         </v-card-text>
       </v-tab-item>
     </v-tabs>
@@ -41,7 +41,9 @@ export default Vue.extend({
 
   computed: {
     chartJSFormat(): any {
-      const data: { [questionId: string]: { labels: string[]; datasets: any[]; question: string } } = {}
+      const data: {
+        [questionId: string]: { labels: string[]; datasets: any[]; question: string }
+      } = {}
 
       for (const questionId in this.distribution) {
         const { question, answers } = this.distribution[questionId]
@@ -49,7 +51,7 @@ export default Vue.extend({
         const labels = Object.keys(answers)
         labels.sort()
 
-        const counts = labels.map(label => parseFloat((answers[label]).toString()))
+        const counts = labels.map((label) => parseFloat(answers[label].toString()))
         const colors = labels.map((_label, index) => this.pickColor(index))
 
         data[questionId] = {

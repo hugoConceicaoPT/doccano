@@ -76,12 +76,12 @@
         </v-btn>
         <v-tooltip bottom :disabled="!isReported(row)">
           <template #activator="{ on, attrs }">
-            <v-btn 
+            <v-btn
               v-if="isAdmin"
-              small 
-              outlined 
-              :color="getReviewButtonColor(row)" 
-              class="ms-1" 
+              small
+              outlined
+              :color="getReviewButtonColor(row)"
+              class="ms-1"
               v-bind="attrs"
               v-on="on"
               @click="openReportDialog(row)"
@@ -102,19 +102,19 @@
         </v-card-title>
         <v-card-text>
           <div class="mb-4">
-            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br>
+            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br />
             <strong>Texto:</strong> {{ itemToReport?.text | truncate(100) }}
           </div>
-          
+
           <v-divider class="mb-4"></v-divider>
-          
+
           <h3 class="mb-3">Concordância por Label:</h3>
-          
+
           <div v-if="loadingLabels" class="text-center py-4">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
             <p class="mt-2">Analisando concordância entre anotadores...</p>
           </div>
-          
+
           <div v-else-if="hasConnectionError" class="text-center py-4">
             <v-alert type="error" outlined class="mb-4">
               <div class="d-flex align-center">
@@ -122,10 +122,10 @@
                 <div class="text-left">
                   <h4 class="mb-2">Erro de Conectividade</h4>
                   <p class="mb-2">{{ connectionErrorMessage }}</p>
-                  <v-btn 
-                    color="error" 
-                    outlined 
-                    small 
+                  <v-btn
+                    color="error"
+                    outlined
+                    small
                     :loading="loadingLabels"
                     @click="retryConnection"
                   >
@@ -136,20 +136,15 @@
               </div>
             </v-alert>
           </div>
-          
+
           <div v-else-if="datasetLabels.length === 0" class="text-center py-4">
             <v-icon large color="grey">{{ require('@mdi/js').mdiInformationOutline }}</v-icon>
             <p class="mt-2 grey--text">Nenhuma anotação encontrada para análise de concordância</p>
           </div>
-          
+
           <div v-else>
             <!-- Mostrar concordância de cada label -->
-            <v-card
-              v-for="label in datasetLabels"
-              :key="label.name"
-              class="mb-3"
-              outlined
-            >
+            <v-card v-for="label in datasetLabels" :key="label.name" class="mb-3" outlined>
               <v-card-text class="py-3">
                 <div class="d-flex align-center justify-space-between">
                   <div class="flex-grow-1">
@@ -164,7 +159,7 @@
                       </v-chip>
                       <span class="font-weight-bold">{{ label.percentage }}%</span>
                     </div>
-                    
+
                     <v-progress-linear
                       :value="label.percentage"
                       :color="label.color || 'primary'"
@@ -172,86 +167,70 @@
                       rounded
                       class="mb-2"
                     ></v-progress-linear>
-                    
+
                     <div class="caption grey--text">
                       {{ label.agreementDetails }}
                     </div>
-                    <div v-if="label.annotators && label.annotators.length > 0" class="caption grey--text mt-1">
+                    <div
+                      v-if="label.annotators && label.annotators.length > 0"
+                      class="caption grey--text mt-1"
+                    >
                       <strong>Anotadores:</strong> {{ label.annotators.join(', ') }}
                     </div>
                   </div>
                 </div>
               </v-card-text>
             </v-card>
-            
-                         <!-- Avaliação geral do dataset -->
-             <v-divider class="my-4"></v-divider>
-             
-             <!-- Aviso se não há anotadores suficientes -->
-             <v-alert
-               v-if="!hasMinimumAnnotators"
-               type="warning"
-               outlined
-               class="mb-4"
-             >
-               <div class="d-flex align-center">
-                 <v-icon class="mr-2">{{ require('@mdi/js').mdiAlertCircle }}</v-icon>
-                 <div>
-                   <strong>Análise de concordância não disponível</strong>
-                   <br>
-                   {{ minimumAnnotatorsMessage }}
-                 </div>
-               </div>
-             </v-alert>
-             
-             <v-card class="mt-4" outlined>
-               <v-card-text class="py-4">
-                 <div class="d-flex align-center justify-space-between mb-4">
-                   <div>
-                     <h4 class="mb-2">Avaliação Geral do Dataset</h4>
-                     <p class="body-2 grey--text mb-0">
-                       Com base nas concordâncias das labels acima, como avalia este dataset?
-                     </p>
-                   </div>
-                   <v-btn-toggle
-                     v-model="datasetApproval"
-                     :disabled="!hasMinimumAnnotators"
-                     dense
-                   >
-                     <v-btn
-                       :value="true"
-                       color="success"
-                       outlined
-                       :disabled="!hasMinimumAnnotators"
-                     >
-                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiCheck }}</v-icon>
-                       Dataset Concordante
-                     </v-btn>
-                     <v-btn
-                       :value="false"
-                       color="error"
-                       outlined
-                       :disabled="!hasMinimumAnnotators"
-                     >
-                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiAlert }}</v-icon>
-                       Dataset Discrepante
-                     </v-btn>
-                   </v-btn-toggle>
-                 </div>
-                 
-                 <v-textarea
-                   v-if="datasetApproval === false"
-                   v-model="datasetComment"
-                   label="Comentário sobre a discrepância (opcional)"
-                   placeholder="Descreva os problemas de concordância identificados no dataset..."
-                   outlined
-                   dense
-                   rows="3"
-                   class="mt-3"
-                   :disabled="!hasMinimumAnnotators"
-                 ></v-textarea>
-               </v-card-text>
-             </v-card>
+
+            <!-- Avaliação geral do dataset -->
+            <v-divider class="my-4"></v-divider>
+
+            <!-- Aviso se não há anotadores suficientes -->
+            <v-alert v-if="!hasMinimumAnnotators" type="warning" outlined class="mb-4">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2">{{ require('@mdi/js').mdiAlertCircle }}</v-icon>
+                <div>
+                  <strong>Análise de concordância não disponível</strong>
+                  <br />
+                  {{ minimumAnnotatorsMessage }}
+                </div>
+              </div>
+            </v-alert>
+
+            <v-card class="mt-4" outlined>
+              <v-card-text class="py-4">
+                <div class="d-flex align-center justify-space-between mb-4">
+                  <div>
+                    <h4 class="mb-2">Avaliação Geral do Dataset</h4>
+                    <p class="body-2 grey--text mb-0">
+                      Com base nas concordâncias das labels acima, como avalia este dataset?
+                    </p>
+                  </div>
+                  <v-btn-toggle v-model="datasetApproval" :disabled="!hasMinimumAnnotators" dense>
+                    <v-btn :value="true" color="success" outlined :disabled="!hasMinimumAnnotators">
+                      <v-icon small class="mr-1">{{ require('@mdi/js').mdiCheck }}</v-icon>
+                      Dataset Concordante
+                    </v-btn>
+                    <v-btn :value="false" color="error" outlined :disabled="!hasMinimumAnnotators">
+                      <v-icon small class="mr-1">{{ require('@mdi/js').mdiAlert }}</v-icon>
+                      Dataset Discrepante
+                    </v-btn>
+                  </v-btn-toggle>
+                </div>
+
+                <v-textarea
+                  v-if="datasetApproval === false"
+                  v-model="datasetComment"
+                  label="Comentário sobre a discrepância (opcional)"
+                  placeholder="Descreva os problemas de concordância identificados no dataset..."
+                  outlined
+                  dense
+                  rows="3"
+                  class="mt-3"
+                  :disabled="!hasMinimumAnnotators"
+                ></v-textarea>
+              </v-card-text>
+            </v-card>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -259,9 +238,9 @@
           <v-btn color="grey" text @click="closeReportDialog">Cancelar</v-btn>
           <v-tooltip bottom :disabled="hasMinimumAnnotators">
             <template #activator="{ on, attrs }">
-              <v-btn 
-                color="primary" 
-                :disabled="!isReviewFormValid" 
+              <v-btn
+                color="primary"
+                :disabled="!isReviewFormValid"
                 :loading="submittingReview"
                 v-bind="attrs"
                 v-on="on"
@@ -284,37 +263,38 @@
           <v-icon class="mr-2" color="success">{{ require('@mdi/js').mdiEye }}</v-icon>
           Resultado da Revisão de Concordância
           <v-spacer></v-spacer>
-          <v-chip 
-            :color="datasetApproval ? 'success' : 'error'" 
-            text-color="white"
-            small
-          >
-            <v-icon left small>{{ datasetApproval ? require('@mdi/js').mdiCheck : require('@mdi/js').mdiAlert }}</v-icon>
+          <v-chip :color="datasetApproval ? 'success' : 'error'" text-color="white" small>
+            <v-icon left small>{{
+              datasetApproval ? require('@mdi/js').mdiCheck : require('@mdi/js').mdiAlert
+            }}</v-icon>
             {{ datasetApproval ? 'Concordante' : 'Discrepante' }}
           </v-chip>
         </v-card-title>
         <v-card-text>
           <div class="mb-4">
-            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br>
+            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br />
             <strong>Texto:</strong> {{ itemToReport?.text | truncate(100) }}
           </div>
-          
+
           <v-divider class="mb-4"></v-divider>
-          
-          <v-alert 
-            :type="datasetApproval ? 'success' : 'error'" 
-            outlined 
-            class="mb-4"
-          >
+
+          <v-alert :type="datasetApproval ? 'success' : 'error'" outlined class="mb-4">
             <div class="d-flex align-center">
-              <v-icon class="mr-2">{{ datasetApproval ? require('@mdi/js').mdiCheckCircle : require('@mdi/js').mdiAlertCircle }}</v-icon>
+              <v-icon class="mr-2">{{
+                datasetApproval
+                  ? require('@mdi/js').mdiCheckCircle
+                  : require('@mdi/js').mdiAlertCircle
+              }}</v-icon>
               <div>
-                <strong>{{ datasetApproval ? 'Dataset Aprovado' : 'Dataset com Discrepâncias' }}</strong>
-                <br>
+                <strong>{{
+                  datasetApproval ? 'Dataset Aprovado' : 'Dataset com Discrepâncias'
+                }}</strong>
+                <br />
                 <span class="body-2">
-                  {{ datasetApproval 
-                    ? 'Este dataset foi avaliado como tendo boa concordância entre anotadores.' 
-                    : 'Este dataset foi identificado como tendo problemas de concordância entre anotadores.' 
+                  {{
+                    datasetApproval
+                      ? 'Este dataset foi avaliado como tendo boa concordância entre anotadores.'
+                      : 'Este dataset foi identificado como tendo problemas de concordância entre anotadores.'
                   }}
                 </span>
               </div>
@@ -331,7 +311,7 @@
           <div class="text-center py-4">
             <v-icon large color="grey">{{ require('@mdi/js').mdiLock }}</v-icon>
             <p class="mt-2 grey--text">
-              <strong>Revisão Finalizada</strong><br>
+              <strong>Revisão Finalizada</strong><br />
               Esta avaliação foi submetida e não pode ser alterada.
             </p>
           </div>
@@ -344,28 +324,16 @@
     </v-dialog>
 
     <!-- Snackbar para feedback -->
-    <v-snackbar
-      v-model="showSnackbar"
-      :color="snackbarColor"
-      :timeout="snackbarTimeout"
-      top
-    >
+    <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="snackbarTimeout" top>
       {{ snackbarMessage }}
       <template #action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="showSnackbar = false">
-          Fechar
-        </v-btn>
+        <v-btn text v-bind="attrs" @click="showSnackbar = false"> Fechar </v-btn>
       </template>
     </v-snackbar>
 
     <!-- Botão de debug (apenas em desenvolvimento) -->
     <div v-if="$nuxt.isDev" class="mt-4 text-center">
-      <v-btn
-        small
-        outlined
-        color="warning"
-        @click="clearReviewState"
-      >
+      <v-btn small outlined color="warning" @click="clearReviewState">
         <v-icon left small>{{ require('@mdi/js').mdiDeleteSweep }}</v-icon>
         Limpar Estado Reviews (Debug)
       </v-btn>
@@ -440,16 +408,19 @@ export default Vue.extend({
       loadingLabels: true,
       hasConnectionError: false,
       connectionErrorMessage: '',
-      datasetLabels: [] as { name: string; percentage: number; count: number; total: number; color?: string; annotators: string[]; agreementDetails: string }[],
+      datasetLabels: [] as {
+        name: string
+        percentage: number
+        count: number
+        total: number
+        color?: string
+        annotators: string[]
+        agreementDetails: string
+      }[],
       datasetApproval: undefined as boolean | undefined,
       datasetComment: '',
       submittingReview: false
     }
-  },
-
-  mounted() {
-    // Carregar estado dos reviews do localStorage quando o componente é montado
-    this.loadReviewState()
   },
 
   computed: {
@@ -487,37 +458,38 @@ export default Vue.extend({
     },
 
     isFormValid() {
-      return this.reportForm.discrepancyType && this.reportForm.description && this.reportForm.severity
+      return (
+        this.reportForm.discrepancyType && this.reportForm.description && this.reportForm.severity
+      )
     },
 
     isReviewFormValid() {
       // Verifica se a concordância do dataset foi avaliada
       const hasEvaluation = this.datasetApproval !== undefined
-      
+
       // Verifica se pelo menos 2 anotadores participaram
-      const hasMinimumAnnotators = this.datasetLabels.length > 0 && 
-        this.datasetLabels.some(label => label.total >= 2)
-      
+      const hasMinimumAnnotators =
+        this.datasetLabels.length > 0 && this.datasetLabels.some((label) => label.total >= 2)
+
       return hasEvaluation && hasMinimumAnnotators
     },
 
     hasMinimumAnnotators() {
       // Verifica se há pelo menos 2 anotadores no dataset
-      return this.datasetLabels.length > 0 && 
-        this.datasetLabels.some(label => label.total >= 2)
+      return this.datasetLabels.length > 0 && this.datasetLabels.some((label) => label.total >= 2)
     },
 
     minimumAnnotatorsMessage() {
       if (this.datasetLabels.length === 0) {
         return 'Nenhuma anotação encontrada no dataset'
       }
-      
-      const maxAnnotators = Math.max(...this.datasetLabels.map(label => label.total))
-      
+
+      const maxAnnotators = Math.max(...this.datasetLabels.map((label) => label.total))
+
       if (maxAnnotators < 2) {
         return `Apenas ${maxAnnotators} anotador(es) participaram. Necessários pelo menos 2 anotadores para análise de concordância.`
       }
-      
+
       return ''
     },
 
@@ -558,18 +530,23 @@ export default Vue.extend({
     }
   },
 
+  mounted() {
+    // Carregar estado dos reviews do localStorage quando o componente é montado
+    this.loadReviewState()
+  },
+
   methods: {
     loadReviewState() {
       // Carregar estado dos reviews do localStorage para este projeto
       try {
         const storageKey = `dataset_reviews_project_${this.projectId}`
         const savedState = localStorage.getItem(storageKey)
-        
+
         if (savedState) {
           const parsedState = JSON.parse(savedState)
           this.reportedIds = parsedState.reportedIds || []
           this.reviewResults = parsedState.reviewResults || {}
-          
+
           console.log(`Carregado estado de reviews para projeto ${this.projectId}:`, {
             reportedIds: this.reportedIds,
             reviewResults: this.reviewResults
@@ -592,7 +569,7 @@ export default Vue.extend({
           reviewResults: this.reviewResults,
           lastUpdated: new Date().toISOString()
         }
-        
+
         localStorage.setItem(storageKey, JSON.stringify(stateToSave))
         console.log(`Guardado estado de reviews para projeto ${this.projectId}:`, stateToSave)
       } catch (error) {
@@ -651,7 +628,7 @@ export default Vue.extend({
         this.showReviewResultsDialog(item)
         return
       }
-      
+
       this.itemToReport = item
       this.resetReviewForm()
       this.showReportDialog = true
@@ -702,12 +679,12 @@ export default Vue.extend({
       if (!this.isReported(item)) {
         return 'primary text-capitalize'
       }
-      
+
       const result = this.reviewResults[item.id]
       if (result) {
         return result.approved ? 'success' : 'error'
       }
-      
+
       return 'success' // fallback para compatibilidade
     },
 
@@ -715,14 +692,14 @@ export default Vue.extend({
       if (!this.isReported(item)) {
         return require('@mdi/js').mdiClipboardCheck
       }
-      
+
       const result = this.reviewResults[item.id]
       if (result) {
-        return result.approved 
-          ? require('@mdi/js').mdiCheckCircle 
+        return result.approved
+          ? require('@mdi/js').mdiCheckCircle
           : require('@mdi/js').mdiAlertCircle
       }
-      
+
       return require('@mdi/js').mdiCheckCircle // fallback para compatibilidade
     },
 
@@ -730,19 +707,21 @@ export default Vue.extend({
       if (!this.isReported(item)) {
         return 'Review'
       }
-      
+
       const result = this.reviewResults[item.id]
       if (result) {
         return result.approved ? 'Concordante' : 'Discrepante'
       }
-      
+
       return 'Reviewed' // fallback para compatibilidade
     },
 
     getReviewTooltip(item: ExampleDTO) {
       const result = this.reviewResults[item.id]
       if (result) {
-        const status = result.approved ? 'Dataset avaliado como CONCORDANTE' : 'Dataset avaliado como DISCREPANTE'
+        const status = result.approved
+          ? 'Dataset avaliado como CONCORDANTE'
+          : 'Dataset avaliado como DISCREPANTE'
         const comment = result.comment ? `\nComentário: ${result.comment}` : ''
         return `${status}${comment}\n\nClique para ver detalhes (somente leitura)`
       }
@@ -752,17 +731,17 @@ export default Vue.extend({
     isDatabaseConnectionError(error: any) {
       // Detectar erros de conexão com a base de dados
       if (!error) return false
-      
+
       const errorMessage = error.message || error.toString().toLowerCase()
       const errorStatus = error.response?.status
       const errorCode = error.code
-      
+
       // Códigos de status que indicam problemas de BD
       const dbErrorStatuses = [500, 502, 503, 504]
-      
+
       // Códigos de erro que indicam problemas de conexão/BD
       const connectionErrorCodes = ['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNRESET']
-      
+
       // Mensagens que indicam problemas de BD ou conexão
       const dbErrorMessages = [
         'database',
@@ -779,30 +758,33 @@ export default Vue.extend({
         'database connection',
         'db connection',
         'failed to connect',
-        'couldn\'t connect to server',
+        "couldn't connect to server",
         'connection failed',
         'network error'
       ]
-      
+
       // Verificar se é um erro de conexão (quando o servidor está completamente inacessível)
-      const isConnectionError = connectionErrorCodes.includes(errorCode) ||
-                                errorMessage.includes('failed to connect') ||
-                                errorMessage.includes('couldn\'t connect') ||
-                                errorMessage.includes('connection refused') ||
-                                (!error.response && errorCode) // Axios sem resposta geralmente indica problema de conexão
-      
-      return dbErrorStatuses.includes(errorStatus) || 
-             dbErrorMessages.some(msg => errorMessage.includes(msg)) ||
-             isConnectionError
+      const isConnectionError =
+        connectionErrorCodes.includes(errorCode) ||
+        errorMessage.includes('failed to connect') ||
+        errorMessage.includes("couldn't connect") ||
+        errorMessage.includes('connection refused') ||
+        (!error.response && errorCode) // Axios sem resposta geralmente indica problema de conexão
+
+      return (
+        dbErrorStatuses.includes(errorStatus) ||
+        dbErrorMessages.some((msg) => errorMessage.includes(msg)) ||
+        isConnectionError
+      )
     },
 
     isNetworkError(error: any) {
       // Detectar erros de rede (diferentes de erros de BD/servidor)
       if (!error) return false
-      
+
       const errorMessage = error.message || error.toString().toLowerCase()
       const errorCode = error.code
-      
+
       // Códigos específicos de rede (não relacionados com BD)
       const networkErrorCodes = ['NETWORK_ERROR', 'ERR_NETWORK']
       const networkErrorMessages = [
@@ -812,18 +794,19 @@ export default Vue.extend({
         'dns',
         'name resolution'
       ]
-      
+
       // Só considerar erro de rede se não for erro de BD/conexão ao servidor
-      const isNetworkSpecific = networkErrorCodes.includes(errorCode) ||
-                                networkErrorMessages.some(msg => errorMessage.includes(msg))
-      
+      const isNetworkSpecific =
+        networkErrorCodes.includes(errorCode) ||
+        networkErrorMessages.some((msg) => errorMessage.includes(msg))
+
       return isNetworkSpecific && !this.isDatabaseConnectionError(error)
     },
 
     isAuthenticationError(error: any) {
       // Detectar erros de autenticação
       if (!error) return false
-      
+
       const errorStatus = error.response?.status
       return errorStatus === 401 || errorStatus === 403
     },
@@ -840,18 +823,18 @@ export default Vue.extend({
       return response
     },
 
-        async fetchDatasetLabels(_datasetId: number) {
+    async fetchDatasetLabels(_datasetId: number) {
       try {
         this.loadingLabels = true
         this.hasConnectionError = false
         this.connectionErrorMessage = ''
-        
+
         // Buscar o projeto para saber que tipo de labels usar
         const project = await this.$services.project.findById(this.projectId)
-        
+
         let labelTypes = []
         let allAnnotations = []
-        
+
         // Determinar que tipo de labels buscar baseado no tipo de projeto
         if (project.canDefineCategory) {
           labelTypes = await this.$services.categoryType.list(this.projectId)
@@ -863,26 +846,26 @@ export default Vue.extend({
           this.datasetLabels = []
           return
         }
-        
+
         // Buscar todos os membros do projeto para obter informações dos anotadores
         const members = await this.$repositories.member.list(this.projectId)
-        const memberMap = Object.fromEntries(members.map(m => [m.user, m.username]))
-        
+        const memberMap = Object.fromEntries(members.map((m) => [m.user, m.username]))
+
         // Agrupar anotações por anotador
         const annotationsByUser = {}
-        allAnnotations.forEach(annotation => {
+        allAnnotations.forEach((annotation) => {
           const userId = annotation.user
           if (!annotationsByUser[userId]) {
             annotationsByUser[userId] = []
           }
           annotationsByUser[userId].push(annotation)
         })
-        
+
         const userIds = Object.keys(annotationsByUser)
         const totalAnnotators = userIds.length
-        
+
         if (totalAnnotators === 0) {
-          this.datasetLabels = labelTypes.map(label => ({
+          this.datasetLabels = labelTypes.map((label) => ({
             name: label.text,
             percentage: 0,
             count: 0,
@@ -893,28 +876,27 @@ export default Vue.extend({
           }))
           return
         }
-        
+
         // Calcular concordância para cada label
         const labelAgreements = {}
-        
-        labelTypes.forEach(label => {
+
+        labelTypes.forEach((label) => {
           let usersWhoAnnotatedThisLabel = 0
           const annotatorsWithLabel = []
-          
-          userIds.forEach(userId => {
+
+          userIds.forEach((userId) => {
             const userAnnotations = annotationsByUser[userId] || []
-            const hasLabelAnnotation = userAnnotations.some(ann => ann.label === label.id)
-            
+            const hasLabelAnnotation = userAnnotations.some((ann) => ann.label === label.id)
+
             if (hasLabelAnnotation) {
               usersWhoAnnotatedThisLabel++
               annotatorsWithLabel.push(memberMap[userId] || `User ${userId}`)
             }
           })
-          
-          const agreementPercentage = totalAnnotators > 0 
-            ? (usersWhoAnnotatedThisLabel / totalAnnotators) * 100 
-            : 0
-          
+
+          const agreementPercentage =
+            totalAnnotators > 0 ? (usersWhoAnnotatedThisLabel / totalAnnotators) * 100 : 0
+
           labelAgreements[label.text] = {
             percentage: Math.round(agreementPercentage * 10) / 10,
             count: usersWhoAnnotatedThisLabel,
@@ -923,10 +905,10 @@ export default Vue.extend({
             agreementDetails: `${usersWhoAnnotatedThisLabel} de ${totalAnnotators} anotadores concordam`
           }
         })
-        
+
         // Converter em dados formatados para o UI, ordenados por percentagem decrescente
         this.datasetLabels = labelTypes
-          .map(label => ({
+          .map((label) => ({
             name: label.text,
             percentage: labelAgreements[label.text].percentage,
             count: labelAgreements[label.text].count,
@@ -936,21 +918,21 @@ export default Vue.extend({
             agreementDetails: labelAgreements[label.text].agreementDetails
           }))
           .sort((a, b) => b.percentage - a.percentage) // Ordenar por percentagem decrescente
-        
+
         // Inicializar formulário
         this.datasetApproval = undefined
         this.datasetComment = ''
-        
       } catch (error) {
         console.error('Erro ao carregar concordância de labels:', error)
         this.datasetLabels = []
         this.hasConnectionError = true
         this.showSnackbar = true
         this.snackbarColor = 'error'
-        
+
         // Detectar tipo de erro para mostrar mensagem apropriada
         if (this.isDatabaseConnectionError(error)) {
-          this.connectionErrorMessage = 'Base de dados indisponível. Verifique a conectividade e tente novamente.'
+          this.connectionErrorMessage =
+            'Base de dados indisponível. Verifique a conectividade e tente novamente.'
           this.snackbarMessage = '❌ ' + this.connectionErrorMessage
         } else if (this.isNetworkError(error)) {
           this.connectionErrorMessage = 'Erro de rede. Verifique a sua ligação à internet.'
@@ -959,7 +941,8 @@ export default Vue.extend({
           this.connectionErrorMessage = 'Erro de autenticação. Faça login novamente.'
           this.snackbarMessage = '🔐 ' + this.connectionErrorMessage
         } else {
-          this.connectionErrorMessage = 'Erro ao carregar concordância entre anotadores. Tente novamente.'
+          this.connectionErrorMessage =
+            'Erro ao carregar concordância entre anotadores. Tente novamente.'
           this.snackbarMessage = '⚠️ ' + this.connectionErrorMessage
         }
       } finally {
@@ -969,14 +952,14 @@ export default Vue.extend({
 
     async submitReview() {
       if (!this.itemToReport || !this.isReviewFormValid) return
-      
+
       this.submittingReview = true
       try {
         const reviewData = {
           dataset_id: this.itemToReport.id,
           reviewed_by: this.$auth?.user?.id || 'anonymous',
           reviewed_at: new Date().toISOString(),
-          label_agreements: this.datasetLabels.map(label => ({
+          label_agreements: this.datasetLabels.map((label) => ({
             label_name: label.name,
             percentage: label.percentage,
             count: label.count,
@@ -991,52 +974,54 @@ export default Vue.extend({
 
         // Fazer chamada real ao backend
         await this.realBackendCall(reviewData)
-        
+
         // Adicionar à lista local de datasets revisados
         this.reportedIds.push(this.itemToReport.id)
-        
+
         // Armazenar resultado do review para mostrar no botão
         this.reviewResults[this.itemToReport.id] = {
           approved: this.datasetApproval,
           comment: this.datasetComment
         }
-        
+
         // Guardar estado no localStorage
         this.saveReviewState()
-        
+
         // Emitir evento para o componente pai
         this.$emit('dataset-reviewed', {
           item: this.itemToReport,
           review: reviewData
         })
-        
+
         this.showSnackbar = true
         this.snackbarColor = 'success'
         this.snackbarMessage = 'Revisão do dataset submetida com sucesso!'
         this.snackbarTimeout = 4000 // Timeout normal para sucesso
-        
+
         this.closeReportDialog()
-        
       } catch (error) {
         console.error('Erro ao submeter revisão:', error)
         this.showSnackbar = true
         this.snackbarColor = 'error'
-        
+
         // Detectar tipo de erro para mostrar mensagem apropriada
         if (this.isDatabaseConnectionError(error)) {
-          this.snackbarMessage = '❌ Base de dados indisponível! A revisão não foi guardada. Tente novamente quando a conectividade for restaurada.'
+          this.snackbarMessage =
+            '❌ Base de dados indisponível! A revisão não foi guardada. Tente novamente quando a conectividade for restaurada.'
           this.snackbarTimeout = 10000 // Mais tempo para erros críticos
         } else if (this.isNetworkError(error)) {
-          this.snackbarMessage = '🌐 Erro de rede. Verifique a sua ligação à internet e tente novamente.'
+          this.snackbarMessage =
+            '🌐 Erro de rede. Verifique a sua ligação à internet e tente novamente.'
           this.snackbarTimeout = 8000
         } else if (this.isAuthenticationError(error)) {
           this.snackbarMessage = '🔐 Sessão expirada. Faça login novamente para submeter a revisão.'
           this.snackbarTimeout = 8000
         } else {
-          this.snackbarMessage = '⚠️ Erro inesperado ao submeter revisão. Tente novamente em alguns momentos.'
+          this.snackbarMessage =
+            '⚠️ Erro inesperado ao submeter revisão. Tente novamente em alguns momentos.'
           this.snackbarTimeout = 6000
         }
-        
+
         // Manter o diálogo aberto para permitir nova tentativa
         // this.closeReportDialog() - removido para permitir retry
       } finally {

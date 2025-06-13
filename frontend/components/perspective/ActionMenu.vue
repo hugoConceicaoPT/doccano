@@ -1,5 +1,10 @@
 <template>
-  <action-menu v-if="showCreateButton" :items="items" :text="$t('dataset.actions')" @create="$emit('create')" />
+  <action-menu
+    v-if="showCreateButton"
+    :items="items"
+    :text="$t('dataset.actions')"
+    @create="$emit('create')"
+  />
 </template>
 
 <script lang="ts">

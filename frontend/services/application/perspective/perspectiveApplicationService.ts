@@ -10,7 +10,7 @@ export class PerspectiveApplicationService {
     const perspective = PerspectiveItem.create(
       item.name,
       item.project_id,
-      item.questions.map(q => ({ ...q, perspective_id: q.perspective_id ?? 0 })),
+      item.questions.map((q) => ({ ...q, perspective_id: q.perspective_id ?? 0 })),
       item.members
     )
     const created = await this.repository.create(projectId, perspective)

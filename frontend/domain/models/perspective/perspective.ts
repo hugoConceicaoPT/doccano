@@ -10,11 +10,19 @@ export class PerspectiveItem {
     readonly members: number[]
   ) {}
 
-  static create(name: string, project_id: number, questions: QuestionItem[], members: number[]): PerspectiveItem {
+  static create(
+    name: string,
+    project_id: number,
+    questions: QuestionItem[],
+    members: number[]
+  ): PerspectiveItem {
     return new PerspectiveItem(0, name, project_id, questions, members)
   }
-  
-  static async list(repository: PerspectiveRepository, project_id: string): Promise<PerspectiveItem>{
+
+  static async list(
+    repository: PerspectiveRepository,
+    project_id: string
+  ): Promise<PerspectiveItem> {
     return await repository.list(project_id)
   }
 }

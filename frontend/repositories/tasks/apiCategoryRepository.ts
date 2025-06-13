@@ -16,7 +16,11 @@ export class APICategoryRepository extends AnnotationRepository<Category> {
     }
   }
 
-  public async list(projectId: string, exampleId: number, allUsers: boolean = false): Promise<Category[]> {
+  public async list(
+    projectId: string,
+    exampleId: number,
+    allUsers: boolean = false
+  ): Promise<Category[]> {
     const url = this.baseUrl(projectId, exampleId)
     const params = allUsers ? { include_all: 'true' } : {}
     const response = await this.request.get(url, { params })

@@ -12,10 +12,10 @@
     <template v-else>
       <template v-if="isAdmin">
         <v-card-title>
-          <v-btn 
+          <v-btn
             v-if="!hasPerspective"
-            color="primary" 
-            class="text-capitalize" 
+            color="primary"
+            class="text-capitalize"
             @click="$router.push('perspectives/add')"
           >
             Create Perspective
@@ -132,9 +132,11 @@ export default Vue.extend({
       try {
         const response = await this.$services.answer.list()
         this.AlreadyAnswered = response.some((answer: AnswerItem) => {
-          return this.questionsList.some((question) => question.id === answer.question) &&
-                 answer.member === this.myRole?.id;
-        });
+          return (
+            this.questionsList.some((question) => question.id === answer.question) &&
+            answer.member === this.myRole?.id
+          )
+        })
       } catch (error) {
         console.error('Erro ao buscar respostas:', error)
       } finally {
@@ -149,16 +151,18 @@ export default Vue.extend({
         const perspectives = await this.$services.perspective.list(this.projectId)
         const perspectiveId = perspectives.id
         const questions = await this.$services.question.list(perspectiveId, this.projectId)
-        this.questionsList = questions.filter((question) => question.perspective_id === perspectiveId)
+        this.questionsList = questions.filter(
+          (question) => question.perspective_id === perspectiveId
+        )
         this.questionsList = questions
-        
+
         // Cria um mapa onde a chave é o question id
         // e o valor é true se options_group estiver preenchido
         this.multipleChoiceMap = {}
         let index = 0
         for (const q of questions) {
           this.multipleChoiceMap[index] = q.options_group !== null && q.options_group !== undefined
-          if(this.multipleChoiceMap[index]) {
+          if (this.multipleChoiceMap[index]) {
             if (q.options_group !== undefined && q.options_group !== null) {
               const options = await this.$services.optionsQuestion.list(this.projectId)
               this.optionsList = options
@@ -173,7 +177,9 @@ export default Vue.extend({
       }
     },
 
-    async submitAnswers(formattedAnswers: { questionId: number; answer: string; answerType: string }[]) {
+    async submitAnswers(
+      formattedAnswers: { questionId: number; answer: string; answerType: string }[]
+    ) {
       console.log('Respostas submetidas:', formattedAnswers)
       try {
         // Mapeia as respostas com base no multipleChoiceMap, usando o question id como chave
@@ -205,7 +211,7 @@ export default Vue.extend({
           this.submitted = true
           this.$router.push(`/projects/${this.projectId}/perspectives`)
         }, 7000)
-        window.location.reload();
+        window.location.reload()
       } catch (error: any) {
         console.error('Erro ao submeter respostas:', error)
         if (error.response && error.response.status === 400) {

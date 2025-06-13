@@ -17,11 +17,11 @@ export class APIOptionsQuestionRepository {
   constructor(private readonly baseUrl = 'question', private readonly request = ApiService) {}
 
   async create(projectId: string, item: OptionsQuestionItem): Promise<OptionsQuestionItem> {
-      const url = `projects/${projectId}/perspectives//${this.baseUrl}-type/create`
-      const payload = toPayload(item)
-      const response = await this.request.post(url, payload)
-      return toModel(response.data)
-    }
+    const url = `projects/${projectId}/perspectives//${this.baseUrl}-type/create`
+    const payload = toPayload(item)
+    const response = await this.request.post(url, payload)
+    return toModel(response.data)
+  }
 
   async list(project_id: string): Promise<OptionsQuestionItem[]> {
     const url = `projects/${project_id}/options-${this.baseUrl}s`

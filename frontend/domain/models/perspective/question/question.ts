@@ -1,7 +1,10 @@
 import { AnswerItem } from '../answer/answer'
-import { OptionsGroupRepository, OptionsQuestionRepository, QuestionRepository } from './questionRepository'
+import {
+  OptionsGroupRepository,
+  OptionsQuestionRepository,
+  QuestionRepository
+} from './questionRepository'
 import { CreateOptionsQuestionCommand } from '~/services/application/perspective/question/questionCommand'
-
 
 export class QuestionItem {
   constructor(
@@ -23,7 +26,11 @@ export class QuestionItem {
     return new QuestionItem(0, question, answers, perspective_id, options_group, answer_type)
   }
 
-  static list(repository: QuestionRepository, perspectiveId: number, project_id: string): Promise<QuestionItem[]> {
+  static list(
+    repository: QuestionRepository,
+    perspectiveId: number,
+    project_id: string
+  ): Promise<QuestionItem[]> {
     return repository.list(perspectiveId, project_id)
   }
 }
@@ -51,9 +58,10 @@ export class OptionsQuestionItem {
     return new OptionsQuestionItem(0, option, options_group)
   }
 
-  static async list(repository: OptionsQuestionRepository, project_id: string): Promise<OptionsQuestionItem[]> {
+  static async list(
+    repository: OptionsQuestionRepository,
+    project_id: string
+  ): Promise<OptionsQuestionItem[]> {
     return await repository.list(project_id)
   }
 }
-
-

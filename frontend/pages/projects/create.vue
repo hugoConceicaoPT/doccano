@@ -5,17 +5,36 @@
       <v-form v-model="valid">
         <project-type-field v-model="editedItem.projectType" />
         <project-name-field v-model="editedItem.name" outlined autofocus />
-        <v-text-field v-model="editedItem.minPercentage" label="Minimum Percentage for Label Discrepancy (%)"
-          type="number" min="0" max="100" outlined required :rules="[rules.required]" />
+        <v-text-field
+          v-model="editedItem.minPercentage"
+          label="Minimum Percentage for Label Discrepancy (%)"
+          type="number"
+          min="0"
+          max="100"
+          outlined
+          required
+          :rules="[rules.required]"
+        />
         <project-description-field v-model="editedItem.description" outlined />
         <tag-list v-model="editedItem.tags" outlined />
-        <v-checkbox v-if="showExclusiveCategories" v-model="editedItem.exclusiveCategories"
-          :label="$t('overview.allowSingleLabel')" />
-        <v-checkbox v-if="_canDefineLabel" v-model="editedItem.allowMemberToCreateLabelType"
-          label="Allow project members to create label types" />
+        <v-checkbox
+          v-if="showExclusiveCategories"
+          v-model="editedItem.exclusiveCategories"
+          :label="$t('overview.allowSingleLabel')"
+        />
+        <v-checkbox
+          v-if="_canDefineLabel"
+          v-model="editedItem.allowMemberToCreateLabelType"
+          label="Allow project members to create label types"
+        />
         <template v-if="isSequenceLabelingProject">
           <v-checkbox v-model="editedItem.allowOverlappingSpans" label="Allow overlapping spans" />
-          <v-img :src="require('~/assets/project/creation.gif')" height="200" position="left" contain />
+          <v-img
+            :src="require('~/assets/project/creation.gif')"
+            height="200"
+            position="left"
+            contain
+          />
           <v-checkbox v-model="editedItem.useRelation" label="Use relation labeling" />
           <v-checkbox v-model="editedItem.enableGraphemeMode">
             <template #label>
@@ -23,7 +42,12 @@
                 Count
                 <v-tooltip bottom>
                   <template #activator="{ on }">
-                    <a target="_blank" href="https://unicode.org/reports/tr29/" @click.stop v-on="on">
+                    <a
+                      target="_blank"
+                      href="https://unicode.org/reports/tr29/"
+                      @click.stop
+                      v-on="on"
+                    >
                       grapheme clusters
                     </a>
                   </template>
@@ -39,7 +63,13 @@
       </v-form>
     </v-card-text>
     <v-card-actions class="ps-4">
-      <v-btn :disabled="!valid" color="primary" style="text-transform: none" outlined @click="create">
+      <v-btn
+        :disabled="!valid"
+        color="primary"
+        style="text-transform: none"
+        outlined
+        @click="create"
+      >
         {{ $t('generic.create') }}
       </v-btn>
     </v-card-actions>
@@ -99,7 +129,7 @@ export default Vue.extend({
       editedItem: initializeProject(),
       rules: {
         required: (v: string | number) => !!v || 'Required'
-      }, 
+      }
     }
   },
 

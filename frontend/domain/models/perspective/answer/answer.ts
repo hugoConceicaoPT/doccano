@@ -1,4 +1,4 @@
-import { AnswerRepository } from "./answerRepository";
+import { AnswerRepository } from './answerRepository'
 
 export class AnswerItem {
   constructor(
@@ -9,11 +9,16 @@ export class AnswerItem {
     readonly answer_option?: string
   ) {}
 
-  static create(member: number, question: number, answer_text?: string, answer_option?: string): AnswerItem {
-    return new AnswerItem(0, member, question, answer_text, answer_option);
+  static create(
+    member: number,
+    question: number,
+    answer_text?: string,
+    answer_option?: string
+  ): AnswerItem {
+    return new AnswerItem(0, member, question, answer_text, answer_option)
   }
 
   static async list(AnswerRepository: AnswerRepository): Promise<AnswerItem[]> {
-    return await AnswerRepository.list();
+    return await AnswerRepository.list()
   }
 }

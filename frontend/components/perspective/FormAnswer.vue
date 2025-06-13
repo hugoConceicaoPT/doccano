@@ -18,7 +18,7 @@
             <div v-if="question.options_group !== null">
               <v-radio-group v-model="answers[question.id]" row>
                 <v-radio
-                  v-for="(option) in getOptionsForQuestion(question.options_group)"
+                  v-for="option in getOptionsForQuestion(question.options_group)"
                   :key="option.id"
                   :label="option.option"
                   :value="option.id"
@@ -27,12 +27,7 @@
             </div>
             <!-- Caso contrário, exibe uma caixa de texto -->
             <div v-else>
-              <v-text-field
-                v-model="answers[question.id]"
-                label="Resposta"
-                outlined
-                required
-              />
+              <v-text-field v-model="answers[question.id]" label="Resposta" outlined required />
             </div>
           </v-col>
         </v-row>
@@ -41,9 +36,7 @@
             <v-btn :disabled="!isFormValid" color="primary" @click="openConfirmDialog">
               Submeter Respostas
             </v-btn>
-            <v-btn color="warning" @click="clearAnswers" class="ml-2">
-              Limpar Respostas
-            </v-btn>
+            <v-btn color="warning" class="ml-2" @click="clearAnswers"> Limpar Respostas </v-btn>
           </v-col>
         </v-row>
       </v-form>
@@ -54,8 +47,8 @@
       <confirm-form
         title="Confirmar Submissão"
         message="Tem certeza que deseja submeter as respostas?"
-        buttonTrueText="Sim"
-        buttonFalseText="Cancelar"
+        button-true-text="Sim"
+        button-false-text="Cancelar"
         @ok="handleConfirmOk"
         @cancel="handleConfirmCancel"
       />
@@ -64,8 +57,8 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import { OptionsQuestionItem, QuestionItem } from "~/domain/models/perspective/question/question";
+import Vue from 'vue'
+import { OptionsQuestionItem, QuestionItem } from '~/domain/models/perspective/question/question'
 import ConfirmForm from '@/components/utils/ConfirmForm.vue'
 
 export default Vue.extend({
@@ -75,12 +68,12 @@ export default Vue.extend({
   props: {
     questionsList: {
       type: Array as () => QuestionItem[],
-      required: true,
+      required: true
     },
     optionsList: {
       type: Array as () => OptionsQuestionItem[],
-      default: () => [],
-    },
+      default: () => []
+    }
   },
   data() {
     return {
@@ -88,56 +81,56 @@ export default Vue.extend({
       // Para perguntas de texto, será uma string; para escolha múltipla, um número.
       answers: {} as Record<number, any>,
       // Controle da janela de confirmação
-      confirmDialog: false,
-    };
+      confirmDialog: false
+    }
   },
   computed: {
     isFormValid(): boolean {
       return this.questionsList.every((question) => {
-        const answer = this.answers[question.id];
+        const answer = this.answers[question.id]
         // Para perguntas de escolha múltipla (options_group !== null), verifica se o valor não é undefined ou null
         if (question.options_group !== null) {
-          return answer !== undefined && answer !== null;
+          return answer !== undefined && answer !== null
         } else {
           // Para perguntas de texto, verifica se há valor não vazio
-          return typeof answer === "string" && answer.trim().length > 0;
+          return typeof answer === 'string' && answer.trim().length > 0
         }
-      });
-    },
+      })
+    }
   },
   methods: {
     getOptionsForQuestion(optionsGroup: number) {
       // Filtra as opções cujo options_group corresponde
-      return this.optionsList.filter(option => option.options_group === optionsGroup);
+      return this.optionsList.filter((option) => option.options_group === optionsGroup)
     },
     openConfirmDialog() {
-      this.confirmDialog = true;
+      this.confirmDialog = true
     },
     handleConfirmOk() {
       // Fecha a janela de confirmação e submete as respostas
-      this.confirmDialog = false;
-      this.submit();
+      this.confirmDialog = false
+      this.submit()
     },
     handleConfirmCancel() {
       // Fecha a janela de confirmação sem submeter
-      this.confirmDialog = false;
+      this.confirmDialog = false
     },
     submit() {
       const formattedAnswers = this.questionsList.map((question) => ({
         questionId: question.id,
         answer: this.answers[question.id],
-        answerType: question.answer_type, // usar answer_type em vez de type
-      }));
-      this.$emit("submit-answers", formattedAnswers);
-      console.log("Respostas enviadas:", formattedAnswers);
+        answerType: question.answer_type // usar answer_type em vez de type
+      }))
+      this.$emit('submit-answers', formattedAnswers)
+      console.log('Respostas enviadas:', formattedAnswers)
     },
     clearAnswers() {
       // Reinicia o objeto answers
-      this.answers = {} as Record<number, any>;
-      console.log("Respostas limpas.");
-    },
-  },
-});
+      this.answers = {} as Record<number, any>
+      console.log('Respostas limpas.')
+    }
+  }
+})
 </script>
 
 <style scoped>

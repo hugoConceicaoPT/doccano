@@ -8,7 +8,7 @@
       </v-tab>
       <v-tab-item v-for="(value, user) in chartJSFormat" :key="user">
         <v-card-text>
-          <chart-pie  @chart-ready="onLabelChartReady" :chart-data="value" />
+          <chart-pie :chart-data="value" @chart-ready="onLabelChartReady" />
         </v-card-text>
       </v-tab-item>
     </v-tabs>
@@ -53,7 +53,12 @@ export default Vue.extend({
   computed: {
     exampleMap(): Record<string, string> {
       return this.examples?.items
-        ? Object.fromEntries(this.examples.items.map(example => [example.id, example.filename.replace(/\.[^/.]+$/, '')]))
+        ? Object.fromEntries(
+            this.examples.items.map((example) => [
+              example.id,
+              example.filename.replace(/\.[^/.]+$/, '')
+            ])
+          )
         : {}
     },
     colorMapping(): { [text: string]: string } {
@@ -67,10 +72,8 @@ export default Vue.extend({
       for (const user in this.distribution) {
         const labels = Object.keys(this.distribution[user])
         labels.sort()
-        const counts = labels.map((label) => parseInt((this.distribution[user][label]).toString()))
-        const colors = labels.map((label) =>
-          this.colorMapping[label] || '#00d1b2'
-        )
+        const counts = labels.map((label) => parseInt(this.distribution[user][label].toString()))
+        const colors = labels.map((label) => this.colorMapping[label] || '#00d1b2')
 
         data[user] = {
           labels,
@@ -84,7 +87,6 @@ export default Vue.extend({
       }
       return data
     }
-
   },
   methods: {
     onLabelChartReady() {

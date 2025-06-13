@@ -11,14 +11,14 @@ export class MemberItem {
   ) {}
 
   get name(): string {
-    return this.username;
+    return this.username
   }
 
   get isProjectAdmin(): boolean {
-    return this.rolename === 'project_admin';
+    return this.rolename === 'project_admin'
   }
 
   get isAnnotator(): boolean {
-    return this.rolename === 'annotator';
+    return this.rolename === 'annotator'
   }
 }

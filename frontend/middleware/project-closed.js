@@ -6,4 +6,4 @@ export default function ({ redirect, params, app }) {
       return redirect(app.localePath(`/projects/${projectId}`))
     }
   }
-} 
+}

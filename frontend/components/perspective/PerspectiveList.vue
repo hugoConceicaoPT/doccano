@@ -1,21 +1,56 @@
 <template>
   <div class="container">
     <!-- Seleção da pergunta -->
-    <v-select v-model="selectedQuestion" :items="availableQuestions" label="Selecione a pergunta" clearable
-      class="mb-4" multiple/>
+    <v-select
+      v-model="selectedQuestion"
+      :items="availableQuestions"
+      label="Selecione a pergunta"
+      clearable
+      class="mb-4"
+      multiple
+    />
     <!-- Seleção do utilizador -->
-    <v-select v-model="selectedUser" :items="availableUsers" label="Selecione o utilizador" clearable class="mb-4" multiple/>
+    <v-select
+      v-model="selectedUser"
+      :items="availableUsers"
+      label="Selecione o utilizador"
+      clearable
+      class="mb-4"
+      multiple
+    />
     <!-- Seleção da resposta -->
-    <v-select v-model="selectedAnswer" :items="availableAnswers" label="Selecione a resposta" clearable class="mb-4" multiple/>
-    <v-data-table :items="processedItems" :headers="headers" :loading="isLoading" :loading-text="$t('generic.loading')"
-      :no-data-text="$t('vuetify.noDataAvailable')" :footer-props="{
+    <v-select
+      v-model="selectedAnswer"
+      :items="availableAnswers"
+      label="Selecione a resposta"
+      clearable
+      class="mb-4"
+      multiple
+    />
+    <v-data-table
+      :items="processedItems"
+      :headers="headers"
+      :loading="isLoading"
+      :loading-text="$t('generic.loading')"
+      :no-data-text="$t('vuetify.noDataAvailable')"
+      :footer-props="{
         showFirstLastPage: true,
         'items-per-page-text': $t('vuetify.itemsPerPageText'),
         'page-text': $t('dataset.pageText')
-      }" item-key="id" show-select @input="$emit('input', $event)">
+      }"
+      item-key="id"
+      show-select
+      @input="$emit('input', $event)"
+    >
       <template #top>
-        <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" :label="$t('generic.search')" single-line
-          hide-details filled />
+        <v-text-field
+          v-model="search"
+          :prepend-inner-icon="mdiMagnify"
+          :label="$t('generic.search')"
+          single-line
+          hide-details
+          filled
+        />
       </template>
       <!-- Oculta o checkbox do header -->
       <template #[`header.data-table-select`]>
@@ -98,11 +133,11 @@ export default Vue.extend({
     availableQuestions() {
       const questionsSet = new Set<string>()
       const projectItems = this.items.filter(
-        item => Number(item.project_id) === Number(this.projectId)
+        (item) => Number(item.project_id) === Number(this.projectId)
       )
-      projectItems.forEach(item => {
+      projectItems.forEach((item) => {
         if (Array.isArray(item.questions)) {
-          item.questions.forEach(q => {
+          item.questions.forEach((q) => {
             if (q.question) {
               questionsSet.add(q.question)
             }
@@ -115,11 +150,11 @@ export default Vue.extend({
     availableUsers() {
       const usersSet = new Set<string>()
       const projectItems = this.items.filter(
-        item => Number(item.project_id) === Number(this.projectId)
+        (item) => Number(item.project_id) === Number(this.projectId)
       )
-      projectItems.forEach(item => {
+      projectItems.forEach((item) => {
         if (Array.isArray(item.questions)) {
-          item.questions.forEach(q => {
+          item.questions.forEach((q) => {
             if (Array.isArray(q.answers)) {
               q.answers.forEach((a: any) => {
                 let memberName = ''
@@ -144,11 +179,11 @@ export default Vue.extend({
     availableAnswers() {
       const answersSet = new Set<string>()
       const projectItems = this.items.filter(
-        item => Number(item.project_id) === Number(this.projectId)
+        (item) => Number(item.project_id) === Number(this.projectId)
       )
-      projectItems.forEach(item => {
+      projectItems.forEach((item) => {
         if (Array.isArray(item.questions)) {
-          item.questions.forEach(q => {
+          item.questions.forEach((q) => {
             if (Array.isArray(q.answers)) {
               q.answers.forEach((a: any) => {
                 const answerText = a.answer_text || a.answer_option || ''
@@ -166,16 +201,18 @@ export default Vue.extend({
     processedItems() {
       const result: Array<{ id: number; memberName: string; question: string; answer: string }> = []
       const projectItems = this.items.filter(
-        item => Number(item.project_id) === Number(this.projectId)
+        (item) => Number(item.project_id) === Number(this.projectId)
       )
       let counter = 0
-      projectItems.forEach(item => {
+      projectItems.forEach((item) => {
         if (Array.isArray(item.questions)) {
-          item.questions.forEach(q => {
+          item.questions.forEach((q) => {
             // Filtra pela pergunta, se houver seleções
-            if (this.selectedQuestion.length > 0 && 
-                q.question && 
-                !this.selectedQuestion.includes(q.question)) {
+            if (
+              this.selectedQuestion.length > 0 &&
+              q.question &&
+              !this.selectedQuestion.includes(q.question)
+            ) {
               return
             }
             if (Array.isArray(q.answers)) {
@@ -202,19 +239,18 @@ export default Vue.extend({
                 // Filtro de busca (buscando em todas as colunas)
                 if (this.search) {
                   const searchLower = this.search.toLowerCase()
-                  const combinedText = `${row.memberName} ${row.question} ${row.answer}`.toLowerCase()
+                  const combinedText =
+                    `${row.memberName} ${row.question} ${row.answer}`.toLowerCase()
                   if (!combinedText.includes(searchLower)) {
                     return
                   }
                 }
                 // Filtro por utilizador, se houver seleções
-                if (this.selectedUser.length > 0 && 
-                    !this.selectedUser.includes(row.memberName)) {
+                if (this.selectedUser.length > 0 && !this.selectedUser.includes(row.memberName)) {
                   return
                 }
                 // Filtro por resposta, se houver seleções
-                if (this.selectedAnswer.length > 0 && 
-                    !this.selectedAnswer.includes(row.answer)) {
+                if (this.selectedAnswer.length > 0 && !this.selectedAnswer.includes(row.answer)) {
                   return
                 }
                 result.push(row)
@@ -253,12 +289,13 @@ export default Vue.extend({
       this.memberNames = {}
 
       // Itera por todos os items
-      this.items.forEach(item => {
+      this.items.forEach((item) => {
         // Itera por todos os member IDs do item
-        item.members.forEach(memberId => {
+        item.members.forEach((memberId) => {
           // Verifica se ainda não carregou esse membro
           if (!this.memberNames[memberId]) {
-            this.$repositories.member.findById(this.projectId, memberId)
+            this.$repositories.member
+              .findById(this.projectId, memberId)
               .then((response: any) => {
                 this.$set(this.memberNames, memberId, response.username)
               })

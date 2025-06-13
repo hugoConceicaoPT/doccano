@@ -56,8 +56,6 @@ export default Vue.extend({
         }
       ] as CreateOptionsGroupCommand[],
 
-
-
       defaultItem: {
         id: null,
         name: '',
@@ -98,13 +96,14 @@ export default Vue.extend({
     async save() {
       try {
         this.editedItem.project_id = Number(this.projectId)
-        this.editedItem.members = await this.getAnnotatorIds();
-        
+        this.editedItem.members = await this.getAnnotatorIds()
+
         // Agora todas as perguntas são "Open Questions" com answer_type
         // Não precisamos mais de lógica para QuestionType ou OptionsGroup
-        
+
         await this.service.create(this.projectId, this.editedItem)
-        this.sucessMessage = 'A perspective has been successfully added to this project and an email has been sent to all annotators of the project'
+        this.sucessMessage =
+          'A perspective has been successfully added to this project and an email has been sent to all annotators of the project'
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/perspectives`)
         }, 1000)
@@ -120,7 +119,8 @@ export default Vue.extend({
       this.editedItem = Object.assign({}, this.defaultItem)
       console.error('Error creating perspective:', error)
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
+        this.errorMessage =
+          'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
       } else {
         this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }

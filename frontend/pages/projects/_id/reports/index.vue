@@ -7,12 +7,7 @@
             <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
             Relatórios sobre Anotadores
             <v-spacer />
-            <v-btn
-              color="white"
-              text
-              :loading="isGenerating"
-              @click="generateReport"
-            >
+            <v-btn color="white" text :loading="isGenerating" @click="generateReport">
               <v-icon left>{{ mdiRefresh }}</v-icon>
               Gerar Relatório
             </v-btn>
@@ -26,7 +21,7 @@
               Exportar
             </v-btn>
           </v-card-title>
-          
+
           <v-card-text class="pa-0">
             <!-- Filtros Melhorados -->
             <v-card flat class="ma-4 elevation-2">
@@ -34,17 +29,12 @@
                 <v-icon left color="primary">{{ mdiFilter }}</v-icon>
                 <span class="text-h6">Filtros de Pesquisa</span>
                 <v-spacer />
-                <v-btn
-                  small
-                  text
-                  color="primary"
-                  @click="clearFilters"
-                >
+                <v-btn small text color="primary" @click="clearFilters">
                   <v-icon small left>{{ mdiFilterRemove }}</v-icon>
                   Limpar Filtros
                 </v-btn>
               </v-card-title>
-              
+
               <v-card-text>
                 <v-row>
                   <!-- Filtro de Utilizadores -->
@@ -76,10 +66,7 @@
                         >
                           {{ item.username }}
                         </v-chip>
-                        <span
-                          v-if="index === 3"
-                          class="grey--text text-caption"
-                        >
+                        <span v-if="index === 3" class="grey--text text-caption">
                           (+{{ filters.users.length - 3 }} outros)
                         </span>
                       </template>
@@ -115,20 +102,13 @@
                         >
                           {{ item.text }}
                         </v-chip>
-                        <span
-                          v-if="index === 2"
-                          class="grey--text text-caption"
-                        >
+                        <span v-if="index === 2" class="grey--text text-caption">
                           (+{{ filters.labels.length - 2 }} outros)
                         </span>
                       </template>
                       <template #item="{ item }">
                         <v-list-item-avatar>
-                          <v-chip
-                            small
-                            :color="getLabelTypeColor(item.type)"
-                            text-color="white"
-                          >
+                          <v-chip small :color="getLabelTypeColor(item.type)" text-color="white">
                             {{ item.type }}
                           </v-chip>
                         </v-list-item-avatar>
@@ -235,17 +215,16 @@
                         >
                           {{ getTaskTypeLabel(item) }}
                         </v-chip>
-                        <span
-                          v-if="index === 4"
-                          class="grey--text text-caption"
-                        >
+                        <span v-if="index === 4" class="grey--text text-caption">
                           (+{{ filters.task_types.length - 4 }} outros)
                         </span>
                       </template>
                       <template #item="{ item }">
                         <v-list-item-content>
                           <v-list-item-title>{{ getTaskTypeLabel(item) }}</v-list-item-title>
-                          <v-list-item-subtitle class="text-caption">{{ item }}</v-list-item-subtitle>
+                          <v-list-item-subtitle class="text-caption">{{
+                            item
+                          }}</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-select>
@@ -260,7 +239,9 @@
                       <v-icon small color="primary" class="mr-2">{{ mdiInformation }}</v-icon>
                       <span class="text-caption font-weight-medium">Filtros ativos:</span>
                       <v-spacer />
-                      <span class="text-caption grey--text">{{ getActiveFiltersCount }} filtro(s) aplicado(s)</span>
+                      <span class="text-caption grey--text"
+                        >{{ getActiveFiltersCount }} filtro(s) aplicado(s)</span
+                      >
                     </div>
                   </v-col>
                 </v-row>
@@ -290,12 +271,9 @@
                       Resultados do Relatório
                     </v-toolbar-title>
                     <v-spacer />
-                    <v-chip color="primary" outlined>
-                      {{ reportData.length }} anotador(es)
-                    </v-chip>
+                    <v-chip color="primary" outlined> {{ reportData.length }} anotador(es) </v-chip>
                   </v-toolbar>
                 </template>
-
 
                 <template #[`item.label_breakdown`]="{ item }">
                   <div class="d-flex flex-wrap">
@@ -308,18 +286,21 @@
                     >
                       {{ label }}: {{ count }}
                     </v-chip>
-                    <span v-if="Object.keys(item.label_breakdown).length === 0" class="grey--text text-caption">
+                    <span
+                      v-if="Object.keys(item.label_breakdown).length === 0"
+                      class="grey--text text-caption"
+                    >
                       Nenhum label
                     </span>
                   </div>
                 </template>
-                
+
                 <template #[`item.first_annotation_date`]="{ item }">
                   <span class="text-caption">
                     {{ formatDate(item.first_annotation_date) }}
                   </span>
                 </template>
-                
+
                 <template #[`item.last_annotation_date`]="{ item }">
                   <span class="text-caption">
                     {{ formatDate(item.last_annotation_date) }}
@@ -331,12 +312,11 @@
               <v-card v-else-if="!isGenerating" flat class="text-center pa-12 elevation-2">
                 <v-icon size="80" color="grey lighten-2">{{ mdiFileDocumentOutline }}</v-icon>
                 <h3 class="grey--text mt-6 mb-2">Nenhum relatório gerado</h3>
-                <p class="grey--text mb-6">Configure os filtros desejados e clique em "Gerar Relatório" para visualizar os dados dos anotadores</p>
-                <v-btn
-                  color="primary"
-                  large
-                  @click="generateReport"
-                >
+                <p class="grey--text mb-6">
+                  Configure os filtros desejados e clique em "Gerar Relatório" para visualizar os
+                  dados dos anotadores
+                </p>
+                <v-btn color="primary" large @click="generateReport">
                   <v-icon left>{{ mdiRefresh }}</v-icon>
                   Gerar Primeiro Relatório
                 </v-btn>
@@ -346,7 +326,9 @@
               <v-card v-else flat class="text-center pa-12 elevation-2">
                 <v-progress-circular indeterminate color="primary" size="80" width="6" />
                 <h3 class="mt-6 mb-2">Gerando relatório...</h3>
-                <p class="grey--text">Por favor aguarde enquanto processamos os dados dos anotadores</p>
+                <p class="grey--text">
+                  Por favor aguarde enquanto processamos os dados dos anotadores
+                </p>
               </v-card>
             </div>
           </v-card-text>
@@ -361,16 +343,12 @@
           <v-icon left color="primary">{{ mdiDownload }}</v-icon>
           Exportar Relatório
         </v-card-title>
-        
+
         <v-card-text>
           <p class="mb-4">Escolha o formato para exportar o relatório:</p>
-          
+
           <v-radio-group v-model="selectedExportFormat" column>
-            <v-radio
-              label="CSV (Comma Separated Values)"
-              value="csv"
-              color="primary"
-            >
+            <v-radio label="CSV (Comma Separated Values)" value="csv" color="primary">
               <template #label>
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" color="green">{{ mdiFileDelimited }}</v-icon>
@@ -381,54 +359,41 @@
                 </div>
               </template>
             </v-radio>
-            
-            <v-radio
-              label="TSV (Tab Separated Values)"
-              value="tsv"
-              color="primary"
-            >
+
+            <v-radio label="TSV (Tab Separated Values)" value="tsv" color="primary">
               <template #label>
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" color="blue">{{ mdiFileDelimited }}</v-icon>
                   <div>
                     <div class="font-weight-medium">TSV (Tab Separated Values)</div>
-                    <div class="text-caption grey--text">Separado por tabs, compatível com muitas ferramentas</div>
+                    <div class="text-caption grey--text">
+                      Separado por tabs, compatível com muitas ferramentas
+                    </div>
                   </div>
                 </div>
               </template>
             </v-radio>
-            
-            <v-radio
-              label="PDF (Portable Document Format)"
-              value="pdf"
-              color="primary"
-            >
+
+            <v-radio label="PDF (Portable Document Format)" value="pdf" color="primary">
               <template #label>
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" color="red">{{ mdiFilePdfBox }}</v-icon>
                   <div>
                     <div class="font-weight-medium">PDF (Portable Document Format)</div>
-                    <div class="text-caption grey--text">Documento formatado para visualização e impressão</div>
+                    <div class="text-caption grey--text">
+                      Documento formatado para visualização e impressão
+                    </div>
                   </div>
                 </div>
               </template>
             </v-radio>
           </v-radio-group>
         </v-card-text>
-        
+
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            text
-            @click="showExportDialog = false"
-          >
-            Cancelar
-          </v-btn>
-          <v-btn
-            color="primary"
-            :loading="isExporting"
-            @click="exportReport"
-          >
+          <v-btn text @click="showExportDialog = false"> Cancelar </v-btn>
+          <v-btn color="primary" :loading="isExporting" @click="exportReport">
             <v-icon left>{{ mdiDownload }}</v-icon>
             Exportar
           </v-btn>
@@ -480,11 +445,11 @@ export default {
       mdiTable,
       mdiFileDelimited,
       mdiFilePdfBox,
-      
+
       isGenerating: false,
       dateFromMenu: false,
       dateToMenu: false,
-      
+
       filters: {
         users: [],
         date_from: null,
@@ -492,7 +457,7 @@ export default {
         labels: [],
         task_types: []
       },
-      
+
       availableUsers: [],
       availableLabels: [],
       taskTypes: [
@@ -505,9 +470,9 @@ export default {
         { text: 'Caixa Delimitadora', value: 'BOUNDING_BOX' },
         { text: 'Segmentação', value: 'SEGMENTATION' }
       ],
-      
+
       reportData: [],
-      
+
       tableHeaders: [
         { text: 'Utilizador', value: 'annotator_username', sortable: true, width: '150px' },
         { text: 'Nome', value: 'annotator_name', sortable: true, width: '250px' },
@@ -528,11 +493,13 @@ export default {
     },
 
     hasActiveFilters() {
-      return this.filters.users.length > 0 ||
-             this.filters.labels.length > 0 ||
-             this.filters.task_types.length > 0 ||
-             this.filters.date_from ||
-             this.filters.date_to
+      return (
+        this.filters.users.length > 0 ||
+        this.filters.labels.length > 0 ||
+        this.filters.task_types.length > 0 ||
+        this.filters.date_from ||
+        this.filters.date_to
+      )
     },
 
     getActiveFiltersCount() {
@@ -555,7 +522,7 @@ export default {
       try {
         // Carregar utilizadores do projeto
         const members = await this.$repositories.member.list(this.projectId)
-        this.availableUsers = members.map(member => ({
+        this.availableUsers = members.map((member) => ({
           id: member.user,
           username: member.username
         }))
@@ -566,31 +533,36 @@ export default {
         // Carregar labels disponíveis baseado no tipo de projeto
         if (currentProject.canDefineCategory) {
           const categoryTypes = await this.$services.categoryType.list(this.projectId)
-          this.availableLabels.push(...categoryTypes.map(label => ({
-            id: label.id,
-            text: label.text,
-            type: 'category'
-          })))
+          this.availableLabels.push(
+            ...categoryTypes.map((label) => ({
+              id: label.id,
+              text: label.text,
+              type: 'category'
+            }))
+          )
         }
 
         if (currentProject.canDefineSpan) {
           const spanTypes = await this.$services.spanType.list(this.projectId)
-          this.availableLabels.push(...spanTypes.map(label => ({
-            id: label.id,
-            text: label.text,
-            type: 'span'
-          })))
+          this.availableLabels.push(
+            ...spanTypes.map((label) => ({
+              id: label.id,
+              text: label.text,
+              type: 'span'
+            }))
+          )
         }
 
         if (currentProject.canDefineRelation) {
           const relationTypes = await this.$services.relationType.list(this.projectId)
-          this.availableLabels.push(...relationTypes.map(label => ({
-            id: label.id,
-            text: label.text,
-            type: 'relation'
-          })))
+          this.availableLabels.push(
+            ...relationTypes.map((label) => ({
+              id: label.id,
+              text: label.text,
+              type: 'relation'
+            }))
+          )
         }
-
       } catch (error) {
         console.error('Erro ao carregar opções de filtro:', error)
         this.showError('Erro ao carregar opções de filtro')
@@ -602,59 +574,70 @@ export default {
       try {
         // Preparar parâmetros de filtro com nomes corretos para a API
         const params = new URLSearchParams()
-        
+
         // project_ids é obrigatório - usar sempre o projeto atual
         params.append('project_ids', this.projectId)
-        
+
         if (this.filters.users.length > 0) {
           params.append('user_ids', this.filters.users.join(','))
         }
-        
+
         if (this.filters.date_from) {
           params.append('date_from', this.filters.date_from)
         }
-        
+
         if (this.filters.date_to) {
           params.append('date_to', this.filters.date_to)
         }
-        
+
         if (this.filters.labels.length > 0) {
           params.append('label_ids', this.filters.labels.join(','))
         }
-        
+
         if (this.filters.task_types.length > 0) {
-          params.append('task_types', this.filters.task_types.map(item => item.value || item).join(','))
+          params.append(
+            'task_types',
+            this.filters.task_types.map((item) => item.value || item).join(',')
+          )
         }
 
         console.log('[FRONTEND DEBUG] Parâmetros enviados:', params.toString())
-        console.log('[FRONTEND DEBUG] URL completa:', `/v1/reports/annotators/?${params.toString()}`)
+        console.log(
+          '[FRONTEND DEBUG] URL completa:',
+          `/v1/reports/annotators/?${params.toString()}`
+        )
 
         // Fazer chamada para a API
         const response = await this.$axios.get(`/v1/reports/annotators/?${params.toString()}`)
         console.log('[FRONTEND DEBUG] Resposta da API:', response)
         console.log('[FRONTEND DEBUG] Status:', response.status)
         console.log('[FRONTEND DEBUG] Data:', response.data)
-        
+
         if (response.data && response.data.data) {
           this.reportData = response.data.data
-          console.log('[FRONTEND DEBUG] Dados do relatório definidos:', this.reportData.length, 'anotadores')
+          console.log(
+            '[FRONTEND DEBUG] Dados do relatório definidos:',
+            this.reportData.length,
+            'anotadores'
+          )
         } else {
           console.warn('[FRONTEND DEBUG] Estrutura de resposta inesperada:', response.data)
           this.reportData = []
         }
-        
-        this.showSuccess(`Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`)
-        
+
+        this.showSuccess(
+          `Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`
+        )
       } catch (error) {
         console.error('[FRONTEND DEBUG] Erro completo:', error)
         console.error('[FRONTEND DEBUG] Erro response:', error.response)
         console.error('[FRONTEND DEBUG] Erro message:', error.message)
-        
+
         let errorMessage = 'Erro ao gerar relatório'
         if (error.response) {
           console.error('[FRONTEND DEBUG] Status do erro:', error.response.status)
           console.error('[FRONTEND DEBUG] Data do erro:', error.response.data)
-          
+
           if (error.response.data) {
             if (error.response.data.detail) {
               errorMessage = error.response.data.detail
@@ -666,7 +649,7 @@ export default {
           errorMessage = 'Erro de rede - servidor não respondeu'
           console.error('[FRONTEND DEBUG] Erro de request:', error.request)
         }
-        
+
         this.showError(errorMessage)
       } finally {
         this.isGenerating = false
@@ -679,28 +662,31 @@ export default {
       try {
         // Preparar parâmetros de filtro com nomes corretos para a API
         const params = new URLSearchParams()
-        
+
         // project_ids é obrigatório - usar sempre o projeto atual
         params.append('project_ids', this.projectId)
-        
+
         if (this.filters.users.length > 0) {
           params.append('user_ids', this.filters.users.join(','))
         }
-        
+
         if (this.filters.date_from) {
           params.append('date_from', this.filters.date_from)
         }
-        
+
         if (this.filters.date_to) {
           params.append('date_to', this.filters.date_to)
         }
-        
+
         if (this.filters.labels.length > 0) {
           params.append('label_ids', this.filters.labels.join(','))
         }
-        
+
         if (this.filters.task_types.length > 0) {
-          params.append('task_types', this.filters.task_types.map(item => item.value || item).join(','))
+          params.append(
+            'task_types',
+            this.filters.task_types.map((item) => item.value || item).join(',')
+          )
         }
 
         // Adicionar formato de exportação
@@ -710,10 +696,13 @@ export default {
         console.log('[EXPORT DEBUG] Parâmetros de exportação:', params.toString())
 
         // Fazer download do arquivo
-        const response = await this.$axios.get(`/v1/reports/annotators/export/?${params.toString()}`, {
-          responseType: 'blob'
-        })
-        
+        const response = await this.$axios.get(
+          `/v1/reports/annotators/export/?${params.toString()}`,
+          {
+            responseType: 'blob'
+          }
+        )
+
         // Determinar nome do arquivo e tipo MIME baseado no formato
         let filename, mimeType
         switch (this.selectedExportFormat) {
@@ -730,10 +719,12 @@ export default {
             mimeType = 'application/pdf'
             break
           default:
-            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.${this.selectedExportFormat}`
+            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.${
+              this.selectedExportFormat
+            }`
             mimeType = 'application/octet-stream'
         }
-        
+
         // Criar link de download
         const blob = new Blob([response.data], { type: mimeType })
         const url = window.URL.createObjectURL(blob)
@@ -744,11 +735,12 @@ export default {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
-        
+
         // Fechar diálogo e mostrar sucesso
         this.showExportDialog = false
-        this.showSuccess(`Relatório exportado em ${this.selectedExportFormat.toUpperCase()} com sucesso!`)
-        
+        this.showSuccess(
+          `Relatório exportado em ${this.selectedExportFormat.toUpperCase()} com sucesso!`
+        )
       } catch (error) {
         console.error('[EXPORT DEBUG] Erro ao exportar:', error)
         this.showError(`Erro ao exportar relatório em ${this.selectedExportFormat.toUpperCase()}`)
@@ -775,22 +767,22 @@ export default {
     },
 
     removeUser(userId) {
-      this.filters.users = this.filters.users.filter(id => id !== userId)
+      this.filters.users = this.filters.users.filter((id) => id !== userId)
     },
 
     removeLabel(labelId) {
-      this.filters.labels = this.filters.labels.filter(id => id !== labelId)
+      this.filters.labels = this.filters.labels.filter((id) => id !== labelId)
     },
 
     removeTaskType(taskType) {
-      this.filters.task_types = this.filters.task_types.filter(type => type !== taskType)
+      this.filters.task_types = this.filters.task_types.filter((type) => type !== taskType)
     },
 
     getLabelTypeColor(type) {
       const colors = {
-        'category': 'blue',
-        'span': 'green',
-        'relation': 'orange'
+        category: 'blue',
+        span: 'green',
+        relation: 'orange'
       }
       return colors[type] || 'grey'
     },
@@ -799,7 +791,7 @@ export default {
       if (typeof taskType === 'object') {
         return taskType.text
       }
-      const found = this.taskTypes.find(t => t.value === taskType)
+      const found = this.taskTypes.find((t) => t.value === taskType)
       return found ? found.text : taskType
     },
 
@@ -863,4 +855,4 @@ export default {
 .text-caption {
   font-size: 0.75rem !important;
 }
-</style> 
+</style>

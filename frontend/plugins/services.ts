@@ -10,9 +10,17 @@ import { SegmentationApplicationService } from '@/services/application/tasks/seg
 import { SequenceLabelingApplicationService } from '@/services/application/tasks/sequenceLabeling/sequenceLabelingApplicationService'
 import { UserApplicationService } from '~/services/application/user/userApplicationService'
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
-import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService } from '~/services/application/perspective/question/questionApplicationService'
+import {
+  QuestionApplicationService,
+  OptionsGroupApplicationService,
+  OptionsQuestionApplicationService
+} from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
-import { VotingConfigurationApplicationService, AnnotationRuleApplicationService, AnnotationRuleAnswerApplicationService } from '~/services/application/rules/ruleApplicationService'
+import {
+  VotingConfigurationApplicationService,
+  AnnotationRuleApplicationService,
+  AnnotationRuleAnswerApplicationService
+} from '~/services/application/rules/ruleApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService
@@ -63,9 +71,13 @@ const plugin: Plugin = (_, inject) => {
     optionsQuestion: new OptionsQuestionApplicationService(repositories.optionsQuestion),
     question: new QuestionApplicationService(repositories.question),
     answer: new AnswerApplicationService(repositories.answer),
-    votingConfiguration: new VotingConfigurationApplicationService(repositories.votingConfiguration),
+    votingConfiguration: new VotingConfigurationApplicationService(
+      repositories.votingConfiguration
+    ),
     annotationRule: new AnnotationRuleApplicationService(repositories.annotationRule),
-    annotationRuleAnswerService: new AnnotationRuleAnswerApplicationService(repositories.annotationRuleAnswer),
+    annotationRuleAnswerService: new AnnotationRuleAnswerApplicationService(
+      repositories.annotationRuleAnswer
+    )
   }
   inject('services', services)
 }
