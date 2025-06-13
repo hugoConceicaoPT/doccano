@@ -22,7 +22,7 @@ export class APICategoryRepository extends AnnotationRepository<Category> {
     allUsers: boolean = false
   ): Promise<Category[]> {
     const url = this.baseUrl(projectId, exampleId)
-    const params = allUsers ? { include_all: 'true' } : {}
+    const params = allUsers ? { all_users: 'true' } : {}
     const response = await this.request.get(url, { params })
     return response.data.map((item: { [key: string]: any }) => this.toModel(item))
   }

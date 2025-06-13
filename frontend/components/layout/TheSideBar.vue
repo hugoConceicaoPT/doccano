@@ -42,7 +42,8 @@ import {
   mdiArrowCollapse,
   mdiChartBoxOutline,
   mdiProgressPencil,
-  mdiFileDocumentOutline
+  mdiFileDocumentOutline,
+  mdiCompare
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
 
@@ -123,8 +124,8 @@ export default {
           isVisible: true
         },
         {
-          icon: mdiAccount,
-          text: 'Discrepancies side to side',
+          icon: mdiCompare,
+          text: 'Discrepancies Side To Side',
           link: 'discrepancies-side-to-side',
           isVisible: this.isProjectAdmin
         },
