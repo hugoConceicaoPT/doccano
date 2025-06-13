@@ -21,14 +21,13 @@
             Create Perspective
           </v-btn>
         </v-card-title>
-        <perspective-list :items="items" :is-loading="isLoading" />
+        <perspective-list :items="items" :is-loading="isLoading" :value="[]" />
       </template>
       <template v-else>
         <!-- O componente form-answer deverá interpretar as perguntas e renderizar as opções de escolha múltipla -->
         <form-answer
           :questions-list="questionsList"
           :options-list="optionsList"
-          :projectId="projectId"
           @submit-answers="submitAnswers"
         />
       </template>
@@ -173,8 +172,6 @@ export default Vue.extend({
         this.isLoading = false
       }
     },
-
-
 
     async submitAnswers(formattedAnswers: { questionId: number; answer: string; answerType: string }[]) {
       console.log('Respostas submetidas:', formattedAnswers)

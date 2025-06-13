@@ -2,12 +2,13 @@ import ApiService from '@/services/api.service'
 import { PerspectiveItem } from '~/domain/models/perspective/perspective'
 
 function toModel(item: { [key: string]: any }): PerspectiveItem {
-  return new PerspectiveItem(item.id, item.project_id, item.questions, item.members)
+  return new PerspectiveItem(item.id, item.name, item.project_id, item.questions, item.members)
 }
 
 function toPayload(item: PerspectiveItem): { [key: string]: any } {
   return {
     id: item.id,
+    name: item.name,
     project_id: item.project_id,
     questions: item.questions,
     members: item.members

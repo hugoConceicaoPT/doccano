@@ -111,10 +111,11 @@ class PerspectiveSerializer(serializers.ModelSerializer):
         source="project",
     )
     questions = QuestionSerializer(many=True, read_only=True)
+    name = serializers.CharField(required=True)
 
     class Meta:
         model = Perspective
-        fields = ("id", "project_id", "created_at", "members", "questions")
+        fields = ("id", "name", "project_id", "created_at", "members", "questions")
         read_only_fields = ("created_at",)
 
 
@@ -150,7 +151,7 @@ class PerspectiveNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Perspective
-        fields = ("id", "created_at", "questions")
+        fields = ("id", "name", "created_at", "questions")
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -266,7 +267,7 @@ class PerspectiveListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Perspective
-        fields = ("id", "project_id", "project_name", "creator_name", "created_at")
+        fields = ("id", "name", "project_id", "project_name", "creator_name", "created_at")
 
 
 class AnnotationRuleTypeSerializer(serializers.ModelSerializer):

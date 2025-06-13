@@ -202,6 +202,7 @@ class MemberManager(Manager):
 
 
 class Perspective(models.Model):
+    name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     project = models.OneToOneField(Project, on_delete=models.CASCADE)
     objects = PerspectiveManager()

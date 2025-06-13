@@ -7,7 +7,7 @@
         <v-form ref="form">
           <v-row>
             <v-col cols="12">
-              <v-text-field v-model="name" label="Add a Name" outlined required :rules="[rules.required]"/>
+              <v-text-field v-model="name" label="Nome da Perspectiva" outlined required :rules="[rules.required]"/>
             </v-col>
           </v-row>
           <v-row>
@@ -76,7 +76,7 @@ import {
 export default Vue.extend({
   data() {
     return {
-      name:'',
+      name: '',
       newQuestion: '',
       answerType: null as string | null,
       rules: {
@@ -93,7 +93,7 @@ export default Vue.extend({
     },
 
     isFormValid(): boolean {
-      return this.questionsList.length > 0
+      return this.questionsList.length > 0 && this.name.trim() !== ''
     },
   },
   methods: {
@@ -136,6 +136,7 @@ export default Vue.extend({
     },
     emitUpdatedQuestions() {
       this.$emit('update-questions', this.questionsList)
+      this.$emit('update-name', this.name)
     },
     resetForm() {
       this.newQuestion = ''
