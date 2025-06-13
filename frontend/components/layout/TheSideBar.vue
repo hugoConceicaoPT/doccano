@@ -38,7 +38,8 @@ import {
   mdiCommentTextOutline,
   mdiArrowCollapse,
   mdiChartBoxOutline,
-  mdiProgressPencil
+  mdiProgressPencil,
+  mdiFileDocumentOutline
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
 
@@ -128,6 +129,12 @@ export default {
           icon: mdiCommentAccountOutline,
           text: 'Comments',
           link: 'comments',
+          isVisible: this.isProjectAdmin
+        },
+        {
+          icon: mdiFileDocumentOutline,
+          text: 'Reports',
+          link: 'reports',
           isVisible: this.isProjectAdmin
         },
         {

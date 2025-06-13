@@ -71,6 +71,7 @@ django-allauth = "^0.52.0"
 pydantic = "^2.0.3"
 psycopg2-binary = "^2.9.10"
 ruamel-yaml-clib = "0.2.7"
+reportlab = "^4.4.1"
 
 [tool.poetry.dev-dependencies]
 model-mommy = "^2.0.0"
