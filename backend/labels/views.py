@@ -41,7 +41,10 @@ class BaseListAPI(generics.ListCreateAPIView):
 
     def get_queryset(self):
         queryset = self.label_class.objects.filter(example=self.kwargs["example_id"])
-        if not self.project.collaborative_annotation:
+        # Se o parâmetro include_all estiver presente, retorna todas as categorias
+        # independentemente do usuário. Isso é útil para a página de discrepâncias.
+        include_all = self.request.query_params.get('include_all', 'false').lower() == 'true'
+        if not self.project.collaborative_annotation and not include_all:
             queryset = queryset.filter(user=self.request.user)
         return queryset
 

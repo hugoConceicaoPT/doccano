@@ -15,4 +15,11 @@ export class APICategoryRepository extends AnnotationRepository<Category> {
       user: item.user
     }
   }
+
+  public async list(projectId: string, exampleId: number, allUsers: boolean = false): Promise<Category[]> {
+    const url = this.baseUrl(projectId, exampleId)
+    const params = allUsers ? { include_all: 'true' } : {}
+    const response = await this.request.get(url, { params })
+    return response.data.map((item: { [key: string]: any }) => this.toModel(item))
+  }
 }
