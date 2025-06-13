@@ -8,7 +8,6 @@ export class AnnotationRuleDTO {
   id: number
   project: number
   name: string
-  description: string
   voting_configuration: number
   final_result: string
   is_finalized: boolean
@@ -17,7 +16,6 @@ export class AnnotationRuleDTO {
     this.id = item.id
     this.project = item.project
     this.name = item.name
-    this.description = item.description
     this.voting_configuration = item.voting_configuration
   }
 }

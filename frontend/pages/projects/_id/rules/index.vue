@@ -36,7 +36,6 @@
       </v-alert>
 
       <v-alert v-if="isAdmin && !hasActiveVoting" type="success" class="mb-4">
-        <v-icon left>{{ mdiCheckCircle }}</v-icon>
         Não existe nenhuma votação ativa. Você pode configurar uma nova votação.
       </v-alert>
 
@@ -302,7 +301,7 @@ export default Vue.extend({
           if (r.is_finalized === true) {
             this.items.push({
               numberVersion,
-              ruleDiscussion: r.description,
+              ruleDiscussion: r.name,
               isFinalized: r.is_finalized,
               result,
               votesFor: this.votesYes[r.id] || 0,

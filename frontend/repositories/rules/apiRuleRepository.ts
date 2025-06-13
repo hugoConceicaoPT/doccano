@@ -15,7 +15,6 @@ function toAnnotationRuleModel(item: { [key: string]: any }): AnnotationRuleItem
     item.id,
     item.project,
     item.name,
-    item.description,
     item.voting_configuration,
     item.final_result || '',
     item.is_finalized || false

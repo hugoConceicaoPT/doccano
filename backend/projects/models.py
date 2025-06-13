@@ -260,10 +260,6 @@ class Answer(models.Model):
     answer_option = models.ForeignKey(
         OptionQuestion, on_delete=models.CASCADE, null=True, blank=True, related_name="answer_option"
     )
-    
-class AnnotationRuleType(models.Model):
-    id = models.IntegerField(primary_key=True)
-    annotation_rule_type = models.TextField()
 
 class VotingCofiguration(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="voting_configurations")
@@ -287,7 +283,6 @@ class VotingCofiguration(models.Model):
 class AnnotationRule(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="annotation_rules")
     name = models.CharField(max_length=255, default="")
-    description = models.TextField(default="")
     voting_configuration = models.ForeignKey(
         VotingCofiguration, on_delete=models.CASCADE, related_name="annotation_rules"
     )

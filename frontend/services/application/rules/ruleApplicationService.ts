@@ -26,7 +26,6 @@ export class AnnotationRuleApplicationService {
       0,
       item.project,
       item.name,
-      item.description,
       item.voting_configuration,
       '',
       false
