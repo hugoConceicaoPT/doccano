@@ -2,14 +2,13 @@ import ApiService from '@/services/api.service'
 import { OptionsQuestionItem } from '~/domain/models/perspective/question/question'
 
 function toModel(item: { [key: string]: any }): OptionsQuestionItem {
-  return new OptionsQuestionItem(item.id, item.option, item.options_group)
+  return new OptionsQuestionItem(item.id, item.option)
 }
 
 function toPayload(item: OptionsQuestionItem): { [key: string]: any } {
   return {
     id: item.id,
-    option: item.option,
-    options_group: item.options_group
+    option: item.option
   }
 }
 

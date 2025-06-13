@@ -17,8 +17,21 @@ export class PerspectiveApplicationService {
     return new PerspectiveDTO(created)
   }
 
-  public async list(projectId: string): Promise<PerspectiveDTO> {
+  public async list(projectId: string): Promise<PerspectiveDTO | null> {
     const perspective = await this.repository.list(projectId)
+    if (!perspective) {
+      return null
+    }
+    return new PerspectiveDTO(perspective)
+  }
+
+  public async listAll(): Promise<PerspectiveDTO[]> {
+    const perspectives = await this.repository.listAll()
+    return perspectives.map(perspective => new PerspectiveDTO(perspective))
+  }
+
+  public async get(projectId: string, perspectiveId: string): Promise<PerspectiveDTO> {
+    const perspective = await this.repository.get(projectId, perspectiveId)
     return new PerspectiveDTO(perspective)
   }
 }

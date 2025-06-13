@@ -28,7 +28,7 @@ export class QuestionApplicationService {
       item.question,
       answers,
       item.perspective_id ?? 0,
-      item.options_group ?? 0,
+
       item.answer_type
     )
 

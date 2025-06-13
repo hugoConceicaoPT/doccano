@@ -7,7 +7,7 @@ export type CreateQuestionCommand = Omit<QuestionDTO, 'id'> & {
 
 export type CreateOptionsGroupCommand = Omit<OptionsGroupDTO, 'id'>
 
-export type CreateOptionsQuestionCommand = Omit<OptionsQuestionDTO, 'id' | 'options_group'>
+export type CreateOptionsQuestionCommand = Omit<OptionsQuestionDTO, 'id'>
 
 export type ListQuestionCommand = {
   username?: string

@@ -251,9 +251,6 @@ class Question(models.Model):
     perspective = models.ForeignKey(Perspective, on_delete=models.CASCADE, related_name="questions")
     question = models.TextField()
     answer_type = models.CharField(max_length=20, null=True, blank=True, default=None)  # 'boolean', 'int', 'double', 'string'
-    options_group = models.ForeignKey(
-        OptionsGroup, null=True, blank=True, on_delete=models.CASCADE, related_name="options_group"
-    )
 
 
 class Answer(models.Model):

@@ -1,77 +1,157 @@
 <template>
   <div class="container">
-    <!-- Seleção da pergunta -->
-    <v-select
-      v-model="selectedQuestion"
-      :items="availableQuestions"
-      label="Selecione a pergunta"
-      clearable
-      class="mb-4"
-      multiple
-    />
-    <!-- Seleção do utilizador -->
-    <v-select
-      v-model="selectedUser"
-      :items="availableUsers"
-      label="Selecione o utilizador"
-      clearable
-      class="mb-4"
-      multiple
-    />
-    <!-- Seleção da resposta -->
-    <v-select
-      v-model="selectedAnswer"
-      :items="availableAnswers"
-      label="Selecione a resposta"
-      clearable
-      class="mb-4"
-      multiple
-    />
-    <v-data-table
-      :items="processedItems"
-      :headers="headers"
-      :loading="isLoading"
-      :loading-text="$t('generic.loading')"
-      :no-data-text="$t('vuetify.noDataAvailable')"
-      :footer-props="{
-        showFirstLastPage: true,
-        'items-per-page-text': $t('vuetify.itemsPerPageText'),
-        'page-text': $t('dataset.pageText')
-      }"
-      item-key="id"
-      show-select
-      @input="$emit('input', $event)"
-    >
-      <template #top>
+    <v-card class="mb-4 pa-4">
+      <v-card-title class="text-h6 font-weight-medium">
+        <v-icon left class="mr-2">{{ mdiFilterVariant }}</v-icon>
+        Filters
+      </v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="6">
+            <div class="d-flex">
+              <v-select
+                v-model="selectedQuestion"
+                :items="availableQuestions"
+                label="Question"
+                clearable
+                outlined
+                dense
+                hide-details
+                class="mb-4 mr-2"
+                :prepend-inner-icon="mdiHelpCircleOutline"
+                multiple
+              >
+                <template #label>
+                  Question
+                </template>
+              </v-select>
+              <v-select
+                v-model="selectedQuestionType"
+                :items="questionTypes"
+                label="Question Type"
+                clearable
+                outlined
+                dense
+                hide-details
+                class="mb-4"
+                :prepend-inner-icon="mdiFormatListBulletedType"
+                multiple
+              >
+                <template #label>
+                  Question Type
+                </template>
+              </v-select>
+            </div>
+          </v-col>
+          <v-col cols="12" md="6">
+            <div class="d-flex">
+              <v-select
+                v-model="selectedUser"
+                :items="availableUsers"
+                label="User"
+                clearable
+                outlined
+                dense
+                hide-details
+                class="mb-4 mr-2"
+                :prepend-inner-icon="mdiAccountOutline"
+                multiple
+              >
+                <template #label>
+                  User
+                </template>
+              </v-select>
+              <v-select
+                v-model="selectedAnswer"
+                :items="availableAnswers"
+                label="Answer"
+                clearable
+                outlined
+                dense
+                hide-details
+                class="mb-4"
+                :prepend-inner-icon="mdiCommentTextOutline"
+                multiple
+              >
+                <template #label>
+                  Answer
+                </template>
+              </v-select>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <v-card>
+      <v-card-title class="d-flex align-center">
+        <span class="text-h6 font-weight-medium">
+          Perspectives
+        </span>
+        <v-spacer></v-spacer>
         <v-text-field
           v-model="search"
-          :prepend-inner-icon="mdiMagnify"
           :label="$t('generic.search')"
           single-line
           hide-details
           filled
+          dense
+          class="ml-4"
+          style="max-width: 300px"
         />
-      </template>
-      <!-- Oculta o checkbox do header -->
-      <template #[`header.data-table-select`]>
-        <!-- slot vazio -->
-      </template>
-      <template #[`item.memberName`]="{ item }">
-        <div>{{ item.memberName }}</div>
-      </template>
-      <template #[`item.question`]="{ item }">
-        <div>{{ item.question }}</div>
-      </template>
-      <template #[`item.answer`]="{ item }">
-        <div>{{ item.answer }}</div>
-      </template>
-    </v-data-table>
+      </v-card-title>
+      <v-data-table
+        :items="processedItems"
+        :headers="headers"
+        :loading="isLoading"
+        :loading-text="$t('generic.loading')"
+        :no-data-text="$t('vuetify.noDataAvailable')"
+        :footer-props="{
+          showFirstLastPage: true,
+          'items-per-page-text': $t('vuetify.itemsPerPageText'),
+          'page-text': $t('dataset.pageText')
+        }"
+        item-key="id"
+        show-select
+        @input="$emit('input', $event)"
+      >
+        <!-- Oculta o checkbox do header -->
+        <template #[`header.data-table-select`]>
+          <!-- slot vazio -->
+        </template>
+        <template #[`item.memberName`]="{ item }">
+          <div>{{ item.memberName }}</div>
+        </template>
+        <template #[`item.question`]="{ item }">
+          <div>{{ item.question }}</div>
+        </template>
+        <template #[`item.questionType`]="{ item }">
+          <v-chip
+            small
+            :color="getQuestionTypeColor(item.questionType)"
+            text-color="white"
+          >
+            {{ item.questionType }}
+          </v-chip>
+        </template>
+        <template #[`item.answer`]="{ item }">
+          <div>{{ item.answer }}</div>
+        </template>
+      </v-data-table>
+    </v-card>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import { mdiMagnify } from '@mdi/js'
+import {
+  mdiMagnify,
+  mdiHelpCircleOutline,
+  mdiFormatListBulletedType,
+  mdiAccountOutline,
+  mdiCommentTextOutline,
+  mdiFilterVariant
+} from '@mdi/js'
 import type { PropType } from 'vue'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
 
@@ -108,10 +188,16 @@ export default Vue.extend({
     return {
       search: '',
       mdiMagnify,
+      mdiHelpCircleOutline,
+      mdiFormatListBulletedType,
+      mdiAccountOutline,
+      mdiCommentTextOutline,
+      mdiFilterVariant,
       // Selecção dos filtros: pergunta, utilizador e resposta
       selectedQuestion: [] as string[],
       selectedUser: [] as string[],
       selectedAnswer: [] as string[],
+      selectedQuestionType: [] as string[],
       // Armazena os nomes carregados para os IDs de 0 a 100
       memberNames: {} as { [key: number]: string }
     }
@@ -123,6 +209,7 @@ export default Vue.extend({
       return [
         { text: this.$t('Created by'), value: 'memberName', sortable: true },
         { text: this.$t('Question'), value: 'question', sortable: true },
+        { text: this.$t('Question Type'), value: 'questionType', sortable: true },
         { text: this.$t('Answer'), value: 'answer', sortable: true }
       ]
     },
@@ -131,6 +218,7 @@ export default Vue.extend({
     },
     // Extrai as perguntas disponíveis
     availableQuestions() {
+
       const questionsSet = new Set<string>()
       const projectItems = this.items.filter(
         (item) => Number(item.project_id) === Number(this.projectId)
@@ -197,9 +285,16 @@ export default Vue.extend({
       })
       return Array.from(answersSet)
     },
+    questionTypes() {
+      return [
+        { text: 'Text', value: 'string' },
+        { text: 'Integer', value: 'int' },
+        { text: 'True/False', value: 'boolean' }
+      ]
+    },
     // Processa os itens gerando uma linha para cada resposta e aplicando os filtros selecionados
     processedItems() {
-      const result: Array<{ id: number; memberName: string; question: string; answer: string }> = []
+      const result: Array<{ id: number; memberName: string; question: string; questionType: string; answer: string }> = []
       const projectItems = this.items.filter(
         (item) => Number(item.project_id) === Number(this.projectId)
       )
@@ -212,6 +307,14 @@ export default Vue.extend({
               this.selectedQuestion.length > 0 &&
               q.question &&
               !this.selectedQuestion.includes(q.question)
+            ) {
+              return
+            }
+            // Filtra pelo tipo de pergunta, se houver seleções
+            if (
+              this.selectedQuestionType.length > 0 &&
+              q.answer_type &&
+              !this.selectedQuestionType.includes(q.answer_type)
             ) {
               return
             }
@@ -228,19 +331,20 @@ export default Vue.extend({
                     memberName = this.memberNames[memberId] || memberId.toString()
                   }
                 }
-                const answerText = a.answer_text || a.answer_option || ''
+                const answerText = a.answer_text || a.answer_option
                 // Cria um registro para cada resposta
                 const row = {
                   id: counter++,
                   memberName,
                   question: q.question,
+                  questionType: this.translateQuestionType(q.answer_type || ''),
                   answer: answerText
                 }
                 // Filtro de busca (buscando em todas as colunas)
                 if (this.search) {
                   const searchLower = this.search.toLowerCase()
                   const combinedText =
-                    `${row.memberName} ${row.question} ${row.answer}`.toLowerCase()
+                    `${row.memberName} ${row.question} ${row.questionType} ${row.answer}`.toLowerCase()
                   if (!combinedText.includes(searchLower)) {
                     return
                   }
@@ -305,6 +409,30 @@ export default Vue.extend({
           }
         })
       })
+    },
+    translateQuestionType(type: string): string {
+      switch (type) {
+        case 'string':
+          return 'Text'
+        case 'int':
+          return 'Integer'
+        case 'boolean':
+          return 'True/False'
+        default:
+          return type
+      }
+    },
+    getQuestionTypeColor(type: string): string {
+      switch (type) {
+        case 'Text':
+          return 'primary'
+        case 'Integer':
+          return 'success'
+        case 'True/False':
+          return 'warning'
+        default:
+          return 'grey'
+      }
     }
   }
 })
@@ -312,8 +440,19 @@ export default Vue.extend({
 
 <style scoped>
 .container {
-  padding-left: 20px;
-  padding-right: 20px;
-  margin-top: 10px;
+  padding: 16px;
+}
+
+::v-deep .v-data-table {
+  border-radius: 4px;
+}
+
+::v-deep .v-data-table-header th {
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+
+::v-deep .v-select__selections {
+  padding-top: 4px;
 }
 </style>
