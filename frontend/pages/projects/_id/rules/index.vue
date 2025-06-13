@@ -179,10 +179,17 @@ export default Vue.extend({
       this.isAdmin = member.isProjectAdmin
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId)
+      // Filtrar apenas as configurações do projeto atual
+      this.votingConfigs = this.votingConfigs.filter(
+        (config) => config.project === Number(projectId)
+      )
+      
       this.rules = await this.$services.annotationRule.list(projectId)
 
-      // Identificar a configuração de votação ativa (não fechada)
-      this.activeVotingConfig = this.votingConfigs.find((config) => !config.is_closed) || null
+      // Identificar a configuração de votação ativa (não fechada) para o projeto atual
+      this.activeVotingConfig = this.votingConfigs.find((config) => 
+        !config.is_closed && config.project === Number(projectId)
+      ) || null
 
       // inicializa agrupamentos e estados
       this.groupedRules = {}
@@ -287,7 +294,11 @@ export default Vue.extend({
       try {
         // Permitir que não-admins verifiquem o status, mas apenas admins podem atualizar
         const configs = await this.$services.votingConfiguration.list(this.projectId)
-        const activeConfigs = configs.filter((config) => !config.is_closed)
+        // Filtrar para garantir que apenas as configurações do projeto atual sejam consideradas
+        const projectConfigs = configs.filter(
+          (config) => config.project === Number(this.projectId)
+        )
+        const activeConfigs = projectConfigs.filter((config) => !config.is_closed)
 
         let votingStatusChanged = false
 
@@ -322,7 +333,9 @@ export default Vue.extend({
           ) as AnnotationRuleItem[]
 
           // Atualizar activeVotingConfig
-          this.activeVotingConfig = this.votingConfigs.find((config) => !config.is_closed) || null
+          this.activeVotingConfig = this.votingConfigs.find(
+            (config) => !config.is_closed && config.project === Number(this.projectId)
+          ) || null
         }
       } catch (error) {
         console.error('Erro ao verificar votações completas:', error)
