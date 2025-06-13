@@ -48,7 +48,27 @@ class AnnotationRules(generics.ListAPIView):
     search_fields = ("description",)
 
     def get_queryset(self):
-        return AnnotationRule.objects.filter(project_id=self.kwargs['project_id'])
+        project_id = self.kwargs['project_id']
+        self.check_and_close_completed_configs(project_id)
+        return AnnotationRule.objects.filter(project_id=project_id)
+    
+    def check_and_close_completed_configs(self, project_id):
+        active_configs = VotingCofiguration.objects.filter(
+            project_id=project_id, 
+            is_closed=False
+        )
+        
+        for config in active_configs:
+            rules = AnnotationRule.objects.filter(voting_configuration=config)
+            
+            if not rules.exists():
+                continue
+                
+            all_finalized = all(rule.is_finalized for rule in rules)
+            
+            if all_finalized:
+                config.is_closed = True
+                config.save()
 
 class AnnotationRuleCreation(generics.CreateAPIView):
     queryset = AnnotationRule.objects.all()
@@ -67,7 +87,27 @@ class VotingConfigurations(generics.ListAPIView):
     search_fields = ("voting_threshold",)
 
     def get_queryset(self):
-        return VotingCofiguration.objects.filter(project_id=self.kwargs['project_id'])
+        project_id = self.kwargs['project_id']
+        self.check_and_close_completed_configs(project_id)
+        return VotingCofiguration.objects.filter(project_id=project_id)
+    
+    def check_and_close_completed_configs(self, project_id):
+        active_configs = VotingCofiguration.objects.filter(
+            project_id=project_id, 
+            is_closed=False
+        )
+        
+        for config in active_configs:
+            rules = AnnotationRule.objects.filter(voting_configuration=config)
+            
+            if not rules.exists():
+                continue
+                
+            all_finalized = all(rule.is_finalized for rule in rules)
+            
+            if all_finalized:
+                config.is_closed = True
+                config.save()
 
 class VotingConfigurationCreation(generics.CreateAPIView):
     queryset = VotingCofiguration.objects.all()
@@ -75,6 +115,33 @@ class VotingConfigurationCreation(generics.CreateAPIView):
     permission_classes = [IsAuthenticated & IsProjectAdmin]
 
     def create(self, request, *args, **kwargs):
+        project_id = self.kwargs['project_id']
+        
+        active_configs = VotingCofiguration.objects.filter(project_id=project_id, is_closed=False)
+        
+        if active_configs.exists():
+            active_config = active_configs.first()
+            all_rules = AnnotationRule.objects.filter(voting_configuration=active_config)
+            
+            if not all_rules.exists() or all(rule.is_finalized for rule in all_rules):
+                active_config.is_closed = True
+                active_config.save()
+            else:
+                return Response({
+                    'detail': 'Não é possível configurar uma nova votação pois existe uma votação ativa com regras não finalizadas.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if 'version' in request.data:
+            version = request.data['version']
+            if VotingCofiguration.objects.filter(project_id=project_id, version=version).exists():
+                max_version = VotingCofiguration.objects.filter(project_id=project_id).order_by('-version').first()
+                if max_version:
+                    next_version = max_version.version + 1
+                else:
+                    next_version = 1
+                
+                request.data['version'] = next_version
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         vote_config = self.perform_create(serializer)
@@ -82,7 +149,7 @@ class VotingConfigurationCreation(generics.CreateAPIView):
         return Response(VotingCofigurationSerializer(vote_config).data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save(project_id=self.kwargs['project_id'], created_by=self.request.user)
+        return serializer.save(project_id=self.kwargs['project_id'], created_by=self.request.user)
 
 class AnnotationRuleAnswersList(generics.ListAPIView):
     serializer_class = AnnotationRuleAnswersSerializer
@@ -128,7 +195,27 @@ class AnnotationRuleDetail(RetrieveUpdateAPIView):
     lookup_url_kwarg = 'annotation_rule_id'
 
     def put(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
+        response = self.partial_update(request, *args, **kwargs)
+        
+        annotation_rule = self.get_object()
+        voting_config = annotation_rule.voting_configuration
+        
+        all_rules = AnnotationRule.objects.filter(voting_configuration=voting_config)
+        
+        all_finalized = True
+        for rule in all_rules:
+            if not rule.is_finalized:
+                all_finalized = False
+                break
+        
+        if all_finalized and not voting_config.is_closed:
+            voting_config.is_closed = True
+            voting_config.save()
+            
+            if isinstance(response.data, dict):
+                response.data['message'] = 'Todas as regras desta votação foram finalizadas. A votação foi fechada automaticamente.'
+        
+        return response
 
 class VotingConfigurationDetail(RetrieveAPIView):
     queryset = VotingCofiguration.objects.all()

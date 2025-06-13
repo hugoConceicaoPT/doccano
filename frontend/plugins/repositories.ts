@@ -30,7 +30,7 @@ import { APIOptionsGroupRepository } from '~/repositories/perspective/question/a
 import { APIOptionsQuestionRepository } from '~/repositories/perspective/question/apiOptionsQuestionReposity'
 
 import { APIAnswerRepository } from '~/repositories/perspective/answer/apiAnswerRepository'
-import { APIVotingConfigurationRepository, APIAnnotationRuleTypeRepository, APIAnnotationRuleRepository, APIAnnotationRuleAnswerRepository } from '~/repositories/rules/apiRuleRepository'
+import { APIVotingConfigurationRepository, APIAnnotationRuleRepository, APIAnnotationRuleAnswerRepository } from '~/repositories/rules/apiRuleRepository'
 import { APIStatisticsRepository } from '~/repositories/statistics/apiStatisticsRepository'
 
 export interface Repositories {
@@ -49,7 +49,6 @@ export interface Repositories {
   optionsQuestion: APIOptionsQuestionRepository
   answer: APIAnswerRepository 
   votingConfiguration: APIVotingConfigurationRepository
-  annotationRuleType: APIAnnotationRuleTypeRepository
   annotationRule: APIAnnotationRuleRepository
   annotationRuleAnswer: APIAnnotationRuleAnswerRepository
 
@@ -110,7 +109,6 @@ const repositories: Repositories = {
   optionsQuestion: new APIOptionsQuestionRepository(),
   answer: new APIAnswerRepository(),
   votingConfiguration: new APIVotingConfigurationRepository(),
-  annotationRuleType: new APIAnnotationRuleTypeRepository(),
   annotationRule: new APIAnnotationRuleRepository(),
   annotationRuleAnswer: new APIAnnotationRuleAnswerRepository(),
 

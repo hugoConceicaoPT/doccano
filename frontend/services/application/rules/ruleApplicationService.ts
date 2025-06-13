@@ -1,44 +1,19 @@
 import {
     CreateAnnotationRuleCommand,
-    CreateAnnotationRuleTypeCommand,
     CreateAnnotationRuleAnswerCommand,
     CreateVotingConfigurationCommand,
   } from './ruleCommand';
   import {
     AnnotationRuleDTO,
-    AnnotationRuleTypeDTO,
     AnnotationRuleAnswerDTO,
     VotingConfigurationDTO,
   } from './ruleData';
   import {
     AnnotationRuleRepository,
-    AnnotationRuleTypeRepository,
     AnnotationRuleAnswerRepository,
     VotingConfigurationRepository,
   } from '~/domain/models/rules/ruleRepository';
-  import { AnnotationRuleAnswerItem,  AnnotationRuleItem, AnnotationRuleTypeItem, VotingConfigurationItem, } from '~/domain/models/rules/rule';
-  
-  export class AnnotationRuleTypeApplicationService {
-    constructor(private readonly repository: AnnotationRuleTypeRepository) {}
-  
-    public async create(projectId: string, item: CreateAnnotationRuleTypeCommand): Promise<AnnotationRuleTypeDTO> {
-      const annotationRuleType = new AnnotationRuleTypeItem(0, item.annotation_rule_type);
-      const created = await this.repository.create(projectId, annotationRuleType);
-      return new AnnotationRuleTypeDTO(created);
-    }
-  
-    public async list(projectId: string): Promise<AnnotationRuleTypeItem[]> {
-      return await this.repository.list(projectId);
-    }
-  
-    public async findById(projectId: string, id: number): Promise<AnnotationRuleTypeDTO> {
-      const item = await this.repository.findById(projectId, id);
-      if (!item) {
-        throw new Error('AnnotationRuleTypeItem not found');
-      }
-      return new AnnotationRuleTypeDTO(item);
-    }
-  }
+  import { AnnotationRuleAnswerItem,  AnnotationRuleItem, VotingConfigurationItem, } from '~/domain/models/rules/rule';
   
   export class AnnotationRuleApplicationService {
     constructor(private readonly repository: AnnotationRuleRepository) {}
@@ -50,7 +25,6 @@ import {
         item.name,
         item.description,
         item.voting_configuration,
-        item.annotation_rule_type,
         '',
         false
       );
@@ -83,7 +57,6 @@ import {
       const votingConfiguration = new VotingConfigurationItem(
         0,
         item.project,
-        item.annotation_rule_type,
         item.voting_threshold,
         item.percentage_threshold,
         item.created_by,
@@ -105,6 +78,11 @@ import {
     public async list(projectId: string): Promise<VotingConfigurationItem[]> {
       return await this.repository.list(projectId);
     }
+    
+    public async update(projectId: string, id: number, data: Partial<VotingConfigurationItem>): Promise<VotingConfigurationDTO> {
+      const updated = await this.repository.update(projectId, id, data);
+      return new VotingConfigurationDTO(updated);
+    }
   }
   
   export class AnnotationRuleAnswerApplicationService {
@@ -115,8 +93,7 @@ import {
         0,
         item.annotation_rule,
         item.member,
-        item.answer,
-        item.annotation_rule_type
+        item.answer
       );
       const created = await this.repository.create(projectId, annotationRuleAnswer);
       return new AnnotationRuleAnswerDTO(created);

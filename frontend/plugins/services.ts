@@ -12,7 +12,7 @@ import { UserApplicationService } from '~/services/application/user/userApplicat
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
 import { QuestionApplicationService, OptionsGroupApplicationService, OptionsQuestionApplicationService } from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
-import { VotingConfigurationApplicationService, AnnotationRuleTypeApplicationService, AnnotationRuleApplicationService, AnnotationRuleAnswerApplicationService } from '~/services/application/rules/ruleApplicationService'
+import { VotingConfigurationApplicationService, AnnotationRuleApplicationService, AnnotationRuleAnswerApplicationService } from '~/services/application/rules/ruleApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService
@@ -32,7 +32,6 @@ export interface Services {
   question: QuestionApplicationService
   answer: AnswerApplicationService
   votingConfiguration: VotingConfigurationApplicationService
-  annotationRuleType: AnnotationRuleTypeApplicationService
   annotationRule: AnnotationRuleApplicationService
   annotationRuleAnswerService: AnnotationRuleAnswerApplicationService
 }
@@ -65,7 +64,6 @@ const plugin: Plugin = (_, inject) => {
     question: new QuestionApplicationService(repositories.question),
     answer: new AnswerApplicationService(repositories.answer),
     votingConfiguration: new VotingConfigurationApplicationService(repositories.votingConfiguration),
-    annotationRuleType: new AnnotationRuleTypeApplicationService(repositories.annotationRuleType),
     annotationRule: new AnnotationRuleApplicationService(repositories.annotationRule),
     annotationRuleAnswerService: new AnnotationRuleAnswerApplicationService(repositories.annotationRuleAnswer),
   }

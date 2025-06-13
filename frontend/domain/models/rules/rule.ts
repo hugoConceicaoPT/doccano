@@ -1,50 +1,8 @@
-// frontend/src/domain/models/rule/rule.ts
-
 import {
-    AnnotationRuleTypeRepository,
     AnnotationRuleRepository,
     VotingConfigurationRepository,
     AnnotationRuleAnswerRepository,
   } from './ruleRepository';
-  
-  export class AnnotationRuleTypeItem {
-    constructor(
-      readonly id: number,
-      readonly annotation_rule_type: string,
-    ) {}
-  
-    static create(
-      annotation_rule_type: string,
-    ): AnnotationRuleTypeItem {
-      return new AnnotationRuleTypeItem(
-        0,
-        annotation_rule_type,
-      );
-    }
-  
-    static async list(repository: AnnotationRuleTypeRepository, projectId: string): Promise<AnnotationRuleTypeItem[]> {
-      return await repository.list(projectId);
-    }
-  
-    async delete(repository: AnnotationRuleTypeRepository, projectId: string): Promise<void> {
-      if (this.id === 0) {
-        throw new Error('Não é possível excluir um tipo de regra sem ID válido.');
-      }
-      await repository.delete(projectId, this.id);
-    }
-  
-    async update(repository: AnnotationRuleTypeRepository, projectId: string): Promise<void> {
-      if (this.id === 0) {
-        throw new Error('Não é possível atualizar um tipo de regra sem ID válido.');
-      }
-  
-      const updatedFields: Record<string, any> = {
-        annotation_rule_type: this.annotation_rule_type,
-      };
-  
-      await repository.update(projectId, this.id, updatedFields);
-    }
-  }
   
   export class AnnotationRuleItem {
     constructor(
@@ -53,7 +11,6 @@ import {
       readonly name: string,
       readonly description: string,
       readonly voting_configuration: number,
-      readonly annotation_rule_type: number,
       readonly final_result: string,
       readonly is_finalized: boolean
     ) {}
@@ -63,7 +20,6 @@ import {
       name: string,
       description: string,
       voting_configuration: number,
-      annotation_rule_type: number,
     ): AnnotationRuleItem {
       return new AnnotationRuleItem(
         0,
@@ -71,7 +27,6 @@ import {
         name,
         description,
         voting_configuration,
-        annotation_rule_type,
         '',
         false
       );
@@ -98,7 +53,6 @@ import {
         name: this.name,
         description: this.description,
         voting_configuration: this.voting_configuration,
-        annotation_rule_type: this.annotation_rule_type,
       };
   
       await repository.update(projectId, this.id, updatedFields);
@@ -109,32 +63,35 @@ import {
     constructor(
       readonly id: number,
       readonly project: number,
-      readonly annotation_rule_type: number,
       readonly voting_threshold: number,
       readonly percentage_threshold: number,
       readonly created_by: number | null,
       readonly begin_date: string,
       readonly end_date: string,
+      readonly is_closed: boolean = false,
+      readonly version: number = 1
     ) {}
   
     static create(
       project: number,
-      annotation_rule_type: number,
       voting_threshold: number,
       percentage_threshold: number,
       created_by: number | null,
       begin_date: string,
       end_date: string,
+      is_closed: boolean = false,
+      version: number = 1
     ): VotingConfigurationItem {
       return new VotingConfigurationItem(
         0,
         project,
-        annotation_rule_type,
         voting_threshold,
         percentage_threshold,
         created_by,
         begin_date,
         end_date,
+        is_closed,
+        version
       );
     }
   
@@ -149,11 +106,12 @@ import {
   
       const updatedFields: Record<string, any> = {
         project: this.project,
-        annotation_rule_type: this.annotation_rule_type,
         voting_threshold: this.voting_threshold,
         percentage_threshold: this.percentage_threshold,
         begin_date: this.begin_date,
         end_date: this.end_date,
+        is_closed: this.is_closed,
+        version: this.version
       };
   
       await repository.update(projectId, this.id, updatedFields);
@@ -166,21 +124,18 @@ import {
       readonly annotation_rule: number,
       readonly member: number,
       readonly answer: boolean,
-      readonly annotation_rule_type: number,
     ) {}
   
     static create(
       annotation_rule: number,
       member: number,
       answer: boolean,
-      annotation_rule_type: number,
     ): AnnotationRuleAnswerItem {
       return new AnnotationRuleAnswerItem(
         0,
         annotation_rule,
         member,
         answer,
-        annotation_rule_type,
       );
     }
   

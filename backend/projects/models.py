@@ -270,14 +270,21 @@ class AnnotationRuleType(models.Model):
 
 class VotingCofiguration(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="voting_configurations")
-    annotation_rule_type = models.ForeignKey(
-        AnnotationRuleType, on_delete=models.CASCADE, related_name="voting_configurations"
-    )
     voting_threshold = models.IntegerField(default=0)
     percentage_threshold = models.FloatField(default=0.0)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     begin_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    is_closed = models.BooleanField(default=False)
+    version = models.IntegerField(default=1)
+
+    class Meta:
+        unique_together = ('project', 'version')
+        
+    def clean(self):
+        # Verificar se não existe outra configuração com a mesma versão no mesmo projeto
+        if VotingCofiguration.objects.filter(project=self.project, version=self.version).exclude(id=self.id).exists():
+            raise ValidationError('Já existe uma configuração de votação com esta versão neste projeto.')
 
 
 class AnnotationRule(models.Model):
@@ -287,9 +294,6 @@ class AnnotationRule(models.Model):
     voting_configuration = models.ForeignKey(
         VotingCofiguration, on_delete=models.CASCADE, related_name="annotation_rules"
     )
-    annotation_rule_type = models.ForeignKey(
-        AnnotationRuleType, on_delete=models.CASCADE, related_name="annotation_rules_set"
-    )
     is_finalized = models.BooleanField(default=False)
     final_result = models.CharField(max_length=20, blank=True)
 
@@ -298,7 +302,4 @@ class AnnotationRuleAnswers(models.Model):
     annotation_rule = models.ForeignKey(AnnotationRule, on_delete=models.CASCADE, related_name="annotation_rule_answers")
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="annotation_rule_answers")
     answer = models.BooleanField(default=False)
-    annotation_rule_type = models.ForeignKey(
-        AnnotationRuleType, on_delete=models.CASCADE, related_name="annotation_rule_answers_set"
-    )
 

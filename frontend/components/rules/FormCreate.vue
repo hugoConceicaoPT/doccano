@@ -3,17 +3,6 @@
       <v-card-title>Configure Voting and Add Annotation Rules</v-card-title>
       <v-card-text>
         <v-form ref="form" v-model="valid">
-          <v-select
-            :items="annotationRuleTypes"
-            item-text="annotation_rule_type"
-            item-value="id"
-            label="Annotation Rule Type"
-            :rules="[rules.required]"
-            :disabled="annotationRuleTypes.length === 0"
-            :value="editedItem.annotation_rule_type"
-            @input="$emit('update:editedItem', { ...editedItem, annotation_rule_type: Number($event) })"
-          ></v-select>
-
           <v-text-field
             label="Vote Threshold"
             type="number"
@@ -47,13 +36,30 @@
             :value="editedItem.end_date"
             @input="$emit('update:editedItem', { ...editedItem, end_date: $event })"
           ></v-text-field>
+
+          <v-text-field
+            label="Versão"
+            :value="editedItem.version"
+            readonly
+            disabled
+            hint="A versão é determinada automaticamente pelo sistema"
+            persistent-hint
+          >
+            <template v-slot:prepend>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <v-icon small v-on="on">mdi-information-outline</v-icon>
+                </template>
+                <span>A versão é incrementada automaticamente com base nas versões existentes</span>
+              </v-tooltip>
+            </template>
+          </v-text-field>
   
           <v-divider class="my-4"></v-divider>
   
           <v-card-subtitle>Add Annotation Rules</v-card-subtitle>
   
-          <!-- Single field for type 1 -->
-          <v-row v-if="editedItem.annotation_rule_type === 1">
+          <v-row>
             <v-col cols="12">
               <v-text-field
                 v-model="newRuleName"
@@ -61,52 +67,36 @@
                 outlined
                 :rules="[rules.requiredIfNoRules(annotationRulesList)]"
                 class="mb-4"
-                @input="handleSingleRuleInput"
               ></v-text-field>
             </v-col>
           </v-row>
-  
-          <!-- Multiple fields for type 2 -->
-          <template v-else-if="editedItem.annotation_rule_type === 2">
-            <v-row>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="newRuleName"
-                  label="Rule Name"
-                  outlined
-                  :rules="[rules.requiredIfNoRules(annotationRulesList)]"
-                  class="mb-4"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-  
-            <v-row>
-              <v-col cols="12">
-                <v-btn color="primary" @click="addRule">Add Rule</v-btn>
-              </v-col>
-            </v-row>
-  
-            <v-row v-if="annotationRulesList.length > 0">
-              <v-col cols="12">
-                <v-list dense>
-                  <v-list-item-group>
-                    <v-list-item v-for="(rule, index) in annotationRulesList" :key="index">
-                      <v-list-item-content>
-                        <v-list-item-title>
-                          <strong>{{ rule.name }}</strong>
-                        </v-list-item-title>
-                      </v-list-item-content>
-                      <v-list-item-action>
-                        <v-btn icon color="red" @click="removeRule(index)">
-                          Delete
-                        </v-btn>
-                      </v-list-item-action>
-                    </v-list-item>
-                  </v-list-item-group>
-                </v-list>
-              </v-col>
-            </v-row>
-          </template>
+
+          <v-row>
+            <v-col cols="12">
+              <v-btn color="primary" @click="addRule">Add Rule</v-btn>
+            </v-col>
+          </v-row>
+
+          <v-row v-if="annotationRulesList.length > 0">
+            <v-col cols="12">
+              <v-list dense>
+                <v-list-item-group>
+                  <v-list-item v-for="(rule, index) in annotationRulesList" :key="index">
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        <strong>{{ rule.name }}</strong>
+                      </v-list-item-title>
+                    </v-list-item-content>
+                    <v-list-item-action>
+                      <v-btn icon color="red" @click="removeRule(index)">
+                        Delete
+                      </v-btn>
+                    </v-list-item-action>
+                  </v-list-item>
+                </v-list-item-group>
+              </v-list>
+            </v-col>
+          </v-row>
   
           <slot :valid="isFormValid" />
         </v-form>
@@ -117,16 +107,11 @@
   <script lang="ts">
   import Vue from 'vue';
   import { CreateVotingConfigurationCommand, CreateAnnotationRuleCommand } from '~/services/application/rules/ruleCommand';
-  import { AnnotationRuleTypeDTO } from '~/services/application/rules/ruleData';
   
   export default Vue.extend({
     props: {
       editedItem: {
         type: Object as () => CreateVotingConfigurationCommand,
-        required: true,
-      },
-      annotationRuleTypes: {
-        type: Array as () => AnnotationRuleTypeDTO[],
         required: true,
       },
       annotationRulesList: {
@@ -172,32 +157,11 @@
   
     computed: {
       isFormValid(): boolean {
-        if (this.editedItem.annotation_rule_type === 1) {
-          return this.valid && (this.annotationRulesList.length > 0 || this.newRuleName.trim() !== '');
-        } else {
-          return this.valid && this.annotationRulesList.length > 0;
-        }
+        return this.valid && (this.annotationRulesList.length > 0 || this.newRuleName.trim() !== '');
       }
     },
   
     methods: {
-      handleSingleRuleInput() {
-        if (this.newRuleName.trim()) {
-          const newRule: CreateAnnotationRuleCommand = {
-            project: this.editedItem.project,
-            name: this.newRuleName.trim(),
-            description: 'NULO',
-            voting_configuration: 0,
-            annotation_rule_type: this.editedItem.annotation_rule_type,
-            final_result: '',
-            is_finalized: false
-          };
-          this.$emit('update:annotationRulesList', [newRule]);
-        } else {
-          this.$emit('update:annotationRulesList', []);
-        }
-      },
-  
       addRule() {
         if (this.newRuleName.trim()) {
           const newRule: CreateAnnotationRuleCommand = {
@@ -205,7 +169,6 @@
             name: this.newRuleName.trim(),
             description: 'NULO',
             voting_configuration: 0,
-            annotation_rule_type: this.editedItem.annotation_rule_type,
             final_result: '',
             is_finalized: false
           };

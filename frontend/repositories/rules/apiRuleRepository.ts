@@ -1,21 +1,14 @@
 import {
-    AnnotationRuleTypeRepository,
     AnnotationRuleRepository,
     VotingConfigurationRepository,
     AnnotationRuleAnswerRepository,
   } from '@/domain/models/rules/ruleRepository';
   import {
-    AnnotationRuleTypeItem,
     AnnotationRuleItem,
     VotingConfigurationItem,
     AnnotationRuleAnswerItem,
   } from '@/domain/models/rules/rule';
   import ApiService from '@/services/api.service';
-  
-  
-  function toAnnotationRuleTypeModel(item: { [key: string]: any }): AnnotationRuleTypeItem {
-    return new AnnotationRuleTypeItem(item.id, item.annotation_rule_type);
-  }
   
   function toAnnotationRuleModel(item: { [key: string]: any }): AnnotationRuleItem {
     return new AnnotationRuleItem(
@@ -24,9 +17,8 @@ import {
       item.name,
       item.description,
       item.voting_configuration,
-      item.annotation_rule_type,
-      item.final_result,
-      item.is_finalized
+      item.final_result || '',
+      item.is_finalized || false
     );
   }
   
@@ -34,12 +26,13 @@ import {
     return new VotingConfigurationItem(
       item.id,
       item.project,
-      item.annotation_rule_type,
       item.voting_threshold,
       item.percentage_threshold,
       item.created_by,
       item.begin_date,
-      item.end_date
+      item.end_date,
+      item.is_closed,
+      item.version
     );
   }
   
@@ -48,44 +41,8 @@ import {
       item.id,
       item.annotation_rule,
       item.member,
-      item.answer,
-      item.annotation_rule_type
+      item.answer
     );
-  }
-  
-  
-  export class APIAnnotationRuleTypeRepository implements AnnotationRuleTypeRepository {
-    constructor(private readonly baseUrl = 'projects', private readonly request = ApiService) {}
-  
-    async create(projectId: string, item: AnnotationRuleTypeItem): Promise<AnnotationRuleTypeItem> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rule-types/create`;
-      const response = await this.request.post(url, { annotation_rule_type: item.annotation_rule_type });
-      return toAnnotationRuleTypeModel(response.data);
-    }
-  
-    async list(projectId: string): Promise<AnnotationRuleTypeItem[]> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rule-types`;
-      const response = await this.request.get(url);
-      return response.data.map((item: { [key: string]: any }) => toAnnotationRuleTypeModel(item));
-    }
-  
-    async delete(projectId: string, id: number): Promise<AnnotationRuleTypeItem> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rule-types/${id}`;
-      const response = await this.request.delete(url);
-      return toAnnotationRuleTypeModel(response.data);
-    }
-  
-    async update(projectId: string, id: number, data: Partial<AnnotationRuleTypeItem>): Promise<AnnotationRuleTypeItem> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rule-types/${id}`;
-      const response = await this.request.put(url, data);
-      return toAnnotationRuleTypeModel(response.data);
-    }
-  
-    async findById(projectId: string, id: number): Promise<AnnotationRuleTypeItem | null> {
-      const url = `/${this.baseUrl}/${projectId}/annotation-rule-types/${id}`;
-      const response = await this.request.get(url);
-      return toAnnotationRuleTypeModel(response.data);
-    }
   }
   
   export class APIAnnotationRuleRepository implements AnnotationRuleRepository {
