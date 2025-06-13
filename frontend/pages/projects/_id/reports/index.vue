@@ -3,6 +3,14 @@
     <v-row>
       <v-col cols="12">
         <v-card>
+          <v-tabs v-model="activeTab" background-color="primary" dark grow>
+            <v-tab key="annotators">Relatórios sobre Anotadores</v-tab>
+            <v-tab key="annotations">Relatórios sobre Anotações</v-tab>
+          </v-tabs>
+
+          <v-tabs-items v-model="activeTab">
+            <!-- Aba de Relatórios sobre Anotadores -->
+            <v-tab-item key="annotators">
           <v-card-title class="primary white--text">
             <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
             Relatórios sobre Anotadores
@@ -117,75 +125,6 @@
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
-                  </v-col>
-
-                  <!-- Filtro de Data Início -->
-                  <v-col cols="12" md="6">
-                    <v-menu
-                      v-model="dateFromMenu"
-                      :close-on-content-click="false"
-                      :nudge-right="40"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="auto"
-                    >
-                      <template #activator="{ on, attrs }">
-                        <v-text-field
-                          v-model="filters.date_from"
-                          label="Data de Início"
-                          :prepend-inner-icon="mdiCalendarStart"
-                          readonly
-                          outlined
-                          dense
-                          clearable
-                          hint="Data a partir da qual considerar as anotações"
-                          persistent-hint
-                          v-bind="attrs"
-                          v-on="on"
-                        />
-                      </template>
-                      <v-date-picker
-                        v-model="filters.date_from"
-                        :max="filters.date_to || new Date().toISOString().substr(0, 10)"
-                        locale="pt"
-                        @input="dateFromMenu = false"
-                      />
-                    </v-menu>
-                  </v-col>
-
-                  <!-- Filtro de Data Fim -->
-                  <v-col cols="12" md="6">
-                    <v-menu
-                      v-model="dateToMenu"
-                      :close-on-content-click="false"
-                      :nudge-right="40"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="auto"
-                    >
-                      <template #activator="{ on, attrs }">
-                        <v-text-field
-                          v-model="filters.date_to"
-                          label="Data de Fim"
-                          :prepend-inner-icon="mdiCalendarEnd"
-                          readonly
-                          outlined
-                          dense
-                          clearable
-                          hint="Data até à qual considerar as anotações"
-                          persistent-hint
-                          v-bind="attrs"
-                          v-on="on"
-                        />
-                      </template>
-                      <v-date-picker
-                        v-model="filters.date_to"
-                        :min="filters.date_from"
-                        :max="new Date().toISOString().substr(0, 10)"
-                        locale="pt"
-                        @input="dateToMenu = false"
-                      />
-                    </v-menu>
                   </v-col>
 
                   <!-- Filtro de Tipos de Tarefa -->
@@ -331,7 +270,247 @@
                 </p>
               </v-card>
             </div>
-          </v-card-text>
+              </v-card-text>
+            </v-tab-item>
+            
+            <!-- Nova aba de Relatórios sobre Anotações -->
+            <v-tab-item key="annotations">
+              <v-card-title class="primary white--text">
+                <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
+                Relatórios sobre Anotações
+                <v-spacer />
+                <v-btn 
+                  color="white" 
+                  text 
+                  :loading="isGeneratingAnnotations || isExportingAnnotation" 
+                  @click="generateAndExportReport"
+                >
+                  <v-icon left>{{ mdiDownload }}</v-icon>
+                  Gerar e Exportar Relatório
+                </v-btn>
+              </v-card-title>
+
+              <v-card-text class="pa-0">
+                <!-- Filtros para Relatório de Anotações -->
+                <v-card flat class="ma-4 elevation-2">
+                  <v-card-title class="pb-2">
+                    <v-icon left color="primary">{{ mdiFilter }}</v-icon>
+                    <span class="text-h6">Filtros de Pesquisa</span>
+                    <v-spacer />
+                    <v-btn small text color="primary" @click="clearAnnotationFilters">
+                      <v-icon small left>{{ mdiFilterRemove }}</v-icon>
+                      Limpar Filtros
+                    </v-btn>
+                  </v-card-title>
+
+                  <v-card-text>
+                    <v-row>
+                      <!-- Filtro de Utilizadores -->
+                      <v-col cols="12" md="6">
+                        <v-autocomplete
+                          v-model="annotationFilters.users"
+                          :items="availableUsers"
+                          item-text="username"
+                          item-value="id"
+                          label="Anotadores"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiAccount"
+                          hint="Selecione os anotadores específicos ou deixe vazio para todos"
+                          persistent-hint
+                        />
+                      </v-col>
+
+                      <!-- Filtro de Labels -->
+                      <v-col cols="12" md="6">
+                        <v-autocomplete
+                          v-model="annotationFilters.labels"
+                          :items="availableLabels"
+                          item-text="text"
+                          item-value="id"
+                          label="Labels"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiTag"
+                          hint="Selecione labels específicos ou deixe vazio para todos"
+                          persistent-hint
+                        />
+                      </v-col>
+
+                      <!-- Filtro de Exemplos -->
+                      <v-col cols="12" md="6">
+                        <v-autocomplete
+                          v-model="annotationFilters.examples"
+                          :items="availableExamples"
+                          item-text="text"
+                          item-value="id"
+                          label="Exemplos"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiFileDocumentOutline"
+                          hint="Selecione exemplos específicos ou deixe vazio para todos"
+                          persistent-hint
+                        />
+                      </v-col>
+                      
+                      <!-- Formato de Exportação -->
+                      <v-col cols="12" md="6">
+                        <v-select
+                          v-model="annotationExportFormat"
+                          :items="exportFormatOptions"
+                          item-text="text"
+                          item-value="value"
+                          label="Formato de Exportação"
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiFileDelimited"
+                          hint="Selecione o formato para exportar o relatório"
+                          persistent-hint
+                        >
+                          <template #selection="{ item }">
+                            <v-chip small :color="getExportFormatColor(item.value)" text-color="white">
+                              <v-icon small left>{{ item.icon }}</v-icon>
+                              {{ item.text }}
+                            </v-chip>
+                          </template>
+                          <template #item="{ item }">
+                            <v-list-item-avatar>
+                              <v-icon :color="getExportFormatColor(item.value)">{{ item.icon }}</v-icon>
+                            </v-list-item-avatar>
+                            <v-list-item-content>
+                              <v-list-item-title>{{ item.text }}</v-list-item-title>
+                              <v-list-item-subtitle class="text-caption">{{ item.description }}</v-list-item-subtitle>
+                            </v-list-item-content>
+                          </template>
+                        </v-select>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+
+                <!-- Resultados do Relatório de Anotações -->
+                <div v-if="isGeneratingAnnotations" class="text-center py-5">
+                  <v-progress-circular indeterminate color="primary" size="64" width="5" />
+                  <div class="mt-3">Gerando relatório...</div>
+                </div>
+                
+                <div v-else-if="annotationReportError" class="text-center py-5 error--text">
+                  <v-icon color="error" large>{{ mdiAlertCircle }}</v-icon>
+                  <div class="mt-2">{{ annotationReportError }}</div>
+                  <v-btn color="error" text class="mt-2" @click="annotationReportError = null">
+                    <v-icon left>{{ mdiRefresh }}</v-icon>
+                    Tentar novamente
+                  </v-btn>
+                </div>
+                
+                <div v-else-if="!annotationReportData" class="text-center py-5">
+                  <v-icon color="grey" size="64">{{ mdiFileDocumentOutline }}</v-icon>
+                  <div class="mt-3 grey--text">
+                    Configure os filtros acima e clique em "Gerar Relatório" para começar.
+                  </div>
+                </div>
+                
+                <div v-else>
+                  <!-- Resumo do relatório -->
+                  <v-card flat class="ma-4">
+                    <v-card-title class="subtitle-1">
+                      <v-icon left color="info">{{ mdiInformationOutline }}</v-icon>
+                      Resumo do Relatório
+                    </v-card-title>
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" sm="6" md="4">
+                          <v-card outlined class="text-center pa-3">
+                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_annotations }}</div>
+                            <div class="caption">Total de Anotações</div>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="4">
+                          <v-card outlined class="text-center pa-3">
+                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_examples }}</div>
+                            <div class="caption">Total de Exemplos</div>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="4">
+                          <v-card outlined class="text-center pa-3">
+                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_annotators }}</div>
+                            <div class="caption">Total de Anotadores</div>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                  
+                  <!-- Tabela de anotações -->
+                  <v-card flat class="ma-4">
+                    <v-card-title>
+                      <v-icon left color="primary">{{ mdiTable }}</v-icon>
+                      Detalhes das Anotações
+                      <v-spacer></v-spacer>
+                      <v-text-field
+                        v-model="annotationSearch"
+                        append-icon="mdi-magnify"
+                        label="Pesquisar"
+                        single-line
+                        hide-details
+                        dense
+                        outlined
+                        class="mr-2"
+                        style="max-width: 300px"
+                      ></v-text-field>
+                    </v-card-title>
+                    <v-data-table
+                      :headers="annotationHeaders"
+                      :items="annotationReportData.data"
+                      :items-per-page="10"
+                      :search="annotationSearch"
+                      :server-items-length="annotationReportData.total_pages * 10"
+                      :footer-props="{
+                        'items-per-page-options': [10, 25, 50],
+                        showFirstLastPage: true
+                      }"
+                      class="elevation-1"
+                      :page.sync="annotationPage"
+                      @update:page="loadAnnotationPage"
+                    >
+                      <template #[`item.created_at`]="{ item }">
+                        {{ new Date(item.created_at).toLocaleString('pt-BR') }}
+                      </template>
+                      <template #[`item.detail`]="{ item }">
+                        <v-tooltip bottom>
+                          <template #activator="{ on, attrs }">
+                            <v-btn
+                              x-small
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                            >
+                              <v-icon small>{{ mdiInformationOutline }}</v-icon>
+                            </v-btn>
+                          </template>
+                          <span>
+                            {{ item.detail ? JSON.stringify(item.detail) : 'Sem detalhes' }}
+                          </span>
+                        </v-tooltip>
+                      </template>
+                    </v-data-table>
+                  </v-card>
+                </div>
+              </v-card-text>
+            </v-tab-item>
+          </v-tabs-items>
         </v-card>
       </v-col>
     </v-row>
@@ -403,7 +582,8 @@
   </v-container>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue'
 import {
   mdiFileDocumentOutline,
   mdiRefresh,
@@ -416,20 +596,79 @@ import {
   mdiCalendarEnd,
   mdiCog,
   mdiInformation,
+  mdiAlertCircle,
+  mdiInformationOutline,
+  mdiClose,
   mdiTable,
   mdiFileDelimited,
   mdiFilePdfBox
 } from '@mdi/js'
 
-export default {
+declare module 'vue/types/vue' {
+  interface Vue {
+    $axios: any
+  }
+}
+
+export default Vue.extend({
   layout: 'project',
+
   middleware: ['check-auth', 'auth', 'setCurrentProject', 'isProjectAdmin'],
 
-  validate({ params }) {
-    return /^\d+$/.test(params.id)
-  },
-
-  data() {
+  data(): {
+    mdiFileDocumentOutline: string;
+    mdiRefresh: string;
+    mdiDownload: string;
+    mdiFilter: string;
+    mdiFilterRemove: string;
+    mdiAccount: string;
+    mdiTag: string;
+    mdiCalendarStart: string;
+    mdiCalendarEnd: string;
+    mdiCog: string;
+    mdiInformation: string;
+    mdiTable: string;
+    mdiFileDelimited: string;
+    mdiFilePdfBox: string;
+    mdiInformationOutline: string;
+    mdiAlertCircle: string;
+    mdiClose: string;
+    isGenerating: boolean;
+    dateFromMenu: boolean;
+    dateToMenu: boolean;
+    filters: {
+      users: number[];
+      date_from: string | null;
+      date_to: string | null;
+      labels: number[];
+      task_types: Array<string | {value: string; text: string}>;
+    };
+    availableUsers: Array<{id: number; username: string}>;
+    availableLabels: Array<{id: number; text: string; type: string}>;
+    taskTypes: Array<{text: string; value: string}>;
+    reportData: any[];
+    tableHeaders: Array<{text: string; value: string; sortable?: boolean; width?: string}>;
+    showExportDialog: boolean;
+    selectedExportFormat: string;
+    isExporting: boolean;
+    activeTab: string;
+    annotationFilters: {
+      users: number[];
+      labels: number[];
+      examples: number[];
+    };
+    isGeneratingAnnotations: boolean;
+    annotationReportData: any;
+    annotationReportError: string | null;
+    annotationSearch: string;
+    annotationHeaders: Array<{text: string; value: string; width?: string; sortable?: boolean}>;
+    annotationPage: number;
+    annotationExportFormat: string;
+    annotationExportMaxResults: number;
+    isExportingAnnotation: boolean;
+    availableExamples: Array<{id: number; text: string}>;
+    exportFormatOptions: Array<{value: string; text: string; icon: string; description: string}>;
+  } {
     return {
       mdiFileDocumentOutline,
       mdiRefresh,
@@ -445,21 +684,24 @@ export default {
       mdiTable,
       mdiFileDelimited,
       mdiFilePdfBox,
+      mdiInformationOutline,
+      mdiAlertCircle,
+      mdiClose,
 
       isGenerating: false,
       dateFromMenu: false,
       dateToMenu: false,
 
       filters: {
-        users: [],
-        date_from: null,
-        date_to: null,
-        labels: [],
-        task_types: []
+        users: [] as number[],
+        date_from: null as string | null,
+        date_to: null as string | null,
+        labels: [] as number[],
+        task_types: [] as Array<string | {value: string; text: string}>
       },
 
-      availableUsers: [],
-      availableLabels: [],
+      availableUsers: [] as Array<{id: number; username: string}>,
+      availableLabels: [] as Array<{id: number; text: string; type: string}>,
       taskTypes: [
         { text: 'Classificação de Documentos', value: 'DOCUMENT_CLASSIFICATION' },
         { text: 'Rotulagem de Sequências', value: 'SEQUENCE_LABELING' },
@@ -471,7 +713,7 @@ export default {
         { text: 'Segmentação', value: 'SEGMENTATION' }
       ],
 
-      reportData: [],
+      reportData: [] as any[],
 
       tableHeaders: [
         { text: 'Utilizador', value: 'annotator_username', sortable: true, width: '150px' },
@@ -483,12 +725,43 @@ export default {
 
       showExportDialog: false,
       selectedExportFormat: 'csv',
-      isExporting: false
+      isExporting: false,
+
+      activeTab: 'annotators',
+      
+      // Dados para relatório de anotações
+      annotationFilters: {
+        users: [] as number[],
+        labels: [] as number[],
+        examples: [] as number[],
+      },
+      isGeneratingAnnotations: false,
+      annotationReportData: null as any,
+      annotationReportError: null as string | null,
+      annotationSearch: '',
+      annotationHeaders: [
+        { text: 'ID', value: 'id', width: '70px' },
+        { text: 'Exemplo', value: 'example_name' },
+        { text: 'Utilizador', value: 'username', width: '130px' },
+        { text: 'Label', value: 'label_text', width: '150px' },
+        { text: 'Data', value: 'created_at', width: '180px' },
+        { text: 'Detalhes', value: 'detail', width: '80px', sortable: false }
+      ],
+      annotationPage: 1,
+      annotationExportFormat: 'csv',
+      annotationExportMaxResults: 1000000,
+      isExportingAnnotation: false,
+      availableExamples: [] as Array<{id: number; text: string}>,
+      exportFormatOptions: [
+        { value: 'csv', text: 'CSV (Comma Separated Values)', icon: mdiFileDelimited, description: 'Ideal para Excel e análise de dados' },
+        { value: 'tsv', text: 'TSV (Tab Separated Values)', icon: mdiFileDelimited, description: 'Separado por tabs, compatível com muitas ferramentas' },
+        { value: 'pdf', text: 'PDF (Portable Document Format)', icon: mdiFilePdfBox, description: 'Documento formatado para visualização e impressão' }
+      ]
     }
   },
 
   computed: {
-    projectId() {
+    projectId(): string {
       return this.$route.params.id
     },
 
@@ -522,7 +795,7 @@ export default {
       try {
         // Carregar utilizadores do projeto
         const members = await this.$repositories.member.list(this.projectId)
-        this.availableUsers = members.map((member) => ({
+        this.availableUsers = members.map((member: any) => ({
           id: member.user,
           username: member.username
         }))
@@ -534,7 +807,7 @@ export default {
         if (currentProject.canDefineCategory) {
           const categoryTypes = await this.$services.categoryType.list(this.projectId)
           this.availableLabels.push(
-            ...categoryTypes.map((label) => ({
+            ...categoryTypes.map((label: any) => ({
               id: label.id,
               text: label.text,
               type: 'category'
@@ -545,7 +818,7 @@ export default {
         if (currentProject.canDefineSpan) {
           const spanTypes = await this.$services.spanType.list(this.projectId)
           this.availableLabels.push(
-            ...spanTypes.map((label) => ({
+            ...spanTypes.map((label: any) => ({
               id: label.id,
               text: label.text,
               type: 'span'
@@ -556,12 +829,23 @@ export default {
         if (currentProject.canDefineRelation) {
           const relationTypes = await this.$services.relationType.list(this.projectId)
           this.availableLabels.push(
-            ...relationTypes.map((label) => ({
+            ...relationTypes.map((label: any) => ({
               id: label.id,
               text: label.text,
               type: 'relation'
             }))
           )
+        }
+
+        // Carregar exemplos para filtro
+        try {
+          const examples = await this.$repositories.example.list(this.projectId, {offset: '0', limit: '1000'})
+          this.availableExamples = examples.items.map((example: any) => ({
+            id: example.id,
+            text: example.filename || example.text?.substring(0, 30) || `Exemplo #${example.id}`
+          }))
+        } catch (error) {
+          console.error('Erro ao carregar exemplos:', error)
         }
       } catch (error) {
         console.error('Erro ao carregar opções de filtro:', error)
@@ -597,7 +881,9 @@ export default {
         if (this.filters.task_types.length > 0) {
           params.append(
             'task_types',
-            this.filters.task_types.map((item) => item.value || item).join(',')
+            this.filters.task_types.map((item: any) => {
+              return typeof item === 'object' ? item.value : item
+            }).join(',')
           )
         }
 
@@ -628,7 +914,7 @@ export default {
         this.showSuccess(
           `Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`
         )
-      } catch (error) {
+      } catch (error: any) {
         console.error('[FRONTEND DEBUG] Erro completo:', error)
         console.error('[FRONTEND DEBUG] Erro response:', error.response)
         console.error('[FRONTEND DEBUG] Erro message:', error.message)
@@ -685,7 +971,9 @@ export default {
         if (this.filters.task_types.length > 0) {
           params.append(
             'task_types',
-            this.filters.task_types.map((item) => item.value || item).join(',')
+            this.filters.task_types.map((item: any) => {
+              return typeof item === 'object' ? item.value : item
+            }).join(',')
           )
         }
 
@@ -741,7 +1029,7 @@ export default {
         this.showSuccess(
           `Relatório exportado em ${this.selectedExportFormat.toUpperCase()} com sucesso!`
         )
-      } catch (error) {
+      } catch (error: any) {
         console.error('[EXPORT DEBUG] Erro ao exportar:', error)
         this.showError(`Erro ao exportar relatório em ${this.selectedExportFormat.toUpperCase()}`)
       } finally {
@@ -766,20 +1054,20 @@ export default {
       this.showSuccess('Filtros limpos')
     },
 
-    removeUser(userId) {
+    removeUser(userId: number) {
       this.filters.users = this.filters.users.filter((id) => id !== userId)
     },
 
-    removeLabel(labelId) {
+    removeLabel(labelId: number) {
       this.filters.labels = this.filters.labels.filter((id) => id !== labelId)
     },
 
-    removeTaskType(taskType) {
+    removeTaskType(taskType: string | {value: string; text: string}) {
       this.filters.task_types = this.filters.task_types.filter((type) => type !== taskType)
     },
 
-    getLabelTypeColor(type) {
-      const colors = {
+    getLabelTypeColor(type: string) {
+      const colors: {[key: string]: string} = {
         category: 'blue',
         span: 'green',
         relation: 'orange'
@@ -787,7 +1075,7 @@ export default {
       return colors[type] || 'grey'
     },
 
-    getTaskTypeLabel(taskType) {
+    getTaskTypeLabel(taskType: any) {
       if (typeof taskType === 'object') {
         return taskType.text
       }
@@ -795,7 +1083,7 @@ export default {
       return found ? found.text : taskType
     },
 
-    formatDate(dateString) {
+    formatDate(dateString: string) {
       if (!dateString) return '-'
       return new Date(dateString).toLocaleDateString('pt-PT', {
         year: 'numeric',
@@ -806,33 +1094,153 @@ export default {
       })
     },
 
-    showSuccess(message) {
-      // Usar $nuxt.$toast se disponível, senão console.log
-      if (this.$nuxt && this.$nuxt.$toast) {
-        this.$nuxt.$toast.success(message)
-      } else if (this.$toast) {
-        this.$toast.success(message)
-      } else {
+    showSuccess(message: string) {
+      // Usar console.log apenas
         console.log('SUCCESS:', message)
-        // Fallback para alert se necessário
+      // Fallback para alert 
         alert(message)
+    },
+
+    showError(message: string) {
+      // Usar console.error apenas
+        console.error('ERROR:', message)
+      // Fallback para alert
+        alert('Erro: ' + message)
+    },
+
+    clearAnnotationFilters() {
+      this.annotationFilters = {
+        users: [],
+        labels: [],
+        examples: [],
+      }
+      this.annotationReportData = null
+      this.annotationReportError = null
+    },
+    
+    async generateAndExportReport() {
+      this.isGeneratingAnnotations = true
+      
+      try {
+        // Primeiro gerar o relatório
+        await this.generateAnnotationReport()
+        
+        // Se o relatório foi gerado com sucesso, exportar
+        if (this.annotationReportData && this.annotationReportData.data && this.annotationReportData.data.length > 0) {
+          await this.exportAnnotationReport()
+        }
+      } catch (error) {
+        console.error('Erro ao gerar e exportar relatório:', error)
+        this.showError('Erro ao gerar e exportar relatório')
+      } finally {
+        this.isGeneratingAnnotations = false
+      }
+    },
+    
+    async generateAnnotationReport() {
+      this.isGeneratingAnnotations = true
+      this.annotationReportError = null
+      
+      try {
+        // Construir parâmetros da query
+        const params = new URLSearchParams()
+        
+        // Parâmetro obrigatório: project_ids
+        params.append('project_ids', this.projectId)
+        
+        // Parâmetros opcionais
+        if (this.annotationFilters.users && this.annotationFilters.users.length > 0) {
+          params.append('user_ids', this.annotationFilters.users.join(','))
+        }
+        
+        if (this.annotationFilters.labels && this.annotationFilters.labels.length > 0) {
+          params.append('label_ids', this.annotationFilters.labels.join(','))
+        }
+        
+        if (this.annotationFilters.examples && this.annotationFilters.examples.length > 0) {
+          params.append('example_ids', this.annotationFilters.examples.join(','))
+        }
+        
+        // Adicionar paginação
+        params.append('page', this.annotationPage.toString())
+        params.append('page_size', '50')
+        
+        // Fazer a requisição
+        const response = await this.$axios.get(`/v1/reports/annotations/?${params.toString()}`)
+        this.annotationReportData = response.data
+        
+      } catch (error: any) {
+        console.error('Erro ao gerar relatório de anotações:', error)
+        this.annotationReportError = error.response?.data?.detail || error.message || 'Erro desconhecido'
+      } finally {
+        this.isGeneratingAnnotations = false
+      }
+    },
+    
+    async loadAnnotationPage(page: number) {
+      if (this.annotationReportData) {
+        this.annotationPage = page
+        await this.generateAnnotationReport()
+      }
+    },
+    
+    async exportAnnotationReport() {
+      this.isExportingAnnotation = true
+      
+      try {
+        // Construir parâmetros da query
+        const params = new URLSearchParams()
+        
+        // Parâmetro obrigatório: project_ids
+        params.append('project_ids', this.projectId)
+        
+        // Parâmetros opcionais
+        if (this.annotationFilters.users && this.annotationFilters.users.length > 0) {
+          params.append('user_ids', this.annotationFilters.users.join(','))
+        }
+        
+        if (this.annotationFilters.labels && this.annotationFilters.labels.length > 0) {
+          params.append('label_ids', this.annotationFilters.labels.join(','))
+        }
+        
+        if (this.annotationFilters.examples && this.annotationFilters.examples.length > 0) {
+          params.append('example_ids', this.annotationFilters.examples.join(','))
+        }
+        
+        // Adicionar formato e máximo de resultados
+        params.append('export_format', this.annotationExportFormat)
+        params.append('max_results', this.annotationExportMaxResults.toString())
+        
+        // Baixar o arquivo
+        const url = `/v1/reports/annotations/export/?${params.toString()}`
+        
+        // Abrir em uma nova janela e aguardar
+        await new Promise<void>((resolve) => {
+          window.open(url, '_blank')
+          // Resolver após um breve delay para garantir que a janela foi aberta
+          setTimeout(() => resolve(), 100)
+        })
+        
+        this.showSuccess(`Relatório exportado com sucesso em formato ${this.annotationExportFormat.toUpperCase()}`)
+        
+      } catch (error) {
+        console.error('Erro ao exportar relatório:', error)
+        this.showError(`Erro ao exportar relatório em formato ${this.annotationExportFormat.toUpperCase()}`)
+      } finally {
+        this.isExportingAnnotation = false
       }
     },
 
-    showError(message) {
-      // Usar $nuxt.$toast se disponível, senão console.error
-      if (this.$nuxt && this.$nuxt.$toast) {
-        this.$nuxt.$toast.error(message)
-      } else if (this.$toast) {
-        this.$toast.error(message)
-      } else {
-        console.error('ERROR:', message)
-        // Fallback para alert se necessário
-        alert('Erro: ' + message)
+    getExportFormatColor(value: string) {
+      const colors: {[key: string]: string} = {
+        csv: 'green',
+        tsv: 'blue',
+        pdf: 'red'
       }
+      return colors[value] || 'grey'
     }
   }
-}
+})
 </script>
 
 <style scoped>
