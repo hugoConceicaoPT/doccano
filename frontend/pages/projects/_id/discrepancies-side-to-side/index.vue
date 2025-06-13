@@ -153,12 +153,18 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Percentage } from '~/domain/models/metrics/metrics'
+import { Percentage, Progress } from '~/domain/models/metrics/metrics'
 import { MemberItem } from '~/domain/models/member/member'
 
 interface LabelInfo {
   id: number;
   text: string;
+}
+
+interface UserProgress {
+  userId: number;
+  username: string;
+  done: number;
 }
 
 export default Vue.extend({
@@ -178,13 +184,15 @@ export default Vue.extend({
       selectedUser2: null as number | null,
       exampleNameMap: {} as Record<string, string>,
       members: [] as MemberItem[],
+      userProgress: [] as UserProgress[],
       errorMessage: '',
       minPercentage: 0,
       showComparison: false,
       labelsUser1: [] as LabelInfo[],
       labelsUser2: [] as LabelInfo[],
       exampleText: null as string | null,
-      categoryTypes: [] as any[]
+      categoryTypes: [] as any[],
+      totalExamples: 0
     }
   },
 
@@ -202,7 +210,6 @@ export default Vue.extend({
       
       // Carregar os tipos de categorias (necessário para as labels)
       this.categoryTypes = await this.$repositories.categoryType.list(this.projectId)
-      console.log(this.categoryTypes)
     } catch (error) {
       this.handleError(error)
     }
@@ -218,11 +225,14 @@ export default Vue.extend({
       return this.minPercentage
     },
 
+    // Filtrar apenas usuários que têm progresso de anotação
     userOptions(): Array<{ text: string; value: number }> {
-      return this.members.map(member => ({
-        text: member.username,
-        value: member.user
-      }))
+      return this.userProgress
+        .filter(user => user.done > 0)
+        .map(user => ({
+          text: user.username,
+          value: user.userId
+        }))
     },
 
     exampleOptions(): Array<{ text: string; value: string }> {
@@ -255,6 +265,32 @@ export default Vue.extend({
       try {
         // Buscar membros do projeto
         this.members = await this.$repositories.member.list(this.projectId)
+        
+        // Buscar progresso dos membros
+        const progress: Progress = await this.$repositories.metrics.fetchMemberProgress(this.projectId)
+        this.totalExamples = progress.total
+        
+        // Mapear o progresso para cada usuário
+        this.userProgress = []
+        
+        // Para cada membro, encontre seu progresso correspondente
+        for (const member of this.members) {
+          const userProgressItem = progress.progress.find(p => {
+            // O formato do nome de usuário pode variar, então tentamos encontrar por correspondência parcial
+            return p.user.includes(member.username) || member.username.includes(p.user)
+          })
+          
+          if (userProgressItem) {
+            this.userProgress.push({
+              userId: member.user,
+              username: member.username,
+              done: userProgressItem.done
+            })
+          }
+        }
+        
+        // Ordenar por número de anotações concluídas (decrescente)
+        this.userProgress.sort((a, b) => b.done - a.done)
       } catch (error) {
         this.handleError(error)
       }
@@ -325,10 +361,12 @@ export default Vue.extend({
               this.categoryTypes = await this.$repositories.categoryType.list(this.projectId)
             }
             
-            // Buscar categorias para o exemplo específico
+            // Buscar categorias para o exemplo específico - passando true para allUsers
+            // para garantir que vemos categorias de todos os usuários
             const categories = await this.$repositories.category.list(
               this.projectId,
-              exampleId
+              exampleId,
+              true // Adiciona o parâmetro allUsers como true
             )
             
             console.log('Categories found:', categories)
