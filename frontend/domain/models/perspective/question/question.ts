@@ -12,7 +12,6 @@ export class QuestionItem {
     readonly question: string,
     readonly answers: AnswerItem[],
     readonly perspective_id: number,
-    readonly options_group?: number,
     readonly answer_type?: string
   ) {}
 
@@ -20,10 +19,9 @@ export class QuestionItem {
     question: string,
     answers: AnswerItem[] = [],
     perspective_id: number,
-    options_group?: number,
     answer_type?: string
   ): QuestionItem {
-    return new QuestionItem(0, question, answers, perspective_id, options_group, answer_type)
+    return new QuestionItem(0, question, answers, perspective_id, answer_type)
   }
 
   static list(
@@ -52,10 +50,10 @@ export class OptionsGroupItem {
 }
 
 export class OptionsQuestionItem {
-  constructor(readonly id: number, readonly option: string, readonly options_group: number) {}
+  constructor(readonly id: number, readonly option: string) {}
 
-  static create(option: string, options_group: number): OptionsQuestionItem {
-    return new OptionsQuestionItem(0, option, options_group)
+  static create(option: string): OptionsQuestionItem {
+    return new OptionsQuestionItem(0, option)
   }
 
   static async list(

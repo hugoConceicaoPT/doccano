@@ -7,7 +7,6 @@ export class QuestionDTO {
   question: string
   answers: AnswerDTO[]
   perspective_id?: number
-  options_group?: number
   answer_type?: string
 
   constructor(item: QuestionItem) {
@@ -15,7 +14,6 @@ export class QuestionDTO {
     this.question = item.question
     this.answers = item.answers.map((answer) => new AnswerDTO(answer))
     this.perspective_id = item.perspective_id
-    this.options_group = item.options_group
     this.answer_type = item.answer_type
   }
 }
@@ -23,12 +21,10 @@ export class QuestionDTO {
 export class OptionsQuestionDTO {
   id: number
   option: string
-  options_group: number
 
   constructor(item: OptionsQuestionDTO) {
     this.id = item.id
     this.option = item.option
-    this.options_group = item.options_group
   }
 }
 

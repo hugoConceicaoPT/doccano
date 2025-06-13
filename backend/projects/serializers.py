@@ -96,16 +96,15 @@ class QuestionSerializer(serializers.ModelSerializer):
     perspective = serializers.PrimaryKeyRelatedField(
         queryset=Perspective.objects.all(), required=False
     )
-    options_group = serializers.PrimaryKeyRelatedField(queryset=OptionsGroup.objects.all(), required=False)
     answer_type = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = Question
-        fields = ("id", "question", "perspective", "answers", "options_group", "answer_type")
+        fields = ("id", "question", "perspective", "answers", "answer_type")
 
 
 class PerspectiveSerializer(serializers.ModelSerializer):
-    members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.filter(role__name="annotator"), many=True)
+    members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.filter(role__name="annotator"), many=True, required=False)
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(),
         source="project",
@@ -117,6 +116,12 @@ class PerspectiveSerializer(serializers.ModelSerializer):
         model = Perspective
         fields = ("id", "name", "project_id", "created_at", "members", "questions")
         read_only_fields = ("created_at",)
+    
+    def validate_name(self, value):
+        """
+        Remover qualquer validação de unicidade para o nome da perspectiva
+        """
+        return value
 
 
 class TagSerializer(serializers.ModelSerializer):

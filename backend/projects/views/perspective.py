@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, serializers, status
 from rest_framework.generics import RetrieveAPIView
@@ -32,29 +34,98 @@ class Perspectives(generics.ListAPIView):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("members__user__username",)
 
+    def get_queryset(self):
+        project_id = self.kwargs.get('project_id')
+        if project_id:
+            return Perspective.objects.filter(project_id=project_id)
+        return Perspective.objects.all()
 
+
+class AllPerspectives(generics.ListAPIView):
+    """
+    View para retornar todas as perspectivas de todos os projetos
+    para permitir reutilização entre projetos
+    """
+    queryset = Perspective.objects.all()
+    serializer_class = PerspectiveSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
+    search_fields = ("name",)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class PerspectiveCreation(generics.CreateAPIView):
     queryset = Perspective.objects.all()
     serializer_class = PerspectiveSerializer
-    permission_classes = [IsAuthenticated & IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         project_id = request.data.get("project_id")
-        if project_id and Perspective.objects.filter(project_id=project_id).exists():
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
 
-        with transaction.atomic():
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            perspective = self.perform_create(serializer)
+        
+        try:
+            with transaction.atomic():
+                # Verificar se já existe uma perspectiva para este projeto
+                try:
+                    existing_perspective = Perspective.objects.get(project_id=project_id)
+                    
+                    # Se existe, atualizar a existente
+                    serializer = self.get_serializer(existing_perspective, data=request.data, partial=True)
+                    if not serializer.is_valid():
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    perspective = serializer.save()
+                    
+                    # Remover perguntas antigas
+                    existing_perspective.questions.all().delete()
+                    
+                except Perspective.DoesNotExist:
+                    # Se não existe, criar nova
+                    serializer = self.get_serializer(data=request.data)
+                    if not serializer.is_valid():
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    perspective = self.perform_create(serializer)
 
-            questions_data = request.data.get("questions", [])
-            for question_data in questions_data:
-                question_data["perspective"] = perspective.id
-                question_serializer = QuestionSerializer(data=question_data)
-                question_serializer.is_valid(raise_exception=True)
-                question_serializer.save()
-            return Response(PerspectiveSerializer(perspective).data, status=status.HTTP_201_CREATED)
+                # Adicionar novas perguntas
+                questions_data = request.data.get("questions", [])
+                
+                for question_data in questions_data:
+                    question_data["perspective"] = perspective.id
+                    question_serializer = QuestionSerializer(data=question_data)
+                    if not question_serializer.is_valid():
+                        return Response(question_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    question_serializer.save()
+                    
+                # Recarregar a perspectiva para garantir que as perguntas estão incluídas
+                perspective.refresh_from_db()
+                
+                # Usar um serializer mais simples para a resposta
+                response_data = {
+                    "id": perspective.id,
+                    "name": perspective.name,
+                    "project_id": perspective.project.id,
+                    "created_at": perspective.created_at,
+                    "questions": [
+                        {
+                            "id": q.id,
+                            "question": q.question,
+                            "answer_type": q.answer_type
+                        }
+                        for q in perspective.questions.all()
+                    ]
+                }
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            # Retornar erro genérico
+            return Response(
+                {"error": "Erro interno do servidor", "details": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
      
 
     def perform_create(self, serializer):
@@ -110,23 +181,46 @@ class AnswerNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Answer
-        fields = ("id", "answer", "member")
+        fields = ("id", "answer_text", "member")
 
 
 class QuestionNestedSerializer(serializers.ModelSerializer):
-    answers = AnswerNestedSerializer(many=True, read_only=True, source="answer_set")
+    answers = AnswerNestedSerializer(many=True, read_only=True, source="answers")
 
     class Meta:
         model = Question
-        fields = ("id", "question", "answers")
+        fields = ("id", "question", "answer_type", "answers")
 
 
 class PerspectiveDetailSerializer(serializers.ModelSerializer):
-    questions = QuestionNestedSerializer(many=True, read_only=True, source="question_set")
+    project_id = serializers.PrimaryKeyRelatedField(
+        source="project",
+        read_only=True
+    )
 
     class Meta:
         model = Perspective
-        fields = ("id", "name", "questions")
+        fields = ("id", "name", "project_id")
+        
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Adicionar questions manualmente para debug
+        questions_data = []
+        try:
+            questions = instance.questions.all()
+            for question in questions:
+                question_data = {
+                    "id": question.id,
+                    "question": question.question,
+                    "answer_type": question.answer_type,
+                    "answers": []
+                }
+                questions_data.append(question_data)
+        except Exception as e:
+            print(f"Erro ao carregar questions: {e}")
+        
+        data["questions"] = questions_data
+        return data
 
 
 class PerspectiveDetail(RetrieveAPIView):

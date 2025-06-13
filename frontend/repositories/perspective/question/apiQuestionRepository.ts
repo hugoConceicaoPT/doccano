@@ -7,7 +7,6 @@ function toModel(item: { [key: string]: any }): QuestionItem {
     item.question,
     item.answers,
     item.perspective_id ?? null,
-    item.options_group ?? null,
     item.answer_type ?? null
   )
 }
@@ -21,7 +20,6 @@ export class APIQuestionRepository {
       question: item.question,
       answers: item.answers,
       perspective_id: item.perspective_id,
-      options_group: item.options_group,
       answer_type: item.answer_type
     }
     const response = await this.request.post(url, payload)

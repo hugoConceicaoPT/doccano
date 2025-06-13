@@ -113,15 +113,15 @@ export default Vue.extend({
       try {
         const projectId = this.$route.params.id
         const response = await this.$services.perspective.list(projectId)
-        this.items = Array.isArray(response) ? response : [response]
-      } catch (error: any) {
-        console.error('Erro ao buscar perspectivas:', error)
-        // Se o erro é porque não há perspectivas, mantém items vazio para mostrar o botão create
-        if (error.message === 'Nenhuma perspectiva encontrada.') {
-          this.items = []
+        if (response) {
+          this.items = Array.isArray(response) ? response : [response]
         } else {
+          // Não há perspectivas neste projeto, mantém items vazio para mostrar o botão create
           this.items = []
         }
+      } catch (error: any) {
+        console.error('Erro ao buscar perspectivas:', error)
+        this.items = []
       } finally {
         this.isLoading = false
       }

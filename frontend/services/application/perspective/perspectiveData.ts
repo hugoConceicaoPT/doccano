@@ -12,7 +12,7 @@ export class PerspectiveDTO {
     this.id = item.id
     this.name = item.name
     this.project_id = item.project_id
-    this.questions = item.questions.map((question) => new QuestionDTO(question))
-    this.members = item.members
+    this.questions = item.questions ? item.questions.map((question) => new QuestionDTO(question)) : []
+    this.members = item.members || []
   }
 }
