@@ -121,23 +121,31 @@ export default Vue.extend({
         let nextVersion = 1
 
         if (existingConfigs && existingConfigs.length > 0) {
-          const existingVersions = existingConfigs
-            .map((config: { version: number }) => config.version)
-            .sort((a: number, b: number) => a - b)
-
-          const uniqueVersions = [...new Set(existingVersions)]
-          if (uniqueVersions.length !== existingVersions.length) {
-            console.warn(
-              'Atenção: Foram detectadas versões duplicadas nas configurações de votação.'
-            )
-          }
-
-          const maxVersion = Math.max(...(uniqueVersions as number[]))
-          nextVersion = maxVersion + 1
-
-          console.log(
-            `Versões existentes: ${uniqueVersions.join(', ')}. Próxima versão: ${nextVersion}`
+          const projectConfigs = existingConfigs.filter(
+            (config: { project: number }) => config.project === Number(this.projectId)
           )
+
+          if (projectConfigs.length > 0) {
+            const existingVersions = projectConfigs
+              .map((config: { version: number }) => config.version)
+              .sort((a: number, b: number) => a - b)
+
+            const uniqueVersions = [...new Set(existingVersions)]
+            if (uniqueVersions.length !== existingVersions.length) {
+              console.warn(
+                'Atenção: Foram detectadas versões duplicadas nas configurações de votação.'
+              )
+            }
+
+            const maxVersion = Math.max(...(uniqueVersions as number[]))
+            nextVersion = maxVersion + 1
+
+            console.log(
+              `Versões existentes no projeto ${this.projectId}: ${uniqueVersions.join(', ')}. Próxima versão: ${nextVersion}`
+            )
+          } else {
+            console.log(`Nenhuma configuração de votação encontrada para o projeto ${this.projectId}. Iniciando com versão 1.`)
+          }
         }
 
         this.editedItem.version = nextVersion
@@ -152,6 +160,22 @@ export default Vue.extend({
         const projectId = Number(this.projectId)
 
         await this.determineNextVersion()
+
+        // Verificar a unicidade da versão para este projeto
+        const existingConfigs = await this.votingConfigurationService.list(this.projectId)
+        const projectConfigs = existingConfigs.filter(
+          (config: { project: number }) => config.project === projectId
+        )
+
+        const versionExists = projectConfigs.some(
+          (config: { version: number }) => config.version === this.editedItem.version
+        )
+
+        if (versionExists) {
+          this.errorMessage = `A versão ${this.editedItem.version} já existe para este projeto. Tentando a próxima versão...`
+          this.editedItem.version += 1
+          console.log(`Atualizando para a próxima versão disponível: ${this.editedItem.version}`)
+        }
 
         const votingConfigPayload = {
           project: projectId,
@@ -170,7 +194,9 @@ export default Vue.extend({
 
         const votingConfigs = await this.votingConfigurationService.list(this.projectId)
         if (votingConfigs && votingConfigs.length > 0) {
-          this.votingConfigurationId = votingConfigs[votingConfigs.length - 1].id
+          // Ordenar por ID para pegar o mais recente
+          const sortedConfigs = [...votingConfigs].sort((a, b) => b.id - a.id)
+          this.votingConfigurationId = sortedConfigs[0].id
           console.log('ID da configuração de votação:', this.votingConfigurationId)
         } else {
           throw new Error('Não foi possível obter o ID da configuração de votação')

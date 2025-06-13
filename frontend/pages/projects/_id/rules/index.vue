@@ -1,7 +1,10 @@
 <template>
-  <v-card>
-    <v-card-title>
-      Regras de Anotação
+  <v-card class="rules-card">
+    <v-card-title class="d-flex align-center py-4">
+      <span class="text-h5 font-weight-medium">
+        <v-icon left class="mr-2 primary--text">{{ mdiGavel }}</v-icon>
+        Regras de Anotação
+      </span>
       <v-spacer />
       <v-btn
         v-if="isAdmin"
@@ -10,12 +13,22 @@
         :disabled="loading || hasActiveVoting"
         @click="goToConfig"
       >
+        <v-icon left>{{ mdiCog }}</v-icon>
         Configure Voting
       </v-btn>
     </v-card-title>
-    <v-card-text>
-      <v-alert v-if="successMessage" type="success" dismissible>{{ successMessage }}</v-alert>
-      <v-alert v-if="errorMessage" type="error" dismissible>{{ errorMessage }}</v-alert>
+
+    <v-divider></v-divider>
+
+    <v-card-text class="pa-4">
+      <v-alert v-if="successMessage" type="success" dismissible class="mb-4">
+        <v-icon left>{{ mdiCheckCircle }}</v-icon>
+        {{ successMessage }}
+      </v-alert>
+      <v-alert v-if="errorMessage" type="error" dismissible class="mb-4">
+        <v-icon left>{{ mdiAlertCircle }}</v-icon>
+        {{ errorMessage }}
+      </v-alert>
 
       <v-alert v-if="hasActiveVoting && isAdmin" type="info" class="mb-4">
         Existe uma votação ativa (Versão {{ activeVotingConfig?.version }}). Não é possível criar
@@ -23,16 +36,25 @@
       </v-alert>
 
       <v-alert v-if="isAdmin && !hasActiveVoting" type="success" class="mb-4">
+        <v-icon left>{{ mdiCheckCircle }}</v-icon>
         Não existe nenhuma votação ativa. Você pode configurar uma nova votação.
       </v-alert>
 
-      <div v-if="loading" class="text-center my-4">
-        <v-progress-circular indeterminate />
+      <div v-if="loading" class="text-center my-8">
+        <v-progress-circular
+          indeterminate
+          color="primary"
+          size="64"
+        ></v-progress-circular>
       </div>
 
       <v-row v-else class="mb-4">
         <v-col cols="12">
-          <v-btn color="secondary" @click="$router.push(localePath(`/projects/${projectId}`))">
+          <v-btn
+            color="secondary"
+            outlined
+            @click="$router.push(localePath(`/projects/${projectId}`))"
+          >
             <v-icon left>{{ mdiHome }}</v-icon>
             Voltar ao projeto
           </v-btn>
@@ -41,14 +63,18 @@
 
       <rule-list v-if="!loading && items.length > 0" :items="items" :is-loading="loading" />
 
-      <div v-if="!loading && items.length === 0" class="text-center my-4">
-        <p>Nenhuma regra de anotação encontrada.</p>
+      <div v-if="!loading && items.length === 0" class="text-center my-8">
+        <v-icon size="64" color="grey lighten-1" class="mb-4">{{ mdiFileDocumentOutline }}</v-icon>
+        <p class="text-h6 grey--text">Nenhuma regra de anotação encontrada.</p>
       </div>
 
       <!-- Votação para não-admins -->
       <div v-if="!isAdmin && activeVotingConfig">
-        <v-divider class="my-4"></v-divider>
-        <h3 class="mb-4">Votação de Regras</h3>
+        <v-divider class="my-6"></v-divider>
+        <h3 class="text-h5 font-weight-medium mb-6">
+          <v-icon left class="mr-2 primary--text">{{ mdiVote }}</v-icon>
+          Votação de Regras
+        </h3>
 
         <div v-if="pendingRules.length > 0">
           <v-row v-if="loading">
@@ -59,33 +85,47 @@
           <div v-else>
             <v-row class="mb-6">
               <v-col v-for="rule in pendingRules" :key="rule.id" cols="12" sm="6" md="4">
-                <v-card outlined class="mb-4">
-                  <v-card-title>{{ rule.name }}</v-card-title>
-                  <v-card-subtitle>{{ rule.description }}</v-card-subtitle>
+                <v-card outlined class="rule-card mb-4">
+                  <v-card-title class="text-subtitle-1 font-weight-medium">
+                    {{ rule.name }}
+                  </v-card-title>
+                  <v-card-text class="pb-2">
+                    {{ rule.description }}
+                  </v-card-text>
                   <v-card-actions>
                     <v-btn
                       small
                       color="success"
                       :disabled="rule.id in answeredRules"
                       @click="vote(rule.id, true)"
-                      >Sim</v-btn
                     >
+                      <v-icon left>{{ mdiThumbUp }}</v-icon>
+                      Sim
+                    </v-btn>
                     <v-btn
                       small
                       color="error"
                       :disabled="rule.id in answeredRules"
                       @click="vote(rule.id, false)"
-                      >Não</v-btn
                     >
+                      <v-icon left>{{ mdiThumbDown }}</v-icon>
+                      Não
+                    </v-btn>
                   </v-card-actions>
                 </v-card>
               </v-col>
             </v-row>
             <v-row>
               <v-col cols="12" class="text-center">
-                <v-btn color="primary" :disabled="!canSubmit" @click="submitVotes"
-                  >Submeter Votos</v-btn
+                <v-btn
+                  color="primary"
+                  :disabled="!canSubmit"
+                  @click="submitVotes"
+                  class="px-6"
                 >
+                  <v-icon left>{{ mdiSend }}</v-icon>
+                  Submeter Votos
+                </v-btn>
               </v-col>
             </v-row>
           </div>
@@ -93,7 +133,8 @@
         <div v-else>
           <v-row>
             <v-col cols="12" class="text-center">
-              <p>Votação concluída com sucesso ou não há regras para votar no momento.</p>
+              <v-icon size="64" color="success" class="mb-4">{{ mdiCheckCircle }}</v-icon>
+              <p class="text-h6 success--text">Votação concluída com sucesso ou não há regras para votar no momento.</p>
             </v-col>
           </v-row>
         </div>
@@ -105,7 +146,19 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import { mdiHome } from '@mdi/js'
+import {
+  mdiHome,
+  mdiGavel,
+  mdiCog,
+  mdiCheckCircle,
+  mdiAlertCircle,
+  mdiInformation,
+  mdiFileDocumentOutline,
+  mdiVote,
+  mdiThumbUp,
+  mdiThumbDown,
+  mdiSend
+} from '@mdi/js'
 import { VotingConfigurationItem, AnnotationRuleItem } from '~/domain/models/rules/rule'
 import { MemberItem } from '~/domain/models/member/member'
 import RuleList from '~/components/rules/RuleList.vue'
@@ -115,6 +168,8 @@ export type Discussion = {
   ruleDiscussion: string
   isFinalized: boolean
   result: string
+  votesFor: number
+  votesAgainst: number
 }
 
 export type VotingAnswer = VotingConfigurationItem & {
@@ -150,6 +205,16 @@ export default Vue.extend({
       currentTime: Date.now(),
       timerId: 0 as number,
       mdiHome,
+      mdiGavel,
+      mdiCog,
+      mdiCheckCircle,
+      mdiAlertCircle,
+      mdiInformation,
+      mdiFileDocumentOutline,
+      mdiVote,
+      mdiThumbUp,
+      mdiThumbDown,
+      mdiSend,
       activeVotingConfig: null as VotingAnswer | null,
       pendingRules: [] as AnnotationRuleItem[]
     }
@@ -179,10 +244,17 @@ export default Vue.extend({
       this.isAdmin = member.isProjectAdmin
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId)
+      // Filtrar apenas as configurações do projeto atual
+      this.votingConfigs = this.votingConfigs.filter(
+        (config) => config.project === Number(projectId)
+      )
+      
       this.rules = await this.$services.annotationRule.list(projectId)
 
-      // Identificar a configuração de votação ativa (não fechada)
-      this.activeVotingConfig = this.votingConfigs.find((config) => !config.is_closed) || null
+      // Identificar a configuração de votação ativa (não fechada) para o projeto atual
+      this.activeVotingConfig = this.votingConfigs.find((config) => 
+        !config.is_closed && config.project === Number(projectId)
+      ) || null
 
       // inicializa agrupamentos e estados
       this.groupedRules = {}
@@ -195,31 +267,10 @@ export default Vue.extend({
 
         for (const r of list) {
           const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id)
-          const rulesFilteredByName = this.rules.filter((rule) => rule.name === r.name)
-          const votingConfigsOrderedByEndDate = this.votingConfigs.sort(
-            (a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime()
-          )
-
-          const sortedRules = rulesFilteredByName.sort((ruleA, ruleB) => {
-            const configA = this.votingConfigs.find((cfg) => cfg.id === ruleA.voting_configuration)
-            const configB = this.votingConfigs.find((cfg) => cfg.id === ruleB.voting_configuration)
-            if (!configA || !configB) return 0
-
-            const indexA = votingConfigsOrderedByEndDate.indexOf(configA)
-            const indexB = votingConfigsOrderedByEndDate.indexOf(configB)
-
-            return indexA - indexB
-          })
-
-          const index = sortedRules.findIndex((sortedRule) => sortedRule.id === r.id)
           const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
           const isExpired = this.currentTime >= endTime
-          let numberVersion = ''
-          if (index < 10) {
-            numberVersion = 'V_0' + (index + 1)
-          } else {
-            numberVersion = 'V_' + (index + 1)
-          }
+          const numberVersion = 'V_' + String(cfg.version).padStart(2, '0');
+
 
           this.$set(this.votesYes, r.id, ans.filter((a) => a.answer).length)
           this.$set(this.votesNo, r.id, ans.filter((a) => !a.answer).length)
@@ -253,7 +304,9 @@ export default Vue.extend({
               numberVersion,
               ruleDiscussion: r.description,
               isFinalized: r.is_finalized,
-              result
+              result,
+              votesFor: this.votesYes[r.id] || 0,
+              votesAgainst: this.votesNo[r.id] || 0
             })
           }
           if (ans.some((a) => a.member === this.memberId)) {
@@ -287,7 +340,11 @@ export default Vue.extend({
       try {
         // Permitir que não-admins verifiquem o status, mas apenas admins podem atualizar
         const configs = await this.$services.votingConfiguration.list(this.projectId)
-        const activeConfigs = configs.filter((config) => !config.is_closed)
+        // Filtrar para garantir que apenas as configurações do projeto atual sejam consideradas
+        const projectConfigs = configs.filter(
+          (config) => config.project === Number(this.projectId)
+        )
+        const activeConfigs = projectConfigs.filter((config) => !config.is_closed)
 
         let votingStatusChanged = false
 
@@ -322,7 +379,9 @@ export default Vue.extend({
           ) as AnnotationRuleItem[]
 
           // Atualizar activeVotingConfig
-          this.activeVotingConfig = this.votingConfigs.find((config) => !config.is_closed) || null
+          this.activeVotingConfig = this.votingConfigs.find(
+            (config) => !config.is_closed && config.project === Number(this.projectId)
+          ) || null
         }
       } catch (error) {
         console.error('Erro ao verificar votações completas:', error)
@@ -381,3 +440,32 @@ export default Vue.extend({
   }
 })
 </script>
+
+<style scoped>
+.rules-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.rule-card {
+  transition: transform 0.2s;
+  border-radius: 8px;
+}
+
+.rule-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+::v-deep .v-card__title {
+  padding: 16px;
+}
+
+::v-deep .v-card__text {
+  padding: 16px;
+}
+
+::v-deep .v-card__actions {
+  padding: 8px 16px;
+}
+</style>

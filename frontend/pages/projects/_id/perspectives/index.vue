@@ -18,7 +18,7 @@
             class="text-capitalize"
             @click="$router.push('perspectives/add')"
           >
-            Create Perspective
+            Create
           </v-btn>
         </v-card-title>
         <perspective-list :items="items" :is-loading="isLoading" :value="[]" />
