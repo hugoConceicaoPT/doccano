@@ -144,6 +144,32 @@ class AnnotationReportFilterSerializer(serializers.Serializer):
         allow_empty=True,
         help_text="Lista de tipos de anotação (category, span, etc)"
     )
+    discrepancy_filter = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        help_text="Filtro de discrepâncias: all, with_discrepancy, without_discrepancy"
+    )
+    perspective_question_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="Lista de IDs das perguntas da perspectiva (vazio = todas)"
+    )
+    perspective_answer_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="Lista de IDs das respostas da perspectiva (vazio = todas)"
+    )
+
+    def validate_discrepancy_filter(self, value):
+        """Validar filtro de discrepâncias"""
+        if value and value not in ['all', 'with_discrepancy', 'without_discrepancy']:
+            raise serializers.ValidationError(
+                "Filtro de discrepâncias deve ser: all, with_discrepancy ou without_discrepancy"
+            )
+        return value
 
     def validate_project_ids(self, value):
         """Validar se os projetos existem"""

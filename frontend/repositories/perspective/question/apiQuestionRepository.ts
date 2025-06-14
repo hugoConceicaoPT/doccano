@@ -27,7 +27,7 @@ export class APIQuestionRepository {
   }
 
   async list(perspective_id: number, project_id: string): Promise<QuestionItem[]> {
-    const url = `projects/${project_id}/perspectives/${perspective_id}/${this.baseUrl}s`
+    const url = `/projects/${project_id}/perspectives/${perspective_id}/questions`
 
     const response = await this.request.get(url)
     return response.data.map((item: { [key: string]: any }) => toModel(item))

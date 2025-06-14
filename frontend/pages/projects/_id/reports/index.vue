@@ -400,8 +400,8 @@
                   :loading="isGeneratingAnnotations || isExportingAnnotation" 
                   @click="generateAndExportAnnotationReport"
                 >
-                  <v-icon left>{{ mdiDownload }}</v-icon>
-                  Gerar e Exportar Relatório
+                  <v-icon left>{{ annotationExportFormats.length > 0 ? mdiDownload : mdiEye }}</v-icon>
+                  {{ annotationExportFormats.length > 0 ? 'Gerar e Exportar Relatório' : 'Gerar Relatório' }}
                 </v-btn>
               </v-card-title>
 
@@ -480,25 +480,103 @@
                         />
                       </v-col>
                       
-                      <!-- Formato de Exportação -->
+                      <!-- Filtro de Discrepâncias -->
                       <v-col cols="12" md="6">
                         <v-select
-                          v-model="annotationExportFormat"
-                          :items="exportFormatOptions"
+                          v-model="annotationFilters.discrepancy_filter"
+                          :items="discrepancyOptions"
                           item-text="text"
                           item-value="value"
-                          label="Formato de Exportação"
+                          label="Filtro de Discrepâncias"
                           outlined
                           dense
-                          :prepend-inner-icon="mdiFileDelimited"
-                          hint="Selecione o formato para exportar o relatório"
+                          clearable
+                          :prepend-inner-icon="mdiAlertCircle"
+                          hint="Filtre por anotações com ou sem discrepâncias"
                           persistent-hint
                         >
                           <template #selection="{ item }">
-                            <v-chip small :color="getExportFormatColor(item.value)" text-color="white">
-                              <v-icon small left>{{ item.icon }}</v-icon>
+                            <v-chip small :color="getDiscrepancyColor(item.value)" text-color="white">
+                              <v-icon small left>{{ getDiscrepancyIcon(item.value) }}</v-icon>
                               {{ item.text }}
                             </v-chip>
+                          </template>
+                        </v-select>
+                      </v-col>
+
+                      <!-- Filtro de Perguntas da Perspectiva -->
+                      <v-col cols="12" md="6">
+                        <v-autocomplete
+                          v-model="annotationFilters.perspective_questions"
+                          :items="availablePerspectiveQuestions"
+                          item-text="text"
+                          item-value="id"
+                          label="Perguntas da Perspectiva"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiHelpCircle"
+                          hint="Selecione perguntas específicas da perspectiva"
+                          persistent-hint
+                        />
+                      </v-col>
+
+                      <!-- Filtro de Respostas da Perspectiva -->
+                      <v-col cols="12" md="6">
+                        <v-autocomplete
+                          v-model="annotationFilters.perspective_answers"
+                          :items="availablePerspectiveAnswers"
+                          item-text="text"
+                          item-value="id"
+                          label="Respostas da Perspectiva"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiCommentCheck"
+                          hint="Selecione respostas específicas da perspectiva"
+                          persistent-hint
+                        />
+                      </v-col>
+
+                      <!-- Formato de Exportação -->
+                      <v-col cols="12" md="6">
+                        <v-select
+                          v-model="annotationExportFormats"
+                          :items="exportFormatOptions"
+                          item-text="text"
+                          item-value="value"
+                          label="Formatos de Exportação"
+                          multiple
+                          chips
+                          deletable-chips
+                          clearable
+                          outlined
+                          dense
+                          :prepend-inner-icon="mdiFileDelimited"
+                          hint="Selecione os formatos para exportar (deixe vazio para apenas visualizar)"
+                          persistent-hint
+                        >
+                          <template #selection="{ item, index }">
+                            <v-chip
+                              v-if="index < 2"
+                              small
+                              close
+                              :color="getExportFormatColor(item.value)"
+                              text-color="white"
+                              @click:close="removeAnnotationExportFormat(item.value)"
+                            >
+                              <v-icon small left>{{ item.icon }}</v-icon>
+                              {{ item.value.toUpperCase() }}
+                            </v-chip>
+                            <span v-if="index === 2" class="grey--text text-caption">
+                              (+{{ annotationExportFormats.length - 2 }} outros)
+                            </span>
                           </template>
                           <template #item="{ item }">
                             <v-list-item-avatar>
@@ -654,7 +732,11 @@ import {
   mdiFileDelimited,
   mdiFilePdfBox,
   mdiEye,
-  mdiDatabase
+  mdiDatabase,
+  mdiHelpCircle,
+  mdiCommentCheck,
+  mdiCheckCircle,
+  mdiCloseCircle
 } from '@mdi/js'
 import datasetNameMixin from '~/mixins/datasetName.js'
 
@@ -691,6 +773,10 @@ export default Vue.extend({
     mdiClose: string;
     mdiEye: string;
     mdiDatabase: string;
+    mdiHelpCircle: string;
+    mdiCommentCheck: string;
+    mdiCheckCircle: string;
+    mdiCloseCircle: string;
     isGenerating: boolean;
     dateFromMenu: boolean;
     dateToMenu: boolean;
@@ -716,6 +802,9 @@ export default Vue.extend({
       users: number[];
       labels: number[];
       examples: number[];
+      discrepancy_filter: string | null;
+      perspective_questions: number[];
+      perspective_answers: number[];
     };
     isGeneratingAnnotations: boolean;
     annotationReportData: any;
@@ -723,13 +812,16 @@ export default Vue.extend({
     annotationSearch: string;
     annotationHeaders: Array<{text: string; value: string; width?: string; sortable?: boolean}>;
     annotationPage: number;
-    annotationExportFormat: string;
+    annotationExportFormats: string[];
     annotationExportMaxResults: number;
     isExportingAnnotation: boolean;
     availableExamples: Array<{id: number; text: string}>;
     exportFormatOptions: Array<{value: string; text: string; icon: string; description: string}>;
     availablePerspectives: Array<{id: number; name: string}>;
     availableDatasets: Array<{name: string; count: number}>;
+    discrepancyOptions: Array<{value: string; text: string; description: string}>;
+    availablePerspectiveQuestions: Array<{id: number; text: string}>;
+    availablePerspectiveAnswers: Array<{id: number; text: string}>;
   } {
     return {
       mdiFileDocumentOutline,
@@ -750,6 +842,10 @@ export default Vue.extend({
       mdiClose,
       mdiEye,
       mdiDatabase,
+      mdiHelpCircle,
+      mdiCommentCheck,
+      mdiCheckCircle,
+      mdiCloseCircle,
 
       isGenerating: false,
       dateFromMenu: false,
@@ -786,6 +882,9 @@ export default Vue.extend({
         users: [] as number[],
         labels: [] as number[],
         examples: [] as number[],
+        discrepancy_filter: null as string | null,
+        perspective_questions: [] as number[],
+        perspective_answers: [] as number[]
       },
       isGeneratingAnnotations: false,
       annotationReportData: null as any,
@@ -800,7 +899,7 @@ export default Vue.extend({
         { text: 'Detalhes', value: 'detail', width: '80px', sortable: false }
       ],
       annotationPage: 1,
-      annotationExportFormat: 'csv',
+      annotationExportFormats: [],
       annotationExportMaxResults: 1000000,
       isExportingAnnotation: false,
       availableExamples: [] as Array<{id: number; text: string}>,
@@ -809,7 +908,14 @@ export default Vue.extend({
         { value: 'pdf', text: 'PDF (Portable Document Format)', icon: mdiFilePdfBox, description: 'Documento formatado para visualização e impressão' }
       ],
       availablePerspectives: [] as Array<{id: number; name: string}>,
-      availableDatasets: [] as Array<{name: string; count: number}>
+      availableDatasets: [] as Array<{name: string; count: number}>,
+      discrepancyOptions: [
+        { value: 'all', text: 'Todas', description: 'Incluir todas as anotações' },
+        { value: 'with_discrepancy', text: 'Com Discrepância', description: 'Apenas anotações com discrepâncias' },
+        { value: 'without_discrepancy', text: 'Sem Discrepância', description: 'Apenas anotações sem discrepâncias' }
+      ] as Array<{value: string; text: string; description: string}>,
+      availablePerspectiveQuestions: [] as Array<{id: number; text: string}>,
+      availablePerspectiveAnswers: [] as Array<{id: number; text: string}>
     }
   },
 
@@ -840,6 +946,17 @@ export default Vue.extend({
       if (this.filters.date_to) count++
       if (this.filters.datasets.length > 0) count++
       return count
+    },
+
+    hasActiveAnnotationFilters() {
+      return (
+        this.annotationFilters.users.length > 0 ||
+        this.annotationFilters.labels.length > 0 ||
+        this.annotationFilters.examples.length > 0 ||
+        this.annotationFilters.discrepancy_filter ||
+        this.annotationFilters.perspective_questions.length > 0 ||
+        this.annotationFilters.perspective_answers.length > 0
+      )
     }
   },
 
@@ -919,6 +1036,43 @@ export default Vue.extend({
           }))
         } catch (error) {
           console.error('Erro ao carregar exemplos:', error)
+        }
+
+        // Carregar perguntas e respostas da perspectiva
+        try {
+          if (this.availablePerspectives.length > 0) {
+            const perspectiveId = this.availablePerspectives[0].id
+            
+            // Carregar perguntas da perspectiva usando o endpoint correto
+            const perspectiveQuestions = await this.$axios.get(`/v1/projects/${this.projectId}/perspectives/${perspectiveId}/questions`)
+            if (perspectiveQuestions.data && Array.isArray(perspectiveQuestions.data)) {
+              this.availablePerspectiveQuestions = perspectiveQuestions.data.map((question: any) => ({
+                id: question.id,
+                text: question.question || `Pergunta #${question.id}`
+              }))
+            }
+
+            // Carregar todas as respostas disponíveis
+            const allAnswers = await this.$axios.get(`/v1/answers`)
+            if (allAnswers.data && Array.isArray(allAnswers.data)) {
+              // Filtrar respostas que pertencem às perguntas desta perspectiva
+              const questionIds = this.availablePerspectiveQuestions.map(q => q.id)
+              const filteredAnswers = allAnswers.data.filter((answer: any) => 
+                questionIds.includes(answer.question)
+              )
+              
+              this.availablePerspectiveAnswers = filteredAnswers.map((answer: any) => ({
+                id: answer.id,
+                text: answer.answer_text || answer.answer_option || `Resposta #${answer.id}`,
+                question_id: answer.question
+              }))
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao carregar perguntas e respostas da perspectiva:', error)
+          // Não mostrar erro ao usuário pois este é um recurso opcional
+          this.availablePerspectiveQuestions = []
+          this.availablePerspectiveAnswers = []
         }
 
         // Carregar datasets disponíveis (filenames únicos)
@@ -1298,7 +1452,11 @@ export default Vue.extend({
         users: [],
         labels: [],
         examples: [],
+        discrepancy_filter: null,
+        perspective_questions: [],
+        perspective_answers: []
       }
+      this.annotationExportFormats = []
       this.annotationReportData = null
       this.annotationReportError = null
     },
@@ -1310,13 +1468,16 @@ export default Vue.extend({
         // Primeiro gerar o relatório
         await this.generateAnnotationReport()
         
-        // Se o relatório foi gerado com sucesso, exportar
-        if (this.annotationReportData && this.annotationReportData.data && this.annotationReportData.data.length > 0) {
+        // Se há formatos selecionados e o relatório foi gerado com sucesso, exportar
+        if (this.annotationExportFormats.length > 0 && this.annotationReportData && this.annotationReportData.data) {
           await this.exportAnnotationReport()
+        } else if (this.annotationExportFormats.length === 0) {
+          // Se não há formatos selecionados, apenas gerar e mostrar mensagem
+          this.showSuccess('Relatório gerado com sucesso! Visualize os resultados abaixo.')
         }
       } catch (error) {
-        console.error('Erro ao gerar e exportar relatório:', error)
-        this.showError('Erro ao gerar e exportar relatório')
+        console.error('Erro ao gerar relatório:', error)
+        this.showError('Erro ao gerar relatório')
       } finally {
         this.isGeneratingAnnotations = false
       }
@@ -1346,6 +1507,18 @@ export default Vue.extend({
           params.append('example_ids', this.annotationFilters.examples.join(','))
         }
         
+        if (this.annotationFilters.discrepancy_filter) {
+          params.append('discrepancy_filter', this.annotationFilters.discrepancy_filter)
+        }
+        
+        if (this.annotationFilters.perspective_questions && this.annotationFilters.perspective_questions.length > 0) {
+          params.append('perspective_question_ids', this.annotationFilters.perspective_questions.join(','))
+        }
+        
+        if (this.annotationFilters.perspective_answers && this.annotationFilters.perspective_answers.length > 0) {
+          params.append('perspective_answer_ids', this.annotationFilters.perspective_answers.join(','))
+        }
+        
         // Adicionar paginação
         params.append('page', this.annotationPage.toString())
         params.append('page_size', '50')
@@ -1370,6 +1543,11 @@ export default Vue.extend({
     },
     
     async exportAnnotationReport() {
+      // Se não há formatos selecionados, não exportar
+      if (!this.annotationExportFormats || this.annotationExportFormats.length === 0) {
+        return
+      }
+      
       this.isExportingAnnotation = true
       
       try {
@@ -1392,25 +1570,70 @@ export default Vue.extend({
           params.append('example_ids', this.annotationFilters.examples.join(','))
         }
         
-        // Adicionar formato e máximo de resultados
-        params.append('export_format', this.annotationExportFormat)
+        if (this.annotationFilters.discrepancy_filter) {
+          params.append('discrepancy_filter', this.annotationFilters.discrepancy_filter)
+        }
+        
+        if (this.annotationFilters.perspective_questions && this.annotationFilters.perspective_questions.length > 0) {
+          params.append('perspective_question_ids', this.annotationFilters.perspective_questions.join(','))
+        }
+        
+        if (this.annotationFilters.perspective_answers && this.annotationFilters.perspective_answers.length > 0) {
+          params.append('perspective_answer_ids', this.annotationFilters.perspective_answers.join(','))
+        }
+        
+        // Adicionar máximo de resultados
         params.append('max_results', this.annotationExportMaxResults.toString())
         
-        // Baixar o arquivo
-        const url = `/v1/reports/annotations/export/?${params.toString()}`
+        // Exportar cada formato selecionado
+        for (const format of this.annotationExportFormats) {
+          const exportParams = new URLSearchParams(params.toString())
+          exportParams.append('export_format', format)
+          
+          // Baixar o arquivo
+          const url = `/v1/reports/annotations/export/?${exportParams.toString()}`
+          
+          // Fazer download usando fetch para melhor controle
+          const response = await this.$axios.get(url, { responseType: 'blob' })
+          
+          // Determinar nome do arquivo e tipo MIME baseado no formato
+          let filename, mimeType
+          switch (format) {
+            case 'csv':
+              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.csv`
+              mimeType = 'text/csv'
+              break
+            case 'pdf':
+              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.pdf`
+              mimeType = 'application/pdf'
+              break
+            default:
+              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.${format}`
+              mimeType = 'application/octet-stream'
+          }
+          
+          // Criar link de download
+          const blob = new Blob([response.data], { type: mimeType })
+          const downloadUrl = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(downloadUrl)
+        }
         
-        // Abrir em uma nova janela e aguardar
-        await new Promise<void>((resolve) => {
-          window.open(url, '_blank')
-          // Resolver após um breve delay para garantir que a janela foi aberta
-          setTimeout(() => resolve(), 100)
-        })
-        
-        this.showSuccess(`Relatório exportado com sucesso em formato ${this.annotationExportFormat.toUpperCase()}`)
+        // Mostrar mensagem de sucesso
+        if (this.annotationExportFormats.length === 1) {
+          this.showSuccess(`Relatório exportado com sucesso em formato ${this.annotationExportFormats[0].toUpperCase()}`)
+        } else {
+          this.showSuccess(`Relatório exportado com sucesso em ${this.annotationExportFormats.length} formatos`)
+        }
         
       } catch (error) {
         console.error('Erro ao exportar relatório:', error)
-        this.showError(`Erro ao exportar relatório em formato ${this.annotationExportFormat.toUpperCase()}`)
+        this.showError('Erro ao exportar relatório')
       } finally {
         this.isExportingAnnotation = false
       }
@@ -1458,6 +1681,38 @@ export default Vue.extend({
         return perspective;
       }
       return '';
+    },
+
+    // Métodos auxiliares para filtros de discrepância
+    getDiscrepancyColor(value: string) {
+      const colors: {[key: string]: string} = {
+        all: 'blue',
+        with_discrepancy: 'orange',
+        without_discrepancy: 'green'
+      }
+      return colors[value] || 'grey'
+    },
+
+    getDiscrepancyIcon(value: string) {
+      const icons: {[key: string]: string} = {
+        all: this.mdiInformation,
+        with_discrepancy: this.mdiAlertCircle,
+        without_discrepancy: this.mdiCheckCircle
+      }
+      return icons[value] || this.mdiInformation
+    },
+
+    // Métodos para remover filtros específicos
+    removePerspectiveQuestion(questionId: number) {
+      this.annotationFilters.perspective_questions = this.annotationFilters.perspective_questions.filter((id) => id !== questionId)
+    },
+
+    removePerspectiveAnswer(answerId: number) {
+      this.annotationFilters.perspective_answers = this.annotationFilters.perspective_answers.filter((id) => id !== answerId)
+    },
+
+    removeAnnotationExportFormat(format: string) {
+      this.annotationExportFormats = this.annotationExportFormats.filter((f) => f !== format)
     }
   }
 })

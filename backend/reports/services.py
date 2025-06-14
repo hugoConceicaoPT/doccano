@@ -527,6 +527,9 @@ class AnnotationReportService:
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
         annotation_types: Optional[List[str]] = None,
+        discrepancy_filter: Optional[str] = None,
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None,
         page: int = 1,
         page_size: int = 50
     ) -> Dict[str, Any]:
@@ -541,6 +544,9 @@ class AnnotationReportService:
             date_to: Data de fim (opcional)
             label_ids: Lista de IDs dos rótulos (opcional)
             annotation_types: Lista de tipos de anotação (opcional)
+            discrepancy_filter: Filtro de discrepâncias: all, with_discrepancy, without_discrepancy (opcional)
+            perspective_question_ids: Lista de IDs das perguntas da perspectiva (opcional)
+            perspective_answer_ids: Lista de IDs das respostas da perspectiva (opcional)
             page: Página dos resultados para paginação
             page_size: Tamanho da página para paginação
             
@@ -567,6 +573,46 @@ class AnnotationReportService:
             base_filter &= Q(created_at__gte=date_from)
         if date_to:
             base_filter &= Q(created_at__lte=date_to)
+        
+        # Aplicar filtros de perspectiva
+        if perspective_question_ids or perspective_answer_ids:
+            # Filtrar utilizadores baseado nas perguntas/respostas da perspectiva
+            from projects.models import Answer
+            
+            perspective_user_ids = set()
+            
+            if perspective_question_ids:
+                # Obter utilizadores que responderam às perguntas especificadas
+                question_user_ids = Answer.objects.filter(
+                    question_id__in=perspective_question_ids
+                ).values_list('member__user_id', flat=True).distinct()
+                perspective_user_ids.update(question_user_ids)
+            
+            if perspective_answer_ids:
+                # Obter utilizadores que deram as respostas especificadas
+                answer_user_ids = Answer.objects.filter(
+                    id__in=perspective_answer_ids
+                ).values_list('member__user_id', flat=True).distinct()
+                perspective_user_ids.update(answer_user_ids)
+            
+            if perspective_user_ids:
+                base_filter &= Q(user_id__in=list(perspective_user_ids))
+            else:
+                # Se não há utilizadores que atendem aos critérios, retornar resultado vazio
+                return {
+                    'summary': {
+                        'total_annotations': 0,
+                        'total_examples': 0,
+                        'total_annotators': 0,
+                        'date_range_from': date_from,
+                        'date_range_to': date_to,
+                        'annotation_type_counts': {}
+                    },
+                    'data': [],
+                    'total_pages': 0,
+                    'current_page': page,
+                    'page_size': page_size
+                }
         
         all_annotations = []
         type_counts = defaultdict(int)
@@ -697,6 +743,16 @@ class AnnotationReportService:
                         # Log erro sem interromper o processamento
                         print(f"Erro ao processar anotação {anno.id} do tipo {anno_type}: {str(e)}")
         
+        # Aplicar filtro de discrepâncias se especificado
+        if discrepancy_filter and discrepancy_filter != 'all':
+            if discrepancy_filter == 'with_discrepancy':
+                # Filtrar apenas anotações com discrepâncias
+                # Por agora, este é um placeholder - a lógica de detecção de discrepâncias precisa ser implementada
+                all_annotations = [anno for anno in all_annotations if AnnotationReportService._has_discrepancy(anno)]
+            elif discrepancy_filter == 'without_discrepancy':
+                # Filtrar apenas anotações sem discrepâncias
+                all_annotations = [anno for anno in all_annotations if not AnnotationReportService._has_discrepancy(anno)]
+        
         # Ordenar anotações por data de criação (mais recentes primeiro)
         all_annotations.sort(key=lambda x: x['created_at'] if x['created_at'] else '', reverse=True)
         
@@ -726,4 +782,27 @@ class AnnotationReportService:
             'current_page': page
         }
         
-        return result 
+        return result
+    
+    @staticmethod
+    def _has_discrepancy(annotation: Dict[str, Any]) -> bool:
+        """
+        Determina se uma anotação tem discrepâncias
+        
+        Por agora, esta é uma implementação placeholder.
+        A lógica real de detecção de discrepâncias pode ser implementada aqui,
+        por exemplo, verificando se múltiplos anotadores têm anotações diferentes
+        para o mesmo exemplo ou posição.
+        
+        Args:
+            annotation: Dicionário com dados da anotação
+            
+        Returns:
+            True se a anotação tem discrepâncias, False caso contrário
+        """
+        # Implementação placeholder - pode ser expandida conforme necessário
+        # Por exemplo, verificar se existem anotações conflitantes no mesmo exemplo
+        
+        # Por agora, retornar False para todas as anotações (sem discrepâncias)
+        # Isso pode ser modificado para implementar lógica real de detecção
+        return False 

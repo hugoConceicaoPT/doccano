@@ -54,7 +54,7 @@ class MemberSerializer(serializers.ModelSerializer):
 class AnswerSerializer(serializers.ModelSerializer):
     member = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all())
     question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
-    answer_text = serializers.CharField(required=False)
+    answer_text = serializers.CharField(required=True)
 
     class Meta:
         model = Answer
@@ -62,16 +62,37 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         answer_text = attrs.get("answer_text", None)
-
-        if answer_text:
-            raise serializers.ValidationError(
-                "You can only provide one of the fiels: 'answer_text', but not both."
-            )
+        question = attrs.get("question", None)
 
         if not answer_text:
             raise serializers.ValidationError(
-                "You must provide at least one of the fields: 'answer_text'."
+                "You must provide 'answer_text'."
             )
+
+        # Validar baseado no tipo de pergunta, se especificado
+        if question and question.answer_type:
+            answer_type = question.answer_type
+            
+            if answer_type == 'boolean':
+                if answer_text.lower() not in ['true', 'false']:
+                    raise serializers.ValidationError(
+                        "For boolean questions, answer must be 'true' or 'false'."
+                    )
+            elif answer_type == 'int':
+                try:
+                    int(answer_text)
+                except ValueError:
+                    raise serializers.ValidationError(
+                        "For integer questions, answer must be a valid integer."
+                    )
+            elif answer_type == 'double':
+                try:
+                    float(answer_text)
+                except ValueError:
+                    raise serializers.ValidationError(
+                        "For double questions, answer must be a valid number."
+                    )
+            # Para 'string' ou outros tipos, qualquer texto é válido
 
         return attrs
 

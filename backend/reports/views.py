@@ -888,6 +888,28 @@ class AnnotationReportView(APIView):
                 type=openapi.TYPE_INTEGER,
                 default=50,
                 required=False
+            ),
+            openapi.Parameter(
+                'discrepancy_filter',
+                openapi.IN_QUERY,
+                description="Filtro de discrepâncias: all, with_discrepancy, without_discrepancy",
+                type=openapi.TYPE_STRING,
+                enum=['all', 'with_discrepancy', 'without_discrepancy'],
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_question_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das perguntas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_answer_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das respostas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
             )
         ]
     )
@@ -986,12 +1008,34 @@ class AnnotationReportView(APIView):
                 x.strip() for x in query_params['annotation_types'].split(',') if x.strip()
             ]
         
+        # Processar perspective_question_ids (opcional)
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                processed['perspective_question_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_question_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_question_ids'] = []
+        
+        # Processar perspective_answer_ids (opcional)
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                processed['perspective_answer_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_answer_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_answer_ids'] = []
+        
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:
             processed['date_from'] = query_params['date_from']
         
         if 'date_to' in query_params and query_params['date_to']:
             processed['date_to'] = query_params['date_to']
+        
+        # Processar filtro de discrepâncias (opcional)
+        if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
+            processed['discrepancy_filter'] = query_params['discrepancy_filter']
         
         return processed
 
@@ -1100,6 +1144,28 @@ class AnnotationReportExportView(APIView):
                 description="Número máximo de resultados (até 1000000)",
                 type=openapi.TYPE_INTEGER,
                 default=1000,
+                required=False
+            ),
+            openapi.Parameter(
+                'discrepancy_filter',
+                openapi.IN_QUERY,
+                description="Filtro de discrepâncias: all, with_discrepancy, without_discrepancy",
+                type=openapi.TYPE_STRING,
+                enum=['all', 'with_discrepancy', 'without_discrepancy'],
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_question_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das perguntas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_answer_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das respostas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
                 required=False
             )
         ],
@@ -1223,12 +1289,34 @@ class AnnotationReportExportView(APIView):
                 x.strip() for x in query_params['annotation_types'].split(',') if x.strip()
             ]
         
+        # Processar perspective_question_ids (opcional)
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                processed['perspective_question_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_question_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_question_ids'] = []
+        
+        # Processar perspective_answer_ids (opcional)
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                processed['perspective_answer_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_answer_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_answer_ids'] = []
+        
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:
             processed['date_from'] = query_params['date_from']
         
         if 'date_to' in query_params and query_params['date_to']:
             processed['date_to'] = query_params['date_to']
+        
+        # Processar filtro de discrepâncias (opcional)
+        if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
+            processed['discrepancy_filter'] = query_params['discrepancy_filter']
         
         return processed
 

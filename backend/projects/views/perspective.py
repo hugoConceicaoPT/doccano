@@ -170,6 +170,20 @@ class Questions(generics.ListAPIView):
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ("perspective__id", "question")
+    
+    def get_queryset(self):
+        perspective_id = self.kwargs.get('perspective_id')
+        project_id = self.kwargs.get('project_id')
+        
+        queryset = Question.objects.all()
+        
+        if perspective_id:
+            queryset = queryset.filter(perspective_id=perspective_id)
+            
+        if project_id:
+            queryset = queryset.filter(perspective__project_id=project_id)
+            
+        return queryset
 
 
 class AnswerNestedSerializer(serializers.ModelSerializer):
