@@ -75,7 +75,6 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.username }}</v-list-item-title>
-                          <v-list-item-subtitle class="text-caption">ID: {{ item.id }}</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -120,7 +119,6 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.text }}</v-list-item-title>
-                          <v-list-item-subtitle class="text-caption">Tipo: {{ item.type }}</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -195,9 +193,10 @@
                           close
                           color="teal"
                           text-color="white"
-                          @click:close="() => removeDataset(item)"
+                          @click:close="removeDataset(item)"
                         >
-                          {{ item }}
+                          <v-icon small left>{{ mdiDatabase }}</v-icon>
+                          {{ getDatasetDisplayName(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
                           (+{{ filters.datasets.length - 2 }} outros)
@@ -209,7 +208,6 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.name }}</v-list-item-title>
-                          <v-list-item-subtitle class="text-caption">{{ item.count }} exemplo(s)</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -1239,22 +1237,26 @@ export default Vue.extend({
       this.filters.export_formats = this.filters.export_formats.filter((f) => f !== format)
     },
 
-    removeDataset(dataset: string) {
+    removeDataset(dataset: any) {
       console.log('[DEBUG] Removendo dataset:', dataset)
-      console.log('[DEBUG] Tipo do dataset:', typeof dataset)
-      console.log('[DEBUG] Datasets antes:', this.filters.datasets)
-      console.log('[DEBUG] Tipos dos datasets:', this.filters.datasets.map(d => typeof d))
-      
-      // Garantir que estamos a comparar strings
-      const datasetStr = String(dataset)
-      const newDatasets = this.filters.datasets.filter((d) => String(d) !== datasetStr)
-      
-      // Usar Vue.set para garantir reatividade
-      this.$set(this.filters, 'datasets', newDatasets)
+      let datasetName = dataset
+      if (typeof dataset === 'object') {
+        datasetName = dataset.name || dataset
+      }
+      const index = this.filters.datasets.indexOf(datasetName)
+      if (index > -1) {
+        this.filters.datasets.splice(index, 1)
+      }
       console.log('[DEBUG] Datasets depois:', this.filters.datasets)
-      
-      // Forçar atualização do componente
-      this.$forceUpdate()
+    },
+
+    getDatasetDisplayName(dataset: any) {
+      if (typeof dataset === 'object') {
+        // Se é um objeto, usar diretamente
+        return this.getDatasetName(dataset)
+      }
+      // Se é uma string, criar um objeto com name
+      return dataset
     },
 
     getLabelTypeColor(type: string) {

@@ -215,98 +215,121 @@ class AnnotatorReportService:
     ) -> Dict[str, int]:
         """Obter breakdown de rótulos para um utilizador específico"""
         
-        base_filter = Q(user_id=user_id, example__project_id__in=project_ids)
-        
-        if date_from:
-            base_filter &= Q(created_at__gte=date_from)
-        if date_to:
-            base_filter &= Q(created_at__lte=date_to)
-        
-        # Aplicar filtro de datasets
-        if dataset_names:
-            base_filter &= Q(example__upload_name__in=dataset_names)
-        
-        # Aplicar filtro de perspectivas - verificar se o utilizador pertence às perspectivas especificadas
-        if perspective_ids:
-            # Verificar se o utilizador pertence a alguma das perspectivas especificadas
-            user_in_perspectives = Member.objects.filter(
-                user_id=user_id,
-                perspective_id__in=perspective_ids,
-                project_id__in=project_ids
-            ).exists()
+        try:
+            base_filter = Q(user_id=user_id, example__project_id__in=project_ids)
             
-            if not user_in_perspectives:
-                # Se o utilizador não pertence às perspectivas especificadas, retornar vazio
-                return {}
-        
-        breakdown = {}
-        
-        # Categories breakdown
-        category_filter = base_filter
-        if label_ids:
-            category_type_ids = CategoryType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if category_type_ids:
-                category_filter &= Q(label_id__in=category_type_ids)
-            else:
-                category_filter = Q(pk__isnull=True)
-        
-        categories = (
-            Category.objects
-            .filter(category_filter)
-            .values('label__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in categories:
-            breakdown[item['label__text']] = item['count']
-        
-        # Spans breakdown
-        span_filter = base_filter
-        if label_ids:
-            span_type_ids = SpanType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if span_type_ids:
-                span_filter &= Q(label_id__in=span_type_ids)
-            else:
-                span_filter = Q(pk__isnull=True)
-        
-        spans = (
-            Span.objects
-            .filter(span_filter)
-            .values('label__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in spans:
-            label_text = item['label__text']
-            if label_text in breakdown:
-                breakdown[label_text] += item['count']
-            else:
-                breakdown[label_text] = item['count']
-        
-        # Relations breakdown
-        relation_filter = base_filter
-        if label_ids:
-            relation_type_ids = RelationType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if relation_type_ids:
-                relation_filter &= Q(type_id__in=relation_type_ids)
-            else:
-                relation_filter = Q(pk__isnull=True)
-        
-        relations = (
-            Relation.objects
-            .filter(relation_filter)
-            .values('type__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in relations:
-            label_text = item['type__text']
-            if label_text in breakdown:
-                breakdown[label_text] += item['count']
-            else:
-                breakdown[label_text] = item['count']
-        
-        return breakdown
+            if date_from:
+                base_filter &= Q(created_at__gte=date_from)
+            if date_to:
+                base_filter &= Q(created_at__lte=date_to)
+            
+            # Aplicar filtro de datasets
+            if dataset_names:
+                base_filter &= Q(example__upload_name__in=dataset_names)
+            
+            # Aplicar filtro de perspectivas - verificar se o utilizador pertence às perspectivas especificadas
+            if perspective_ids:
+                # Verificar se o utilizador pertence a alguma das perspectivas especificadas
+                user_in_perspectives = Member.objects.filter(
+                    user_id=user_id,
+                    perspective_id__in=perspective_ids,
+                    project_id__in=project_ids
+                ).exists()
+                
+                if not user_in_perspectives:
+                    # Se o utilizador não pertence às perspectivas especificadas, retornar vazio
+                    return {}
+            
+            breakdown = {}
+            
+            # Categories breakdown
+            try:
+                category_filter = base_filter
+                if label_ids:
+                    category_type_ids = CategoryType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if category_type_ids:
+                        category_filter &= Q(label_id__in=category_type_ids)
+                    else:
+                        category_filter = Q(pk__isnull=True)
+                
+                categories = (
+                    Category.objects
+                    .filter(category_filter)
+                    .values('label__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in categories:
+                    label_text = item.get('label__text')
+                    count = item.get('count', 0)
+                    if label_text and count > 0:
+                        breakdown[label_text] = count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar categories breakdown: {e}")
+            
+            # Spans breakdown
+            try:
+                span_filter = base_filter
+                if label_ids:
+                    span_type_ids = SpanType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if span_type_ids:
+                        span_filter &= Q(label_id__in=span_type_ids)
+                    else:
+                        span_filter = Q(pk__isnull=True)
+                
+                spans = (
+                    Span.objects
+                    .filter(span_filter)
+                    .values('label__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in spans:
+                    label_text = item.get('label__text')
+                    count = item.get('count', 0)
+                    if label_text and count > 0:
+                        if label_text in breakdown:
+                            breakdown[label_text] += count
+                        else:
+                            breakdown[label_text] = count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar spans breakdown: {e}")
+            
+            # Relations breakdown
+            try:
+                relation_filter = base_filter
+                if label_ids:
+                    relation_type_ids = RelationType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if relation_type_ids:
+                        relation_filter &= Q(type_id__in=relation_type_ids)
+                    else:
+                        relation_filter = Q(pk__isnull=True)
+                
+                relations = (
+                    Relation.objects
+                    .filter(relation_filter)
+                    .values('type__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in relations:
+                    label_text = item.get('type__text')
+                    count = item.get('count', 0)
+                    if label_text and count > 0:
+                        if label_text in breakdown:
+                            breakdown[label_text] += count
+                        else:
+                            breakdown[label_text] = count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar relations breakdown: {e}")
+            
+            return breakdown
+            
+        except Exception as e:
+            print(f"[DEBUG] Erro geral em _get_label_breakdown: {e}")
+            import traceback
+            traceback.print_exc()
+            return {}
 
     @staticmethod
     def _get_dataset_label_breakdown(
@@ -320,95 +343,123 @@ class AnnotatorReportService:
     ) -> Dict[str, Dict[str, int]]:
         """Obter breakdown detalhado de labels por dataset para o utilizador"""
         
-        base_filter = Q(user_id=user_id, example__project_id__in=project_ids)
-        
-        if date_from:
-            base_filter &= Q(created_at__gte=date_from)
-        if date_to:
-            base_filter &= Q(created_at__lte=date_to)
-        
-        # Aplicar filtro de datasets
-        if dataset_names:
-            base_filter &= Q(example__upload_name__in=dataset_names)
-        
-        # Aplicar filtro de perspectivas
-        if perspective_ids:
-            user_in_perspectives = Member.objects.filter(
-                user_id=user_id,
-                perspective_id__in=perspective_ids,
-                project_id__in=project_ids
-            ).exists()
+        try:
+            base_filter = Q(user_id=user_id, example__project_id__in=project_ids)
             
-            if not user_in_perspectives:
-                return {}
-        
-        result = defaultdict(lambda: defaultdict(int))
-        
-        # Categories
-        category_filter = base_filter
-        if label_ids:
-            category_type_ids = CategoryType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if category_type_ids:
-                category_filter &= Q(label_id__in=category_type_ids)
-            else:
-                category_filter = Q(pk__isnull=True)  # Não incluir se não há CategoryTypes nos label_ids
-        
-        categories = (
-            Category.objects
-            .filter(category_filter)
-            .select_related('label', 'example')
-            .values('example__upload_name', 'label__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in categories:
-            if item['example__upload_name'] and item['label__text']:
-                result[item['example__upload_name']][item['label__text']] += item['count']
-        
-        # Spans
-        span_filter = base_filter
-        if label_ids:
-            span_type_ids = SpanType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if span_type_ids:
-                span_filter &= Q(label_id__in=span_type_ids)
-            else:
-                span_filter = Q(pk__isnull=True)  # Não incluir se não há SpanTypes nos label_ids
-        
-        spans = (
-            Span.objects
-            .filter(span_filter)
-            .select_related('label', 'example')
-            .values('example__upload_name', 'label__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in spans:
-            if item['example__upload_name'] and item['label__text']:
-                result[item['example__upload_name']][item['label__text']] += item['count']
-        
-        # Relations
-        relation_filter = base_filter
-        if label_ids:
-            relation_type_ids = RelationType.objects.filter(id__in=label_ids).values_list('id', flat=True)
-            if relation_type_ids:
-                relation_filter &= Q(type_id__in=relation_type_ids)
-            else:
-                relation_filter = Q(pk__isnull=True)  # Não incluir se não há RelationTypes nos label_ids
-        
-        relations = (
-            Relation.objects
-            .filter(relation_filter)
-            .select_related('type', 'example')
-            .values('example__upload_name', 'type__text')
-            .annotate(count=Count('id'))
-        )
-        
-        for item in relations:
-            if item['example__upload_name'] and item['type__text']:
-                result[item['example__upload_name']][item['type__text']] += item['count']
-        
-        # Converter defaultdict para dict normal
-        return {dataset: dict(labels) for dataset, labels in result.items()}
+            if date_from:
+                base_filter &= Q(created_at__gte=date_from)
+            if date_to:
+                base_filter &= Q(created_at__lte=date_to)
+            
+            # Aplicar filtro de datasets
+            if dataset_names:
+                base_filter &= Q(example__upload_name__in=dataset_names)
+            
+            # Aplicar filtro de perspectivas
+            if perspective_ids:
+                user_in_perspectives = Member.objects.filter(
+                    user_id=user_id,
+                    perspective_id__in=perspective_ids,
+                    project_id__in=project_ids
+                ).exists()
+                
+                if not user_in_perspectives:
+                    return {}
+            
+            result = defaultdict(lambda: defaultdict(int))
+            
+            # Categories
+            try:
+                category_filter = base_filter
+                if label_ids:
+                    category_type_ids = CategoryType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if category_type_ids:
+                        category_filter &= Q(label_id__in=category_type_ids)
+                    else:
+                        category_filter = Q(pk__isnull=True)  # Não incluir se não há CategoryTypes nos label_ids
+                
+                categories = (
+                    Category.objects
+                    .filter(category_filter)
+                    .select_related('label', 'example')
+                    .values('example__upload_name', 'label__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in categories:
+                    upload_name = item.get('example__upload_name')
+                    label_text = item.get('label__text')
+                    count = item.get('count', 0)
+                    
+                    if upload_name and label_text and count > 0:
+                        result[upload_name][label_text] += count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar categories: {e}")
+            
+            # Spans
+            try:
+                span_filter = base_filter
+                if label_ids:
+                    span_type_ids = SpanType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if span_type_ids:
+                        span_filter &= Q(label_id__in=span_type_ids)
+                    else:
+                        span_filter = Q(pk__isnull=True)  # Não incluir se não há SpanTypes nos label_ids
+                
+                spans = (
+                    Span.objects
+                    .filter(span_filter)
+                    .select_related('label', 'example')
+                    .values('example__upload_name', 'label__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in spans:
+                    upload_name = item.get('example__upload_name')
+                    label_text = item.get('label__text')
+                    count = item.get('count', 0)
+                    
+                    if upload_name and label_text and count > 0:
+                        result[upload_name][label_text] += count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar spans: {e}")
+            
+            # Relations
+            try:
+                relation_filter = base_filter
+                if label_ids:
+                    relation_type_ids = RelationType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+                    if relation_type_ids:
+                        relation_filter &= Q(type_id__in=relation_type_ids)
+                    else:
+                        relation_filter = Q(pk__isnull=True)  # Não incluir se não há RelationTypes nos label_ids
+                
+                relations = (
+                    Relation.objects
+                    .filter(relation_filter)
+                    .select_related('type', 'example')
+                    .values('example__upload_name', 'type__text')
+                    .annotate(count=Count('id'))
+                )
+                
+                for item in relations:
+                    upload_name = item.get('example__upload_name')
+                    type_text = item.get('type__text')
+                    count = item.get('count', 0)
+                    
+                    if upload_name and type_text and count > 0:
+                        result[upload_name][type_text] += count
+            except Exception as e:
+                print(f"[DEBUG] Erro ao processar relations: {e}")
+            
+            # Converter defaultdict para dict normal
+            return {dataset: dict(labels) for dataset, labels in result.items()}
+            
+        except Exception as e:
+            print(f"[DEBUG] Erro geral em _get_dataset_label_breakdown: {e}")
+            import traceback
+            traceback.print_exc()
+            return {}
 
     @staticmethod
     def _calculate_summary(
