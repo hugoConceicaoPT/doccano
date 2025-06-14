@@ -20,7 +20,8 @@ class AnnotatorReportService:
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
-        perspective_ids: Optional[List[int]] = None
+        perspective_ids: Optional[List[int]] = None,
+        dataset_names: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Gera relatório sobre anotadores com filtros especificados
@@ -39,13 +40,17 @@ class AnnotatorReportService:
         
         # Obter dados agregados por utilizador
         annotator_data = AnnotatorReportService._get_annotator_data(
-            project_ids, user_ids, date_from, date_to, label_ids, perspective_ids
+            project_ids, user_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
         )
         
         # Calcular breakdown de rótulos para cada anotador
         for annotator in annotator_data:
             annotator['label_breakdown'] = AnnotatorReportService._get_label_breakdown(
-                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids
+                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
+            )
+            # Adicionar informação detalhada sobre labels por dataset
+            annotator['dataset_label_breakdown'] = AnnotatorReportService._get_dataset_label_breakdown(
+                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
             )
         
         # Calcular resumo geral
@@ -67,7 +72,8 @@ class AnnotatorReportService:
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
-        perspective_ids: Optional[List[int]] = None
+        perspective_ids: Optional[List[int]] = None,
+        dataset_names: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """Obter dados agregados por anotador"""
         
@@ -83,6 +89,10 @@ class AnnotatorReportService:
         # Aplicar filtro de utilizadores
         if user_ids:
             base_filter &= Q(user_id__in=user_ids)
+        
+        # Aplicar filtro de datasets
+        if dataset_names:
+            base_filter &= Q(example__upload_name__in=dataset_names)
         
         # Aplicar filtro de perspectivas - obter utilizadores das perspectivas especificadas
         if perspective_ids:
@@ -113,11 +123,7 @@ class AnnotatorReportService:
             Category.objects
             .filter(categories_filter)
             .values('user_id', 'user__username', 'user__first_name', 'user__last_name', 'user__email')
-            .annotate(
-                categories_count=Count('id'),
-                first_annotation=Min('created_at'),
-                last_annotation=Max('created_at')
-            )
+            .annotate(categories_count=Count('id'))
         )
         
         # Obter dados de Spans
@@ -135,11 +141,7 @@ class AnnotatorReportService:
             Span.objects
             .filter(spans_filter)
             .values('user_id', 'user__username', 'user__first_name', 'user__last_name', 'user__email')
-            .annotate(
-                spans_count=Count('id'),
-                first_annotation=Min('created_at'),
-                last_annotation=Max('created_at')
-            )
+            .annotate(spans_count=Count('id'))
         )
         
         # Obter dados de TextLabels (não têm label específico)
@@ -152,11 +154,7 @@ class AnnotatorReportService:
             TextLabel.objects
             .filter(texts_filter)
             .values('user_id', 'user__username', 'user__first_name', 'user__last_name', 'user__email')
-            .annotate(
-                texts_count=Count('id'),
-                first_annotation=Min('created_at'),
-                last_annotation=Max('created_at')
-            )
+            .annotate(texts_count=Count('id'))
         )
         
         # Obter dados de Relations
@@ -174,20 +172,14 @@ class AnnotatorReportService:
             Relation.objects
             .filter(relations_filter)
             .values('user_id', 'user__username', 'user__first_name', 'user__last_name', 'user__email')
-            .annotate(
-                relations_count=Count('id'),
-                first_annotation=Min('created_at'),
-                last_annotation=Max('created_at')
-            )
+            .annotate(relations_count=Count('id'))
         )
         
         # Consolidar dados por utilizador
         user_data = defaultdict(lambda: {
             'annotator_id': None,
             'annotator_username': '',
-            'annotator_name': '',
-            'first_annotation_date': None,
-            'last_annotation_date': None
+            'annotator_name': ''
         })
         
         # Processar todos os dados para obter informações básicas dos utilizadores
@@ -200,12 +192,6 @@ class AnnotatorReportService:
                 'annotator_username': item['user__username'],
                 'annotator_name': AnnotatorReportService._format_user_name(
                     item['user__first_name'], item['user__last_name'], item['user__username']
-                ),
-                'first_annotation_date': AnnotatorReportService._min_date(
-                    user_data[user_id]['first_annotation_date'], item.get('first_annotation')
-                ),
-                'last_annotation_date': AnnotatorReportService._max_date(
-                    user_data[user_id]['last_annotation_date'], item.get('last_annotation')
                 )
             })
         
@@ -224,7 +210,8 @@ class AnnotatorReportService:
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
-        perspective_ids: Optional[List[int]] = None
+        perspective_ids: Optional[List[int]] = None,
+        dataset_names: Optional[List[str]] = None
     ) -> Dict[str, int]:
         """Obter breakdown de rótulos para um utilizador específico"""
         
@@ -234,6 +221,10 @@ class AnnotatorReportService:
             base_filter &= Q(created_at__gte=date_from)
         if date_to:
             base_filter &= Q(created_at__lte=date_to)
+        
+        # Aplicar filtro de datasets
+        if dataset_names:
+            base_filter &= Q(example__upload_name__in=dataset_names)
         
         # Aplicar filtro de perspectivas - verificar se o utilizador pertence às perspectivas especificadas
         if perspective_ids:
@@ -316,6 +307,108 @@ class AnnotatorReportService:
                 breakdown[label_text] = item['count']
         
         return breakdown
+
+    @staticmethod
+    def _get_dataset_label_breakdown(
+        user_id: int,
+        project_ids: List[int],
+        date_from: Optional[timezone.datetime] = None,
+        date_to: Optional[timezone.datetime] = None,
+        label_ids: Optional[List[int]] = None,
+        perspective_ids: Optional[List[int]] = None,
+        dataset_names: Optional[List[str]] = None
+    ) -> Dict[str, Dict[str, int]]:
+        """Obter breakdown detalhado de labels por dataset para o utilizador"""
+        
+        base_filter = Q(user_id=user_id, example__project_id__in=project_ids)
+        
+        if date_from:
+            base_filter &= Q(created_at__gte=date_from)
+        if date_to:
+            base_filter &= Q(created_at__lte=date_to)
+        
+        # Aplicar filtro de datasets
+        if dataset_names:
+            base_filter &= Q(example__upload_name__in=dataset_names)
+        
+        # Aplicar filtro de perspectivas
+        if perspective_ids:
+            user_in_perspectives = Member.objects.filter(
+                user_id=user_id,
+                perspective_id__in=perspective_ids,
+                project_id__in=project_ids
+            ).exists()
+            
+            if not user_in_perspectives:
+                return {}
+        
+        result = defaultdict(lambda: defaultdict(int))
+        
+        # Categories
+        category_filter = base_filter
+        if label_ids:
+            category_type_ids = CategoryType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+            if category_type_ids:
+                category_filter &= Q(label_id__in=category_type_ids)
+            else:
+                category_filter = Q(pk__isnull=True)  # Não incluir se não há CategoryTypes nos label_ids
+        
+        categories = (
+            Category.objects
+            .filter(category_filter)
+            .select_related('label', 'example')
+            .values('example__upload_name', 'label__text')
+            .annotate(count=Count('id'))
+        )
+        
+        for item in categories:
+            if item['example__upload_name'] and item['label__text']:
+                result[item['example__upload_name']][item['label__text']] += item['count']
+        
+        # Spans
+        span_filter = base_filter
+        if label_ids:
+            span_type_ids = SpanType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+            if span_type_ids:
+                span_filter &= Q(label_id__in=span_type_ids)
+            else:
+                span_filter = Q(pk__isnull=True)  # Não incluir se não há SpanTypes nos label_ids
+        
+        spans = (
+            Span.objects
+            .filter(span_filter)
+            .select_related('label', 'example')
+            .values('example__upload_name', 'label__text')
+            .annotate(count=Count('id'))
+        )
+        
+        for item in spans:
+            if item['example__upload_name'] and item['label__text']:
+                result[item['example__upload_name']][item['label__text']] += item['count']
+        
+        # Relations
+        relation_filter = base_filter
+        if label_ids:
+            relation_type_ids = RelationType.objects.filter(id__in=label_ids).values_list('id', flat=True)
+            if relation_type_ids:
+                relation_filter &= Q(type_id__in=relation_type_ids)
+            else:
+                relation_filter = Q(pk__isnull=True)  # Não incluir se não há RelationTypes nos label_ids
+        
+        relations = (
+            Relation.objects
+            .filter(relation_filter)
+            .select_related('type', 'example')
+            .values('example__upload_name', 'type__text')
+            .annotate(count=Count('id'))
+        )
+        
+        for item in relations:
+            if item['example__upload_name'] and item['type__text']:
+                result[item['example__upload_name']][item['type__text']] += item['count']
+        
+        # Converter defaultdict para dict normal
+        return {dataset: dict(labels) for dataset, labels in result.items()}
 
     @staticmethod
     def _calculate_summary(
@@ -512,14 +605,9 @@ class AnnotationReportService:
                         example_id = anno.example_id if hasattr(anno, 'example_id') else None
                         example_name = f"Exemplo {example_id}"
                         if hasattr(anno, 'example') and anno.example:
-                            # Tentar usar o upload_name primeiro
+                            # Tentar usar o filename primeiro
                             if hasattr(anno.example, 'upload_name') and anno.example.upload_name:
                                 example_name = str(anno.example.upload_name)
-                            # Se não tiver upload_name, usar filename
-                            elif hasattr(anno.example, 'filename') and anno.example.filename:
-                                filename = str(anno.example.filename)
-                                if not (len(filename) > 20 and any(c.isdigit() for c in filename) and any(c.isalpha() for c in filename)):
-                                    example_name = filename
                             # Se não tiver filename, usar parte do texto
                             elif hasattr(anno.example, 'text') and anno.example.text:
                                 text_content = str(anno.example.text)

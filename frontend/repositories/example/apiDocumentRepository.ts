@@ -12,8 +12,9 @@ function toModel(item: { [key: string]: any }): ExampleItem {
     item.comment_count,
     item.filename,
     item.is_confirmed,
-    item.upload_name,
-    item.assignments
+    item.filename,
+    item.assignments || [],
+    item.upload_name
   )
 }
 

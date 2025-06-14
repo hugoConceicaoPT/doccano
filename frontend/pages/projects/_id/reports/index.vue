@@ -56,18 +56,27 @@
                     >
                       <template #selection="{ item, index }">
                         <v-chip
-                          v-if="index < 3"
+                          v-if="index < 2"
                           small
                           close
                           color="primary"
                           text-color="white"
-                          @click:close="removeUser(item.id)"
+                          @click:close="removeUser(item)"
                         >
-                          {{ item.username }}
+                          {{ getSelectedUserText(item) }}
                         </v-chip>
-                        <span v-if="index === 3" class="grey--text text-caption">
-                          (+{{ filters.users.length - 3 }} outros)
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.users.length - 2 }} outros)
                         </span>
+                      </template>
+                      <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon color="primary">{{ mdiAccount }}</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                          <v-list-item-title>{{ item.username }}</v-list-item-title>
+                          <v-list-item-subtitle class="text-caption">ID: {{ item.id }}</v-list-item-subtitle>
+                        </v-list-item-content>
                       </template>
                     </v-autocomplete>
                   </v-col>
@@ -95,11 +104,11 @@
                           v-if="index < 2"
                           small
                           close
-                          :color="getLabelTypeColor(item.type)"
+                          :color="getLabelTypeColor(getSelectedLabelType(item))"
                           text-color="white"
-                          @click:close="removeLabel(item.id)"
+                          @click:close="removeLabel(item)"
                         >
-                          {{ item.text }}
+                          {{ getSelectedLabelText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
                           (+{{ filters.labels.length - 2 }} outros)
@@ -107,12 +116,11 @@
                       </template>
                       <template #item="{ item }">
                         <v-list-item-avatar>
-                          <v-chip small :color="getLabelTypeColor(item.type)" text-color="white">
-                            {{ item.type }}
-                          </v-chip>
+                          <v-icon :color="getLabelTypeColor(item.type)">{{ mdiTag }}</v-icon>
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.text }}</v-list-item-title>
+                          <v-list-item-subtitle class="text-caption">Tipo: {{ item.type }}</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -143,9 +151,9 @@
                           close
                           color="purple"
                           text-color="white"
-                          @click:close="removePerspective(item.id)"
+                          @click:close="removePerspective(item)"
                         >
-                          {{ item.name }}
+                          {{ getSelectedPerspectiveText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
                           (+{{ filters.perspectives.length - 2 }} outras)
@@ -157,6 +165,51 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.name }}</v-list-item-title>
+                        </v-list-item-content>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+
+                  <!-- Filtro de Datasets -->
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="filters.datasets"
+                      :items="availableDatasets"
+                      item-text="name"
+                      item-value="name"
+                      label="Datasets"
+                      multiple
+                      chips
+                      deletable-chips
+                      clearable
+                      outlined
+                      dense
+                      :prepend-inner-icon="mdiDatabase"
+                      hint="Selecione datasets específicos ou deixe vazio para todos"
+                      persistent-hint
+                    >
+                      <template #selection="{ item, index }">
+                        <v-chip
+                          v-if="index < 2"
+                          small
+                          close
+                          color="teal"
+                          text-color="white"
+                          @click:close="() => removeDataset(item)"
+                        >
+                          {{ item }}
+                        </v-chip>
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.datasets.length - 2 }} outros)
+                        </span>
+                      </template>
+                      <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon color="teal">{{ mdiDatabase }}</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                          <v-list-item-title>{{ item.name }}</v-list-item-title>
+                          <v-list-item-subtitle class="text-caption">{{ item.count }} exemplo(s)</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -182,7 +235,7 @@
                     >
                       <template #selection="{ item, index }">
                         <v-chip
-                          v-if="index < 3"
+                          v-if="index < 2"
                           small
                           close
                           :color="getExportFormatColor(item.value)"
@@ -192,8 +245,8 @@
                           <v-icon small left>{{ item.icon }}</v-icon>
                           {{ item.value.toUpperCase() }}
                         </v-chip>
-                        <span v-if="index === 3" class="grey--text text-caption">
-                          (+{{ filters.export_formats.length - 3 }} outros)
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.export_formats.length - 2 }} outros)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -256,35 +309,58 @@
                 </template>
 
                 <template #[`item.label_breakdown`]="{ item }">
-                  <div class="d-flex flex-wrap">
+                  <div class="label-breakdown-container">
                     <v-chip
                       v-for="(count, label) in item.label_breakdown"
                       :key="label"
-                      x-small
-                      class="ma-1"
+                      small
+                      class="total-label-chip"
                       color="secondary"
                     >
                       {{ label }}: {{ count }}
                     </v-chip>
-                    <span
+                    <div
                       v-if="Object.keys(item.label_breakdown).length === 0"
-                      class="grey--text text-caption"
+                      class="no-labels-message"
                     >
-                      Nenhum label
-                    </span>
+                      <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                      <span class="grey--text text-caption ml-1">Nenhuma label</span>
+                    </div>
                   </div>
                 </template>
 
-                <template #[`item.first_annotation_date`]="{ item }">
-                  <span class="text-caption">
-                    {{ formatDate(item.first_annotation_date) }}
-                  </span>
-                </template>
-
-                <template #[`item.last_annotation_date`]="{ item }">
-                  <span class="text-caption">
-                    {{ formatDate(item.last_annotation_date) }}
-                  </span>
+                <template #[`item.dataset_label_breakdown`]="{ item }">
+                  <div class="dataset-breakdown">
+                    <div
+                      v-for="(labels, dataset) in item.dataset_label_breakdown"
+                      :key="dataset"
+                      class="dataset-section"
+                    >
+                      <div class="dataset-header">
+                        <v-icon small color="teal" class="mr-1">{{ mdiDatabase }}</v-icon>
+                        <span class="dataset-name">{{ dataset }}</span>
+                      </div>
+                      <div class="labels-in-dataset">
+                        <v-chip
+                          v-for="(count, label) in labels"
+                          :key="`${dataset}-${label}`"
+                          small
+                          class="label-chip"
+                          color="primary"
+                          outlined
+                        >
+                          {{ label }}
+                        </v-chip>
+                      </div>
+                    </div>
+                    <div
+                      v-if="!item.dataset_label_breakdown || Object.keys(item.dataset_label_breakdown).length === 0"
+                      class="no-data-message"
+                    >
+                      <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                      <span class="grey--text text-caption ml-1">Nenhuma anotação encontrada</span>
+                    </div>
+                  </div>
                 </template>
               </v-data-table>
 
@@ -558,7 +634,7 @@
 
 
   </v-container>
-</template>
+  </template>
 
 <script lang="ts">
 import Vue from 'vue'
@@ -579,8 +655,10 @@ import {
   mdiTable,
   mdiFileDelimited,
   mdiFilePdfBox,
-  mdiEye
+  mdiEye,
+  mdiDatabase
 } from '@mdi/js'
+import datasetNameMixin from '~/mixins/datasetName.js'
 
 declare module 'vue/types/vue' {
   interface Vue {
@@ -589,6 +667,8 @@ declare module 'vue/types/vue' {
 }
 
 export default Vue.extend({
+  mixins: [datasetNameMixin],
+
   layout: 'project',
 
   middleware: ['check-auth', 'auth', 'setCurrentProject', 'isProjectAdmin'],
@@ -612,6 +692,7 @@ export default Vue.extend({
     mdiAlertCircle: string;
     mdiClose: string;
     mdiEye: string;
+    mdiDatabase: string;
     isGenerating: boolean;
     dateFromMenu: boolean;
     dateToMenu: boolean;
@@ -622,6 +703,7 @@ export default Vue.extend({
       labels: number[];
       perspectives: number[];
       export_formats: string[];
+      datasets: string[];
     };
     availableUsers: Array<{id: number; username: string}>;
     availableLabels: Array<{id: number; text: string; type: string}>;
@@ -649,6 +731,7 @@ export default Vue.extend({
     availableExamples: Array<{id: number; text: string}>;
     exportFormatOptions: Array<{value: string; text: string; icon: string; description: string}>;
     availablePerspectives: Array<{id: number; name: string}>;
+    availableDatasets: Array<{name: string; count: number}>;
   } {
     return {
       mdiFileDocumentOutline,
@@ -668,6 +751,7 @@ export default Vue.extend({
       mdiAlertCircle,
       mdiClose,
       mdiEye,
+      mdiDatabase,
 
       isGenerating: false,
       dateFromMenu: false,
@@ -679,7 +763,8 @@ export default Vue.extend({
         date_to: null as string | null,
         labels: [] as number[],
         perspectives: [] as number[],
-        export_formats: [] as string[]
+        export_formats: [] as string[],
+        datasets: [] as string[]
       },
 
       availableUsers: [] as Array<{id: number; username: string}>,
@@ -688,11 +773,10 @@ export default Vue.extend({
       reportData: [] as any[],
 
       tableHeaders: [
-        { text: 'Utilizador', value: 'annotator_username', sortable: true, width: '150px' },
-        { text: 'Nome', value: 'annotator_name', sortable: true, width: '250px' },
-        { text: 'Por Label', value: 'label_breakdown', sortable: false, width: '300px' },
-        { text: 'Primeira', value: 'first_annotation_date', sortable: true, width: '150px' },
-        { text: 'Última', value: 'last_annotation_date', sortable: true, width: '150px' }
+        { text: 'Utilizador', value: 'annotator_username', sortable: true, width: '140px' },
+        { text: 'Nome', value: 'annotator_name', sortable: true, width: '180px' },
+        { text: 'Total por Label', value: 'label_breakdown', sortable: false, width: '220px' },
+        { text: 'Labels por Dataset', value: 'dataset_label_breakdown', sortable: false, width: '460px' }
       ],
 
       isExporting: false,
@@ -726,7 +810,8 @@ export default Vue.extend({
         { value: 'csv', text: 'CSV (Comma Separated Values)', icon: mdiFileDelimited, description: 'Ideal para Excel e análise de dados' },
         { value: 'pdf', text: 'PDF (Portable Document Format)', icon: mdiFilePdfBox, description: 'Documento formatado para visualização e impressão' }
       ],
-      availablePerspectives: [] as Array<{id: number; name: string}>
+      availablePerspectives: [] as Array<{id: number; name: string}>,
+      availableDatasets: [] as Array<{name: string; count: number}>
     }
   },
 
@@ -742,7 +827,8 @@ export default Vue.extend({
         this.filters.perspectives.length > 0 ||
         this.filters.export_formats.length > 0 ||
         this.filters.date_from ||
-        this.filters.date_to
+        this.filters.date_to ||
+        this.filters.datasets.length > 0
       )
     },
 
@@ -754,6 +840,7 @@ export default Vue.extend({
       if (this.filters.export_formats.length > 0) count++
       if (this.filters.date_from) count++
       if (this.filters.date_to) count++
+      if (this.filters.datasets.length > 0) count++
       return count
     }
   },
@@ -835,6 +922,78 @@ export default Vue.extend({
         } catch (error) {
           console.error('Erro ao carregar exemplos:', error)
         }
+
+        // Carregar datasets disponíveis (filenames únicos)
+        try {
+          const examples = await this.$repositories.example.list(this.projectId, {offset: '0', limit: '10000'})
+          const datasetMap = new Map()
+          
+          console.log('[DEBUG] Total de exemplos:', examples.items.length)
+          console.log('[DEBUG] Primeiro exemplo completo:', examples.items[0])
+          
+          examples.items.forEach((example: any, index: number) => {
+            if (index < 3) { // Debug apenas os primeiros 3
+              console.log(`[DEBUG] Exemplo ${index}:`, {
+                id: example.id,
+                filename: example.filename,
+                uploadName: example.uploadName,
+                upload_name: example.upload_name
+              })
+            }
+            
+            // Lógica robusta para obter o nome completo do dataset
+            let datasetName = ''
+            
+            // 1. Priorizar uploadName (camelCase) com extensão
+            if (example.uploadName && typeof example.uploadName === 'string' && example.uploadName.includes('.')) {
+              datasetName = example.uploadName
+            }
+            // 2. Tentar upload_name (snake_case) com extensão
+            else if (example.upload_name && typeof example.upload_name === 'string' && example.upload_name.includes('.')) {
+              datasetName = example.upload_name
+            }
+            // 3. Filename com extensão
+            else if (example.filename && typeof example.filename === 'string' && example.filename.includes('.')) {
+              datasetName = example.filename
+            }
+            // 4. Fallback para uploadName sem extensão
+            else if (example.uploadName && typeof example.uploadName === 'string') {
+              datasetName = example.uploadName
+            }
+            // 5. Fallback para upload_name sem extensão
+            else if (example.upload_name && typeof example.upload_name === 'string') {
+              datasetName = example.upload_name
+            }
+            // 6. Último recurso: filename
+            else if (example.filename && typeof example.filename === 'string') {
+              datasetName = example.filename
+            }
+            
+            if (index < 3) {
+              console.log(`[DEBUG] Dataset name final para exemplo ${index}:`, datasetName)
+            }
+            
+            if (datasetName && datasetName.trim()) {
+              const trimmedName = datasetName.trim()
+              if (datasetMap.has(trimmedName)) {
+                datasetMap.set(trimmedName, datasetMap.get(trimmedName) + 1)
+              } else {
+                datasetMap.set(trimmedName, 1)
+              }
+            }
+          })
+          
+          this.availableDatasets = Array.from(datasetMap.entries()).map(([name, count]) => ({
+            name,
+            count
+          }))
+          
+          console.log('[DEBUG] Datasets finais:', this.availableDatasets)
+          console.log('[DEBUG] Primeiro dataset:', this.availableDatasets[0])
+          console.log('[DEBUG] Tipos dos nomes:', this.availableDatasets.map(d => typeof d.name))
+        } catch (error) {
+          console.error('Erro ao carregar datasets:', error)
+        }
       } catch (error) {
         console.error('Erro ao carregar opções de filtro:', error)
         this.showError('Erro ao carregar opções de filtro')
@@ -885,6 +1044,10 @@ export default Vue.extend({
 
         if (this.filters.perspectives.length > 0) {
           params.append('perspective_ids', this.filters.perspectives.join(','))
+        }
+
+        if (this.filters.datasets.length > 0) {
+          params.append('dataset_names', this.filters.datasets.join(','))
         }
 
         console.log('[FRONTEND DEBUG] Parâmetros enviados:', params.toString())
@@ -972,6 +1135,10 @@ export default Vue.extend({
           params.append('perspective_ids', this.filters.perspectives.join(','))
         }
 
+        if (this.filters.datasets.length > 0) {
+          params.append('dataset_names', this.filters.datasets.join(','))
+        }
+
         // Usar os formatos selecionados nos filtros
         const exportFormats = this.filters.export_formats
         if (exportFormats.length === 0) {
@@ -1047,25 +1214,47 @@ export default Vue.extend({
         date_to: null,
         labels: [],
         perspectives: [],
-        export_formats: []
+        export_formats: [],
+        datasets: []
       }
       this.showSuccess('Filtros limpos')
     },
 
-    removeUser(userId: number) {
+    removeUser(user: any) {
+      const userId = typeof user === 'object' ? user.id : user
       this.filters.users = this.filters.users.filter((id) => id !== userId)
     },
 
-    removeLabel(labelId: number) {
+    removeLabel(label: any) {
+      const labelId = typeof label === 'object' ? label.id : label
       this.filters.labels = this.filters.labels.filter((id) => id !== labelId)
     },
 
-    removePerspective(perspectiveId: number) {
+    removePerspective(perspective: any) {
+      const perspectiveId = typeof perspective === 'object' ? perspective.id : perspective
       this.filters.perspectives = this.filters.perspectives.filter((id) => id !== perspectiveId)
     },
 
     removeExportFormat(format: string) {
       this.filters.export_formats = this.filters.export_formats.filter((f) => f !== format)
+    },
+
+    removeDataset(dataset: string) {
+      console.log('[DEBUG] Removendo dataset:', dataset)
+      console.log('[DEBUG] Tipo do dataset:', typeof dataset)
+      console.log('[DEBUG] Datasets antes:', this.filters.datasets)
+      console.log('[DEBUG] Tipos dos datasets:', this.filters.datasets.map(d => typeof d))
+      
+      // Garantir que estamos a comparar strings
+      const datasetStr = String(dataset)
+      const newDatasets = this.filters.datasets.filter((d) => String(d) !== datasetStr)
+      
+      // Usar Vue.set para garantir reatividade
+      this.$set(this.filters, 'datasets', newDatasets)
+      console.log('[DEBUG] Datasets depois:', this.filters.datasets)
+      
+      // Forçar atualização do componente
+      this.$forceUpdate()
     },
 
     getLabelTypeColor(type: string) {
@@ -1231,6 +1420,42 @@ export default Vue.extend({
         pdf: 'red'
       }
       return colors[value] || 'grey'
+    },
+
+    getSelectedUserText(user: any) {
+      if (typeof user === 'object') {
+        return user.username;
+      } else if (typeof user === 'string') {
+        return user;
+      }
+      return '';
+    },
+
+    getSelectedLabelType(label: any) {
+      if (typeof label === 'object') {
+        return label.type;
+      } else if (typeof label === 'string') {
+        return 'category'; // Assuming a default type if not provided
+      }
+      return '';
+    },
+
+    getSelectedLabelText(label: any) {
+      if (typeof label === 'object') {
+        return label.text;
+      } else if (typeof label === 'string') {
+        return label;
+      }
+      return '';
+    },
+
+    getSelectedPerspectiveText(perspective: any) {
+      if (typeof perspective === 'object') {
+        return perspective.name;
+      } else if (typeof perspective === 'string') {
+        return perspective;
+      }
+      return '';
     }
   }
 })
@@ -1255,5 +1480,94 @@ export default Vue.extend({
 
 .text-caption {
   font-size: 0.75rem !important;
+}
+
+.dataset-breakdown {
+  max-width: 450px;
+  padding: 8px;
+}
+
+.dataset-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #009688;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.dataset-section:last-child {
+  margin-bottom: 0;
+}
+
+.dataset-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.dataset-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #009688;
+}
+
+.labels-in-dataset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.label-chip {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  transition: all 0.2s ease;
+}
+
+.label-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.no-data-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border: 1px dashed #ccc;
+}
+
+.label-breakdown-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+}
+
+.total-label-chip {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  transition: all 0.2s ease;
+}
+
+.total-label-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.no-labels-message {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  border: 1px dashed #ccc;
 }
 </style>

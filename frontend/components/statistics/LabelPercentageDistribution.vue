@@ -18,15 +18,20 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import Vue from 'vue'
+import { Chart, registerables } from 'chart.js'
 import ChartPie from './ChartPie.vue'
 import { Distribution } from '~/domain/models/metrics/metrics'
 import { LabelDTO } from '~/services/application/label/labelData'
 import { ExampleListDTO } from '~/services/application/example/exampleData'
+import datasetNameMixin from '~/mixins/datasetName.js'
+
+Chart.register(...registerables)
 
 export default Vue.extend({
   components: {
     ChartPie
   },
+  mixins: [datasetNameMixin],
 
   props: {
     title: {
@@ -56,7 +61,7 @@ export default Vue.extend({
         ? Object.fromEntries(
             this.examples.items.map((example) => [
               example.id,
-              example.filename.replace(/\.[^/.]+$/, '')
+              this.getDatasetName(example)
             ])
           )
         : {}

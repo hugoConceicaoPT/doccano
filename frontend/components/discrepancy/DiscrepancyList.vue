@@ -109,8 +109,11 @@ import { Distribution } from '~/domain/models/statistics/statistics'
 import { ExampleDTO } from '~/services/application/example/exampleData'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
 import { MemberItem } from '~/domain/models/member/member'
+import datasetNameMixin from '~/mixins/datasetName.js'
 
 export default Vue.extend({
+  mixins: [datasetNameMixin],
+
   props: {
     isLoading: {
       type: Boolean,
@@ -380,7 +383,7 @@ export default Vue.extend({
     async resolveExampleName(id: string) {
       if (!this.exampleNameMap[id]) {
         const example = await this.$repositories.example.findById(this.projectId, Number(id))
-        this.$set(this.exampleNameMap, id, example.filename.replace(/\.[^/.]+$/, ''))
+        this.$set(this.exampleNameMap, id, this.getDatasetName(example))
       }
       return this.exampleNameMap[id]
     },

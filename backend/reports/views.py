@@ -84,6 +84,13 @@ class AnnotatorReportView(APIView):
                 description="Lista de IDs das perspectivas (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
+            ),
+            openapi.Parameter(
+                'dataset_names',
+                openapi.IN_QUERY,
+                description="Lista de nomes dos datasets (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
             )
         ]
     )
@@ -167,6 +174,12 @@ class AnnotatorReportView(APIView):
                 ]
             except ValueError:
                 processed['perspective_ids'] = []
+        
+        # Processar dataset_names (opcional)
+        if 'dataset_names' in query_params and query_params['dataset_names']:
+            processed['dataset_names'] = [
+                x.strip() for x in query_params['dataset_names'].split(',') if x.strip()
+            ]
         
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:
@@ -270,6 +283,13 @@ class AnnotatorReportExportView(APIView):
                 description="Lista de IDs das perspectivas (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
+            ),
+            openapi.Parameter(
+                'dataset_names',
+                openapi.IN_QUERY,
+                description="Lista de nomes dos datasets (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
             )
         ],
         responses={
@@ -364,7 +384,20 @@ class AnnotatorReportExportView(APIView):
             except ValueError:
                 processed['label_ids'] = []
         
-
+        # Processar perspective_ids (opcional)
+        if 'perspective_ids' in query_params and query_params['perspective_ids']:
+            try:
+                processed['perspective_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_ids'] = []
+        
+        # Processar dataset_names (opcional)
+        if 'dataset_names' in query_params and query_params['dataset_names']:
+            processed['dataset_names'] = [
+                x.strip() for x in query_params['dataset_names'].split(',') if x.strip()
+            ]
         
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:

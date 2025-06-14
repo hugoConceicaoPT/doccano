@@ -253,6 +253,7 @@ import {
 import { VotingConfigurationItem, AnnotationRuleItem } from '~/domain/models/rules/rule'
 import { MemberItem } from '~/domain/models/member/member'
 import RuleList from '~/components/rules/RuleList.vue'
+import datasetNameMixin from '~/mixins/datasetName.js'
 
 export type Discussion = {
   numberVersion: string
@@ -271,6 +272,8 @@ export default Vue.extend({
   components: {
     RuleList
   },
+  mixins: [datasetNameMixin],
+  
   layout: 'project',
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
   data() {
@@ -731,7 +734,8 @@ export default Vue.extend({
       }
     },
     stripExtension(filename?: string): string {
-      return filename ? filename.replace(/\.[^/.]+$/, '') : ''
+      // Agora retorna o nome completo em vez de remover a extensão
+      return filename || ''
     },
     formatDate(date: Date): string {
       return date.toLocaleString('pt-PT', {

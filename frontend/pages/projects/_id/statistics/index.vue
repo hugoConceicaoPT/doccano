@@ -161,12 +161,15 @@ import LabelPercentageDistribution from '~/components/statistics/LabelPercentage
 import PerspectivePercentageDistribution from '~/components/statistics/PerspectivePercentageDistribution.vue'
 import { MemberItem } from '~/domain/models/member/member'
 import { Distribution } from '~/domain/models/statistics/statistics'
+import datasetNameMixin from '~/mixins/datasetName.js'
 
 export default Vue.extend({
   components: {
     LabelPercentageDistribution,
     PerspectivePercentageDistribution
   },
+
+  mixins: [datasetNameMixin],
 
   layout: 'project',
 
@@ -278,7 +281,7 @@ export default Vue.extend({
     formattedAnnotations(): { text: string; value: number }[] {
       if (!this.examples || !this.examples.items) return []
       return this.examples.items.map((item: any) => ({
-        text: item.filename.replace(/\.[^/.]+$/, ''),
+        text: this.getDatasetName(item),
         value: item.id
       }))
     }
