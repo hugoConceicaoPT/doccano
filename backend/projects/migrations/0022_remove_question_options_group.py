@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("projects", "0022_alter_perspective_project"),
+        ("projects", "0021_alter_perspective_project"),
     ]
 
     operations = [

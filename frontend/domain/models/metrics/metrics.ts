@@ -1,7 +1,13 @@
 export type Label = { [key: string]: number }
 export type User = { [key: string]: number }
 export type ConfirmedCount = { [key: string]: number }
-export type Distribution = { [user: string]: { [label: string]: number } }
+export type Distribution = {
+  [userId: string]: {
+    [exampleId: string]: {
+      [label: string]: number
+    }
+  }
+}
 export type DiscussionPerRule = { [rule: string]: number }
 export type Percentage = { [example: string]: { [label: string]: number } }
 export interface Progress {

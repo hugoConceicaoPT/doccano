@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("projects", "0023_remove_question_options_group"),
+        ("projects", "0022_remove_question_options_group"),
     ]
 
     operations = [

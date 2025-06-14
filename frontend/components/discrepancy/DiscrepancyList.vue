@@ -22,55 +22,28 @@
       <v-card-text>
         <v-row>
           <v-col cols="12" md="4">
-            <v-select
-              v-model="selectedExample"
-              :items="exampleOptions"
-              label="Selecione a anotação"
-              dense
-              outlined
-              clearable
-              hide-details
-              placeholder="Select"
-              :prepend-inner-icon="mdiFileDocumentOutline"
-            />
+            <v-select v-model="selectedExample" :items="exampleOptions" label="Selecione a anotação" dense outlined
+              multiple hide-details placeholder="Select" :prepend-inner-icon="mdiFileDocumentOutline" />
           </v-col>
           <v-col cols="12" md="4">
-            <v-select
-              v-model="selectedPerspectiveQuestion"
-              :items="perspectiveQuestions"
-              label="Perspective Question"
-              dense
-              outlined
-              hide-details
-              placeholder="Select a question"
-              :prepend-inner-icon="mdiHelpCircleOutline"
-            />
+            <v-select v-model="selectedPerspectiveQuestion" :items="perspectiveQuestions" label="Perspective Question"
+              dense outlined hide-details placeholder="Select a question" :prepend-inner-icon="mdiHelpCircleOutline" />
           </v-col>
           <v-col v-if="selectedPerspectiveQuestion" cols="12" md="4">
-            <v-select
-              v-model="selectedPerspectiveAnswer"
-              :items="possibleAnswers"
-              label="Perspective Answer"
-              dense
-              outlined
-              multiple
-              hide-details
-              placeholder="Select answer(s)"
-              :prepend-inner-icon="mdiCheckboxMultipleMarkedOutline"
-            />
+            <v-select v-model="selectedPerspectiveAnswer" :items="possibleAnswers" label="Perspective Answer" dense
+              outlined multiple hide-details placeholder="Select answer(s)"
+              :prepend-inner-icon="mdiCheckboxMultipleMarkedOutline" />
           </v-col>
         </v-row>
         <v-row>
-          <v-col cols="12" class="d-flex justify-end">
-            <v-btn
-              color="primary"
-              outlined
-              small
-              @click="clearFilters"
-              :disabled="!hasActiveFilters"
-            >
+          <v-col cols="12" class="d-flex justify-start">
+            <v-btn color="primary" outlined small @click="clearFilters" :disabled="!hasActiveFilters">
               <v-icon left small>{{ mdiFilterRemove }}</v-icon>
               Clear Filters
+            </v-btn>
+            <v-btn color="secondary" outlined small class="ml-2" @click="$router.push(localePath(`/projects/${projectId}`))">
+              <v-icon left small>{{ mdiHome }}</v-icon>
+              Home
             </v-btn>
           </v-col>
         </v-row>
@@ -78,33 +51,16 @@
     </v-card>
 
     <v-card class="table-card">
-      <v-data-table
-        :items="flatItems"
-        :headers="headers"
-        :loading="isLoading"
-        :loading-text="$t('generic.loading')"
-        :no-data-text="$t('vuetify.noDataAvailable')"
-        :footer-props="{
+      <v-data-table :items="flatItems" :headers="headers" :loading="isLoading" :loading-text="$t('generic.loading')"
+        :no-data-text="$t('vuetify.noDataAvailable')" :footer-props="{
           showFirstLastPage: true,
           'items-per-page-text': $t('vuetify.itemsPerPageText'),
           'page-text': $t('dataset.pageText')
-        }"
-        :item-key="items.exampleName + '-' + items.labelName"
-        show-select
-        @input="$emit('input', $event)"
-        class="elevation-0"
-      >
+        }" :item-key="items.exampleName + '-' + items.labelName" show-select @input="$emit('input', $event)"
+        class="elevation-0">
         <template #top>
-          <v-text-field
-            v-model="search"
-            :prepend-inner-icon="mdiMagnify"
-            :label="$t('generic.search')"
-            single-line
-            hide-details
-            filled
-            class="mx-4 mt-4 mb-2"
-            style="max-width: 300px"
-          />
+          <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" :label="$t('generic.search')" single-line
+            hide-details filled class="mx-4 mt-4 mb-2" style="max-width: 300px" />
         </template>
 
         <template #[`header.data-table-select`]>
@@ -123,11 +79,7 @@
         </template>
 
         <template #[`item.discrepancyBool`]="{ item }">
-          <v-chip
-            :color="item.discrepancyBool === 'Yes' ? 'error' : 'success'"
-            small
-            class="font-weight-medium"
-          >
+          <v-chip :color="item.discrepancyBool === 'Yes' ? 'error' : 'success'" small class="font-weight-medium">
             <v-icon left small>{{ item.discrepancyBool === 'Yes' ? mdiAlert : mdiCheck }}</v-icon>
             {{ item.discrepancyBool }}
           </v-chip>
@@ -148,12 +100,15 @@ import {
   mdiFileDocumentOutline,
   mdiHelpCircleOutline,
   mdiCheckboxMultipleMarkedOutline,
-  mdiFilterRemove
+  mdiFilterRemove,
+  mdiHome
 } from '@mdi/js'
 import type { PropType } from 'vue'
 import { Percentage } from '~/domain/models/metrics/metrics'
 import { Distribution } from '~/domain/models/statistics/statistics'
 import { ExampleDTO } from '~/services/application/example/exampleData'
+import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
+import { MemberItem } from '~/domain/models/member/member'
 
 export default Vue.extend({
   props: {
@@ -166,9 +121,21 @@ export default Vue.extend({
       type: Object as PropType<Percentage>,
       required: true
     },
+    perspective: {
+      type: Object as PropType<PerspectiveDTO>,
+      required: true
+    },
+    categoryDistribution: {
+      type: Object as PropType<Distribution>,
+      required: true
+    },
     discrepancyThreshold: {
       type: Number,
       default: 0,
+      required: true
+    },
+    members: {
+      type: Array as PropType<MemberItem[]>,
       required: true
     }
   },
@@ -185,7 +152,8 @@ export default Vue.extend({
       mdiHelpCircleOutline,
       mdiCheckboxMultipleMarkedOutline,
       mdiFilterRemove,
-      selectedExample: 'Todas as anotações',
+      mdiHome,
+      selectedExample: [] as string[],
       exampleNameMap: {} as Record<string, string>,
       isReady: false,
       selectedPerspectiveQuestion: '',
@@ -219,74 +187,75 @@ export default Vue.extend({
     projectId(): string {
       return this.$route.params.id
     },
-    flatItems(): Array<{
-      exampleName: string
-      labelsValue: string
-      discrepancyBool: string
-    }> {
-      const rows = []
+    flatItems(): Array<{ exampleName: string; labelsValue: string; discrepancyBool: string }> {
+      const rows: Array<{ exampleName: string; labelsValue: string; discrepancyBool: string }> = []
 
       const source = this.filteredItems
       for (const [exampleName, labels] of Object.entries(source)) {
-        // If no question is selected, use original percentages
-        if (!this.selectedPerspectiveQuestion) {
+        // Sem pergunta ou resposta selecionada, usa percentuais originais
+        if (!this.selectedPerspectiveQuestion || !this.selectedPerspectiveAnswer.length) {
           const labelsValue = Object.entries(labels)
             .filter(([label]) => this.matchesSearch(label))
-            .map(([label, percent]) => `${label}: ${Math.round(Number(percent))}%`)
+            .map(([label, percent]) => {
+              return `${label}: ${Math.round(Number(percent))}%`
+            })
             .join('\n')
 
           if (labelsValue) {
-            const notHasDiscrepancy = Object.values(labels).some(
+            const hasDiscrepancy = Object.values(labels).some(
               (percentage) => Number(percentage) > this.discrepancyThreshold
             )
 
             rows.push({
               exampleName,
               labelsValue,
-              discrepancyBool: notHasDiscrepancy ? 'No' : 'Yes'
+              discrepancyBool: hasDiscrepancy ? 'Yes' : 'No'
             })
           }
           continue
         }
+        const questionId = Number(this.selectedPerspectiveQuestion)
 
-        // Get the example's perspective answers for the selected question
-        const examplePerspectiveAnswers = this.perspectiveDistribution[this.selectedPerspectiveQuestion]?.answers || {}
-        console.log(examplePerspectiveAnswers)
-        // Filter answers based on selected answers
-        const filteredAnswers = this.selectedPerspectiveAnswer.length > 0
-          ? Object.entries(examplePerspectiveAnswers).filter(([answer]) => 
-              this.selectedPerspectiveAnswer.includes(answer)
-            )
-          : Object.entries(examplePerspectiveAnswers)
+        // Para cada resposta selecionada, obter percentuais por example
+        const percentagesForAnswers = this.selectedPerspectiveAnswer
+          .map(answerText => this.getLabelPercentagesForAnswer(questionId, answerText))
+          .filter(p => Object.keys(p).length > 0)
 
-        // Calculate total annotators for the filtered answers
-        const totalAnnotators = filteredAnswers.reduce((sum, [_, count]) => sum + count, 0)
+        // Combina percentuais para o example atual
+        const combinedPercentages: Record<string, number> = {}
 
-        // Calculate percentages based on filtered annotators
-        const filteredLabels = Object.entries(labels).map(([label, percentage]) => {
-          // For each label, calculate how many annotators selected it
-          const labelAnnotators = Math.round((Number(percentage) * totalAnnotators) / 100)
-          // Calculate the percentage based on the actual number of annotators
-          const adjustedPercentage = totalAnnotators > 0 
-            ? (labelAnnotators / totalAnnotators) * 100
-            : 0
-          return [label, adjustedPercentage] as [string, number]
-        })
+        for (const percentagesByExample of percentagesForAnswers) {
+          const examplePercentages = percentagesByExample[exampleName]
+          if (!examplePercentages) continue
 
-        const labelsValue = filteredLabels
+          for (const [label, percent] of Object.entries(examplePercentages)) {
+            combinedPercentages[label] = (combinedPercentages[label] || 0) + percent
+          }
+        }
+
+        const totalPercent = Object.values(combinedPercentages).reduce((sum, val) => sum + val, 0)
+        const normalizedPercentages = totalPercent > 0
+          ? Object.fromEntries(
+            Object.entries(combinedPercentages).map(([label, percent]) => [label, (percent / totalPercent) * 100])
+          )
+          : {}
+
+        const labelsValue = Object.entries(normalizedPercentages)
           .filter(([label]) => this.matchesSearch(label))
-          .map(([label, percent]) => `${label}: ${Math.round(percent)}%`)
+          .map(([label, percent]) => {
+            return `${label}: ${Math.round(percent)}%`
+          })
           .join('\n')
 
         if (labelsValue) {
-          const notHasDiscrepancy = filteredLabels.some(
-            ([_, percentage]) => percentage > this.discrepancyThreshold
+          const hasDiscrepancy = Object.values(normalizedPercentages).some(
+            (percentage) => percentage > this.discrepancyThreshold
           )
 
           rows.push({
             exampleName,
             labelsValue,
-            discrepancyBool: notHasDiscrepancy ? 'No' : 'Yes'
+            discrepancyBool: hasDiscrepancy ? 'Yes' : 'No'
           })
         }
       }
@@ -295,33 +264,31 @@ export default Vue.extend({
     },
 
     exampleOptions(): Array<{ text: string; value: string }> {
-      return [
-        { text: 'Todas as anotações', value: 'Todas as anotações' },
-        ...Object.entries(this.exampleNameMap).map(([id, name]) => ({
-          text: name,
-          value: id
-        }))
-      ]
+      return Object.entries(this.exampleNameMap).map(([id, name]) => ({
+        text: name,
+        value: id
+      }))
     },
 
     filteredItems(): Percentage {
-      console.log(this.items)
-      if (!this.selectedExample || this.selectedExample === 'Todas as anotações') {
+      if (!this.selectedExample || this.selectedExample.length === 0) {
         return this.items
       }
 
-      const selected = this.items[this.selectedExample]
-
-      if (selected) {
-        return { [this.selectedExample]: selected }
+      const filtered: Percentage = {}
+      for (const exampleId of this.selectedExample) {
+        const selected = this.items[exampleId]
+        if (selected) {
+          filtered[exampleId] = selected
+        }
       }
 
-      return {}
+      return filtered
     },
 
     hasActiveFilters(): boolean {
       return (
-        this.selectedExample !== 'Todas as anotações' ||
+        this.selectedExample.length > 0 ||
         this.selectedPerspectiveQuestion !== '' ||
         this.selectedPerspectiveAnswer.length > 0 ||
         this.search !== ''
@@ -350,6 +317,63 @@ export default Vue.extend({
   },
 
   methods: {
+    getLabelPercentagesForAnswer(questionId: number, selectedAnswerText: string): Record<string, Record<string, number>> {
+      const percentagesByExample: Record<string, Record<string, number>> = {}
+
+      // 1. Encontrar a pergunta
+      const question = this.perspective.questions.find(q => q.id === questionId)
+      if (!question) return {}
+      // 2. Filtrar respostas que têm o texto desejado
+      const matchingAnswers = question.answers.filter(a => a.answer_text === selectedAnswerText)
+      if (matchingAnswers.length === 0) return {}
+      // 3. Obter IDs dos membros que deram essa resposta
+      const memberIds = matchingAnswers.map(a => a.member).filter(m => m !== undefined)
+      if (memberIds.length === 0) return {}
+
+      // 4. Obter nomes dos membros
+      const memberNames = memberIds.map(id => {
+        const member = this.members.find((m: MemberItem) => m.id === id)
+        return member ? member.name : null
+      }).filter(name => name !== null) as string[]
+
+      // 5. Para cada membro, somar os votos por example e calcular percentagens
+      for (const memberName of memberNames) {
+        const examples = this.categoryDistribution[memberName]
+        if (!examples) continue
+
+        for (const [exampleId, labelCounts] of Object.entries(examples)) {
+          // Inicializar objeto se não existir
+          if (!percentagesByExample[exampleId]) {
+            percentagesByExample[exampleId] = {}
+          }
+
+          // Somar os votos por label para aquele example
+          for (const [label, count] of Object.entries(labelCounts)) {
+            const value = Number(count) || 0
+            percentagesByExample[exampleId][label] = (percentagesByExample[exampleId][label] || 0) + value
+          }
+        }
+      }
+
+      // 6. Agora calcular porcentagens por label para cada exampleId
+      for (const exampleId in percentagesByExample) {
+        const labelCounts = percentagesByExample[exampleId]
+
+        const totalVotes = Object.values(labelCounts).reduce((sum, val) => sum + val, 0)
+        if (totalVotes === 0) {
+          for (const label of Object.keys(labelCounts)) {
+            labelCounts[label] = 0
+          }
+        } else {
+          for (const label of Object.keys(labelCounts)) {
+            labelCounts[label] = (labelCounts[label] / totalVotes) * 100
+          }
+        }
+      }
+      return percentagesByExample
+    },
+
+
     matchesSearch(label: string): boolean {
       return label.toLowerCase().includes(this.search.toLowerCase())
     },
@@ -373,7 +397,7 @@ export default Vue.extend({
       this.$router.push(this.localePath(`/projects/${this.projectId}`))
     },
     clearFilters() {
-      this.selectedExample = 'Todas as anotações'
+      this.selectedExample = [] as string[]
       this.selectedPerspectiveQuestion = ''
       this.selectedPerspectiveAnswer = [] as string[]
       this.search = ''

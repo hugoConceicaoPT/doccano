@@ -54,9 +54,16 @@ export default Vue.extend({
     chartJSFormat(): any {
       const data: { [user: string]: { labels: string[]; datasets: any[] } } = {}
       for (const user in this.distribution) {
-        const labels = Object.keys(this.distribution[user])
+        const labelCounts: Record<string, number> = {}
+        for (const exampleVotes of Object.values(this.distribution[user])) {
+          for (const [label, count] of Object.entries(exampleVotes)) {
+            labelCounts[label] = (labelCounts[label] || 0) + count
+          }
+        }
+
+        const labels = Object.keys(labelCounts)
         labels.sort()
-        const counts = labels.map((label) => this.distribution[user][label])
+        const counts = labels.map((label) => labelCounts[label])
         const colors = labels.map((label) =>
           label in this.colorMapping ? this.colorMapping[label] : '#00d1b2'
         )

@@ -150,12 +150,12 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
 import { mdiClose, mdiFilterCheck, mdiHome } from '@mdi/js'
 import Papa from 'papaparse'
 import html2canvas from 'html2canvas'
 import { jsPDF as JsPDF } from 'jspdf'
 import 'jspdf-autotable'
-import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import LabelPercentageDistribution from '~/components/statistics/LabelPercentageDistribution.vue'
 import PerspectivePercentageDistribution from '~/components/statistics/PerspectivePercentageDistribution.vue'

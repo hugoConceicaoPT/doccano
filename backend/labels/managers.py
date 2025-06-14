@@ -16,11 +16,20 @@ class LabelManager(Manager):
             labels: label queryset.
 
         Returns:
-            label distribution per user.
+            label distribution per user and example.
 
         Examples:
             >>> self.calc_label_distribution(examples, members, labels)
-            {'admin': {'positive': 10, 'negative': 5}}
+            {
+                'user1': {
+                    'example1': {'positive': 1, 'negative': 0},
+                    'example2': {'positive': 0, 'negative': 1}
+                },
+                'user2': {
+                    'example1': {'positive': 1, 'negative': 0},
+                    'example2': {'positive': 1, 'negative': 0}
+                }
+            }
         """
         try:
             logger.info(f"Calculando distribuição de labels para {members.count()} membros e {labels.count()} labels")
@@ -35,8 +44,10 @@ class LabelManager(Manager):
             distribution = {}
             for member in members:
                 distribution[member.username] = {}
-                for label in labels:
-                    distribution[member.username][label.text] = 0
+                for example_id in example_ids:
+                    distribution[member.username][example_id] = {}
+                    for label in labels:
+                        distribution[member.username][example_id][label.text] = 0
             
             logger.info(f"Distribuição inicializada para {len(distribution)} utilizadores")
             
@@ -49,7 +60,7 @@ class LabelManager(Manager):
             try:
                 items = (
                     self.filter(example_id__in=example_ids)
-                    .values("user__username", f"{self.label_type_field}__text")
+                    .values("user__username", "example_id", f"{self.label_type_field}__text")
                     .annotate(count=Count(f"{self.label_type_field}__text"))
                 )
                 
@@ -63,16 +74,17 @@ class LabelManager(Manager):
             # Preencher distribuição com dados reais
             for item in items_list:
                 username = item.get("user__username")
+                example_id = item.get("example_id")
                 label_text = item.get(f"{self.label_type_field}__text")
                 count = item.get("count", 0)
                 
-                if username and label_text and username in distribution:
-                    if label_text in distribution[username]:
-                        distribution[username][label_text] = count
+                if username and example_id and label_text and username in distribution:
+                    if example_id in distribution[username] and label_text in distribution[username][example_id]:
+                        distribution[username][example_id][label_text] = count
                     else:
-                        logger.warning(f"Label '{label_text}' não encontrado na distribuição inicial para user '{username}'")
+                        logger.warning(f"Label '{label_text}' ou example '{example_id}' não encontrado na distribuição inicial para user '{username}'")
                 else:
-                    logger.warning(f"Dados inválidos no item: username='{username}', label='{label_text}', count={count}")
+                    logger.warning(f"Dados inválidos no item: username='{username}', example_id='{example_id}', label='{label_text}', count={count}")
             
             logger.info(f"Distribuição calculada com sucesso")
             return distribution
@@ -81,7 +93,13 @@ class LabelManager(Manager):
             logger.error(f"Erro ao calcular distribuição de labels: {str(e)}", exc_info=True)
             # Retornar distribuição vazia em caso de erro
             try:
-                return {member.username: {label.text: 0 for label in labels} for member in members}
+                return {
+                    member.username: {
+                        example_id: {label.text: 0 for label in labels}
+                        for example_id in example_ids
+                    }
+                    for member in members
+                }
             except:
                 return {}
 

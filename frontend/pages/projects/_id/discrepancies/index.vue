@@ -27,7 +27,7 @@
           dismissible
           @click="errorMessage = ''"
         >
-          <v-icon left>{{ mdiAlertCircle }}</v-icon>
+          
           {{ errorMessage }}
         </v-alert>
         <v-alert
@@ -44,10 +44,13 @@
         <discrepancy-list
           v-model="selected"
           :items="items"
+          :perspective="perspective"
+          :category-distribution="categoryDistribution"
           :is-loading="isLoading"
           :discrepancy-threshold="
             project && project.minPercentage !== undefined ? project.minPercentage : 0
           "
+          :members="members"
           @message="handleMessage"
         />
       </v-card-text>
@@ -65,6 +68,9 @@ import {
 } from '@mdi/js'
 import DiscrepancyList from '~/components/discrepancy/DiscrepancyList.vue'
 import { Percentage } from '~/domain/models/metrics/metrics'
+import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
+import { Distribution } from '~/domain/models/metrics/metrics'
+import { MemberItem } from '~/domain/models/member/member'
 
 export default Vue.extend({
   components: {
@@ -78,6 +84,8 @@ export default Vue.extend({
   data() {
     return {
       items: {} as Percentage,
+      perspective: {} as PerspectiveDTO | null,
+      categoryDistribution: {} as Distribution,
       isLoading: false,
       drawerLeft: null,
       selected: {} as Percentage,
@@ -88,7 +96,8 @@ export default Vue.extend({
       },
       mdiAlertCircle,
       mdiInformation,
-      mdiPercent
+      mdiPercent,
+      members: [] as MemberItem[]
     }
   },
 
@@ -96,6 +105,9 @@ export default Vue.extend({
     this.isLoading = true
     try {
       this.items = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+      this.perspective = await this.$services.perspective.list(this.projectId)
+      this.categoryDistribution = await this.$repositories.metrics.fetchCategoryDistribution(this.projectId)
+      this.members = await this.$repositories.member.list(this.projectId)
     } catch (error) {
       this.handleError(error)
     }

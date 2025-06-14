@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("projects", "0021_alter_perspective_project_and_more"),
+        ("projects", "0020_votingcofiguration_is_closed_and_more"),
     ]
 
     operations = [
