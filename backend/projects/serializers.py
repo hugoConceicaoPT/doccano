@@ -20,7 +20,6 @@ from .models import (
     Speech2textProject,
     Tag,
     TextClassificationProject,
-    AnnotationRuleType,
     AnnotationRule,
     VotingCofiguration,
     AnnotationRuleAnswers,
@@ -274,11 +273,6 @@ class PerspectiveListSerializer(serializers.ModelSerializer):
         model = Perspective
         fields = ("id", "name", "project_id", "project_name", "creator_name", "created_at")
 
-
-class AnnotationRuleTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AnnotationRuleType
-        fields = ['id', 'annotation_rule_type']
 
 class AnnotationRuleSerializer(serializers.ModelSerializer):
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())

@@ -1,21 +1,8 @@
 import {
-  AnnotationRuleTypeItem,
   AnnotationRuleItem,
   VotingConfigurationItem,
   AnnotationRuleAnswerItem
 } from './rule'
-
-export interface AnnotationRuleTypeRepository {
-  create(projectId: string, item: AnnotationRuleTypeItem): Promise<AnnotationRuleTypeItem>
-  list(projectId: string): Promise<AnnotationRuleTypeItem[]>
-  delete(projectId: string, id: number): Promise<AnnotationRuleTypeItem>
-  update(
-    projectId: string,
-    id: number,
-    data: Partial<AnnotationRuleTypeItem>
-  ): Promise<AnnotationRuleTypeItem>
-  findById(projectId: string, id: number): Promise<AnnotationRuleTypeItem | null>
-}
 
 export interface AnnotationRuleRepository {
   create(projectId: string, item: AnnotationRuleItem): Promise<AnnotationRuleItem>

@@ -11,7 +11,6 @@ from datetime import datetime
 
 from projects.models import (
     Project,
-    AnnotationRuleType,
     AnnotationRule,
     VotingCofiguration,
     AnnotationRuleAnswers,
@@ -19,27 +18,10 @@ from projects.models import (
 )
 from projects.permissions import IsProjectAdmin, IsProjectMember, IsAnnotatorForVoting
 from projects.serializers import (
-    AnnotationRuleTypeSerializer,
     AnnotationRuleSerializer,
     VotingCofigurationSerializer,
     AnnotationRuleAnswersSerializer,
 )
-
-class AnnotationRuleTypes(generics.ListAPIView):
-    queryset = AnnotationRuleType.objects.all()
-    serializer_class = AnnotationRuleTypeSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ("annotation_rule_type",)
-
-class AnnotationRuleTypeCreation(generics.CreateAPIView):
-    queryset = AnnotationRuleType.objects.all()
-    serializer_class = AnnotationRuleTypeSerializer
-    permission_classes = [IsAuthenticated & IsAdminUser]
-
-    def perform_create(self, serializer):
-        serializer.save(project_id=self.kwargs['project_id'])
 
 class AnnotationRules(generics.ListAPIView):
     queryset = AnnotationRule.objects.all()
@@ -249,12 +231,6 @@ class AnnotationRuleAnswersCreation(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
-
-class AnnotationRuleTypeDetail(RetrieveAPIView):
-    queryset = AnnotationRuleType.objects.all()
-    serializer_class = AnnotationRuleTypeSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_url_kwarg = 'annotation_rule_type_id'
 
 class AnnotationRuleDetail(RetrieveUpdateAPIView):
     queryset = AnnotationRule.objects.all()

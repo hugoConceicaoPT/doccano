@@ -48,7 +48,6 @@
       </v-alert>
 
       <v-alert v-if="isAdmin && !hasActiveVoting" type="success" class="mb-4">
-        <v-icon left>{{ mdiCheckCircle }}</v-icon>
         Não existe nenhuma votação ativa. Você pode configurar uma nova votação.
       </v-alert>
 
