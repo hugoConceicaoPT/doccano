@@ -236,16 +236,6 @@ class Member(models.Model):
         unique_together = ("user", "project")
 
 
-class OptionsGroup(models.Model):
-    name = models.TextField()
-
-
-class OptionQuestion(models.Model):
-    option = models.TextField()
-    options_group = models.ForeignKey(
-        OptionsGroup, null=True, blank=True, on_delete=models.CASCADE, related_name="option_questions"
-    )
-
 
 class Question(models.Model):
     perspective = models.ForeignKey(Perspective, on_delete=models.CASCADE, related_name="questions")
@@ -257,9 +247,6 @@ class Answer(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     answer_text = models.TextField()
-    answer_option = models.ForeignKey(
-        OptionQuestion, on_delete=models.CASCADE, null=True, blank=True, related_name="answer_option"
-    )
 
 class VotingCofiguration(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="voting_configurations")
@@ -270,9 +257,6 @@ class VotingCofiguration(models.Model):
     end_date = models.DateTimeField()
     is_closed = models.BooleanField(default=False)
     version = models.IntegerField(default=1)
-
-    class Meta:
-        unique_together = ('project', 'version')
         
     def clean(self):
         # Verificar se não existe outra configuração com a mesma versão no mesmo projeto
