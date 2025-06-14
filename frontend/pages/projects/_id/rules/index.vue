@@ -1,24 +1,36 @@
 <template>
   <v-card class="rules-card">
-    <v-card-title class="d-flex align-center py-4">
-      <span class="text-h5 font-weight-medium">
-        <v-icon left class="mr-2 primary--text">{{ mdiGavel }}</v-icon>
-        Regras de Anotação
-      </span>
-      <v-spacer />
-      <v-btn
-        v-if="isAdmin"
-        color="primary"
-        class="ml-2"
-        :disabled="loading || hasActiveVoting"
-        @click="goToConfig"
-      >
-        <v-icon left>{{ mdiCog }}</v-icon>
-        Configure Voting
-      </v-btn>
-    </v-card-title>
+    <!-- Título apenas para administradores -->
+    <div v-if="isAdmin">
+      <v-card-title class="d-flex align-center py-4">
+        <span class="text-h5 font-weight-medium">
+          <v-icon left class="mr-2 primary--text">{{ mdiGavel }}</v-icon>
+          Regras de Anotação
+        </span>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          class="ml-2"
+          :disabled="loading || hasActiveVoting"
+          @click="goToConfig"
+        >
+          <v-icon left>{{ mdiCog }}</v-icon>
+          Configure Voting
+        </v-btn>
+      </v-card-title>
+      <v-divider></v-divider>
+    </div>
 
-    <v-divider></v-divider>
+    <!-- Título simples para anotadores quando há votação ativa -->
+    <div v-if="!isAdmin && activeVotingConfig">
+      <v-card-title class="d-flex align-center py-4">
+        <span class="text-h5 font-weight-medium">
+          <v-icon left class="mr-2 primary--text">{{ mdiVote }}</v-icon>
+          Votação nas Regras de Anotação Ativa
+        </span>
+      </v-card-title>
+      <v-divider></v-divider>
+    </div>
 
     <v-card-text class="pa-4">
       <v-alert v-if="successMessage" type="success" dismissible class="mb-4">
@@ -48,7 +60,8 @@
         ></v-progress-circular>
       </div>
 
-      <v-row v-else class="mb-4">
+      <!-- Botão voltar apenas para administradores -->
+      <v-row v-if="!loading && isAdmin" class="mb-4">
         <v-col cols="12">
           <v-btn
             color="secondary"
@@ -61,22 +74,40 @@
         </v-col>
       </v-row>
 
-      <rule-list v-if="!loading && items.length > 0" :items="items" :is-loading="loading" />
+      <!-- Histórico de regras - apenas para administradores -->
+      <div v-if="isAdmin">
+        <rule-list v-if="!loading && items.length > 0" :items="items" :is-loading="loading" />
 
-      <div v-if="!loading && items.length === 0" class="text-center my-8">
-        <v-icon size="64" color="grey lighten-1" class="mb-4">{{ mdiFileDocumentOutline }}</v-icon>
-        <p class="text-h6 grey--text">Nenhuma regra de anotação encontrada.</p>
+        <div v-if="!loading && items.length === 0" class="text-center my-8">
+          <v-icon size="64" color="grey lighten-1" class="mb-4">{{ mdiFileDocumentOutline }}</v-icon>
+          <p class="text-h6 grey--text">Nenhuma regra de anotação encontrada.</p>
+        </div>
       </div>
 
-      <!-- Votação para não-admins -->
-      <div v-if="!isAdmin && activeVotingConfig">
-        <v-divider class="my-6"></v-divider>
-        <h3 class="text-h5 font-weight-medium mb-6">
-          <v-icon left class="mr-2 primary--text">{{ mdiVote }}</v-icon>
-          Votação de Regras
-        </h3>
+      <!-- Interface para anotadores - apenas votação -->
+      <div v-if="!isAdmin && !activeVotingConfig" class="text-center my-8">
+        <v-icon size="64" color="grey lighten-1" class="mb-4">{{ mdiVote }}</v-icon>
+        <p class="text-h6 grey--text">Não há votações ativas no momento.</p>
+        <p class="text-body-2 grey--text">Aguarde o administrador configurar uma nova votação de regras.</p>
+      </div>
 
-        <div v-if="pendingRules.length > 0">
+      <!-- Votação para anotadores -->
+      <div v-if="!isAdmin && activeVotingConfig">
+        <!-- Informações sobre o período de votação -->
+        <v-alert 
+          :type="votingStatus.type" 
+          class="mb-4"
+          :icon="votingStatus.icon"
+        >
+          <div class="d-flex align-center">
+            <div>
+              <strong>{{ votingStatus.title }}</strong>
+              <div class="text-caption mt-1">{{ votingStatus.message }}</div>
+            </div>
+          </div>
+        </v-alert>
+
+        <div v-if="pendingRules.length > 0 && isAnnotator && votingStatus.canVote">
           <v-row v-if="loading">
             <v-col cols="12" class="text-center">
               <v-progress-circular indeterminate color="primary" />
@@ -85,33 +116,56 @@
           <div v-else>
             <v-row class="mb-6">
               <v-col v-for="rule in pendingRules" :key="rule.id" cols="12" sm="6" md="4">
-                <v-card outlined class="rule-card mb-4">
-                  <v-card-title class="text-subtitle-1 font-weight-medium">
+                <v-card outlined class="rule-card mb-4" :class="{ 'voted': rule.id in localVotes }">
+                  <v-card-title class="text-subtitle-1 font-weight-medium d-flex align-center">
                     {{ rule.name }}
+                    <v-spacer />
+                    <v-chip v-if="rule.id in localVotes" small color="primary" text-color="white">
+                      <v-icon small left>{{ localVotes[rule.id] ? mdiThumbUp : mdiThumbDown }}</v-icon>
+                      {{ localVotes[rule.id] ? 'Sim' : 'Não' }}
+                    </v-chip>
                   </v-card-title>
-                  <v-card-text class="pb-2">
-                    {{ rule.description }}
-                  </v-card-text>
-                  <v-card-actions>
+                  <v-card-actions class="justify-space-between">
+                    <div>
+                      <v-btn
+                        small
+                        color="success"
+                        :disabled="rule.id in answeredRules"
+                        :outlined="!(rule.id in localVotes && localVotes[rule.id])"
+                        @click="vote(rule.id, true)"
+                      >
+                        <v-icon left>{{ mdiThumbUp }}</v-icon>
+                        Aprovar
+                      </v-btn>
+                      <v-btn
+                        small
+                        color="error"
+                        class="ml-2"
+                        :disabled="rule.id in answeredRules"
+                        :outlined="!(rule.id in localVotes && !localVotes[rule.id])"
+                        @click="vote(rule.id, false)"
+                      >
+                        <v-icon left>{{ mdiThumbDown }}</v-icon>
+                        Rejeitar
+                      </v-btn>
+                    </div>
                     <v-btn
+                      v-if="rule.id in localVotes && !(rule.id in answeredRules)"
                       small
-                      color="success"
-                      :disabled="rule.id in answeredRules"
-                      @click="vote(rule.id, true)"
+                      color="grey"
+                      outlined
+                      @click="removeVote(rule.id)"
                     >
-                      <v-icon left>{{ mdiThumbUp }}</v-icon>
-                      Sim
-                    </v-btn>
-                    <v-btn
-                      small
-                      color="error"
-                      :disabled="rule.id in answeredRules"
-                      @click="vote(rule.id, false)"
-                    >
-                      <v-icon left>{{ mdiThumbDown }}</v-icon>
-                      Não
+                      <v-icon small>{{ mdiClose }}</v-icon>
+                      Remover
                     </v-btn>
                   </v-card-actions>
+                  <v-card-text v-if="rule.id in answeredRules" class="pt-0">
+                    <v-chip small color="success" text-color="white">
+                      <v-icon small left>{{ mdiCheckCircle }}</v-icon>
+                      Já votado
+                    </v-chip>
+                  </v-card-text>
                 </v-card>
               </v-col>
             </v-row>
@@ -122,19 +176,54 @@
                   :disabled="!canSubmit"
                   @click="submitVotes"
                   class="px-6"
+                  large
                 >
                   <v-icon left>{{ mdiSend }}</v-icon>
-                  Submeter Votos
+                  Submeter Todos os Votos
                 </v-btn>
+                <p class="text-caption mt-2 grey--text">
+                  {{ Object.keys(localVotes).length }} de {{ pendingRules.length }} regra(s) votada(s)
+                  <span v-if="!canSubmit && pendingRules.length > 0" class="error--text">
+                    - Vote em todas as regras para submeter
+                  </span>
+                </p>
               </v-col>
             </v-row>
           </div>
         </div>
+        
+        <!-- Casos especiais para anotadores -->
+        <div v-else-if="isAnnotator">
+          <!-- Já votou em todas as regras -->
+          <div v-if="pendingRules.length === 0 && votingStatus.canVote">
+            <v-row>
+              <v-col cols="12" class="text-center">
+                <v-icon size="64" color="success" class="mb-4">{{ mdiCheckCircle }}</v-icon>
+                <p class="text-h6 success--text">Parabéns! Você já votou em todas as regras disponíveis.</p>
+                <p class="text-body-2 grey--text">Aguarde o resultado da votação ou novas regras serem adicionadas.</p>
+              </v-col>
+            </v-row>
+          </div>
+          
+          <!-- Votação não disponível por questões de tempo -->
+          <div v-else>
+            <v-row>
+              <v-col cols="12" class="text-center">
+                <v-icon size="64" :color="votingStatus.type" class="mb-4">{{ votingStatus.icon }}</v-icon>
+                <p class="text-h6" :class="`${votingStatus.type}--text`">{{ votingStatus.title }}</p>
+                <p class="text-body-2 grey--text">{{ votingStatus.message }}</p>
+              </v-col>
+            </v-row>
+          </div>
+        </div>
+        
+        <!-- Aviso para não-anotadores -->
         <div v-else>
           <v-row>
             <v-col cols="12" class="text-center">
-              <v-icon size="64" color="success" class="mb-4">{{ mdiCheckCircle }}</v-icon>
-              <p class="text-h6 success--text">Votação concluída com sucesso ou não há regras para votar no momento.</p>
+              <v-icon size="64" color="warning" class="mb-4">{{ mdiInformation }}</v-icon>
+              <p class="text-h6 warning--text">Sem permissão para votar</p>
+              <p class="text-body-2 grey--text">Apenas anotadores podem participar da votação.</p>
             </v-col>
           </v-row>
         </div>
@@ -157,7 +246,10 @@ import {
   mdiVote,
   mdiThumbUp,
   mdiThumbDown,
-  mdiSend
+  mdiSend,
+  mdiClose,
+  mdiClockOutline,
+  mdiCalendarClock
 } from '@mdi/js'
 import { VotingConfigurationItem, AnnotationRuleItem } from '~/domain/models/rules/rule'
 import { MemberItem } from '~/domain/models/member/member'
@@ -215,8 +307,12 @@ export default Vue.extend({
       mdiThumbUp,
       mdiThumbDown,
       mdiSend,
+      mdiClose,
+      mdiClockOutline,
+      mdiCalendarClock,
       activeVotingConfig: null as VotingAnswer | null,
-      pendingRules: [] as AnnotationRuleItem[]
+      pendingRules: [] as AnnotationRuleItem[],
+      isAnnotator: false
     }
   },
   computed: {
@@ -228,7 +324,52 @@ export default Vue.extend({
       return this.activeVotingConfig !== null
     },
     canSubmit() {
-      return Object.keys(this.localVotes).length > 0
+      // Só pode submeter se todas as regras pendentes têm voto selecionado
+      return this.pendingRules.length > 0 && 
+             this.pendingRules.every(rule => rule.id in this.localVotes)
+    },
+    votingStatus() {
+      if (!this.activeVotingConfig) {
+        return {
+          type: 'info',
+          icon: this.mdiInformation,
+          title: 'Sem votação ativa',
+          message: 'Não há votações disponíveis no momento.',
+          canVote: false
+        }
+      }
+
+      const now = new Date()
+      const beginDate = new Date(this.activeVotingConfig.begin_date)
+      const endDate = new Date(this.activeVotingConfig.end_date)
+
+      if (now < beginDate) {
+        return {
+          type: 'warning',
+          icon: this.mdiClockOutline,
+          title: 'Votação ainda não iniciou',
+          message: `A votação começará em ${this.formatDate(beginDate)}`,
+          canVote: false
+        }
+      }
+
+      if (now > endDate) {
+        return {
+          type: 'error',
+          icon: this.mdiCalendarClock,
+          title: 'Votação expirada',
+          message: `A votação terminou em ${this.formatDate(endDate)}`,
+          canVote: false
+        }
+      }
+
+      return {
+        type: 'success',
+        icon: this.mdiVote,
+        title: 'Votação ativa',
+        message: `Você pode votar até ${this.formatDate(endDate)}`,
+        canVote: true
+      }
     }
   },
   async fetch() {
@@ -242,6 +383,7 @@ export default Vue.extend({
       const member = await this.$repositories.member.fetchMyRole(projectId)
       this.memberId = member.id
       this.isAdmin = member.isProjectAdmin
+      this.isAnnotator = member.isAnnotator
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId)
       // Filtrar apenas as configurações do projeto atual
@@ -302,7 +444,7 @@ export default Vue.extend({
           if (r.is_finalized === true) {
             this.items.push({
               numberVersion,
-              ruleDiscussion: r.description,
+              ruleDiscussion: r.name,
               isFinalized: r.is_finalized,
               result,
               votesFor: this.votesYes[r.id] || 0,
@@ -347,6 +489,7 @@ export default Vue.extend({
         const activeConfigs = projectConfigs.filter((config) => !config.is_closed)
 
         let votingStatusChanged = false
+        const now = new Date()
 
         for (const config of activeConfigs) {
           const rules = await this.$services.annotationRule.list(this.projectId)
@@ -354,17 +497,26 @@ export default Vue.extend({
 
           const allFinalized =
             configRules.length > 0 && configRules.every((rule) => rule.is_finalized)
+          
+          // Verificar se a votação expirou por tempo
+          const endDate = new Date(config.end_date)
+          const isExpired = now > endDate
 
-          if (allFinalized) {
+          if (allFinalized || isExpired) {
             if (this.isAdmin) {
               // Apenas admins podem atualizar o status
               await this.$services.votingConfiguration.update(this.projectId, config.id, {
                 ...config,
                 is_closed: true
               })
-              console.log(`Configuração de votação ${config.id} fechada automaticamente.`)
-              this.successMessage =
-                'Uma votação foi fechada automaticamente porque todas as suas regras foram finalizadas.'
+              
+              if (isExpired) {
+                console.log(`Configuração de votação ${config.id} fechada automaticamente por expiração.`)
+                this.successMessage = 'Uma votação foi fechada automaticamente porque o prazo expirou.'
+              } else {
+                console.log(`Configuração de votação ${config.id} fechada automaticamente.`)
+                this.successMessage = 'Uma votação foi fechada automaticamente porque todas as suas regras foram finalizadas.'
+              }
             }
 
             votingStatusChanged = true
@@ -414,7 +566,7 @@ export default Vue.extend({
           this.$set(this.answeredRules, ruleId, true)
         }
         this.localVotes = {}
-        this.successMessage = 'Votos submetidos com sucesso.'
+        this.successMessage = `Votos submetidos com sucesso! Você votou em ${Object.keys(this.localVotes).length || Object.keys(this.answeredRules).length} regra(s).`
 
         // Atualizar a lista de regras pendentes
         this.pendingRules = this.rules.filter(
@@ -427,15 +579,62 @@ export default Vue.extend({
         }
       } catch (error: any) {
         console.error('Erro ao submeter votos:', error)
-        let msg = 'Erro ao submeter votos.'
-        if (error.response?.data)
-          msg = error.response.data.detail || JSON.stringify(error.response.data)
-        else if (error.message) msg = error.message
-        this.errorMessage = msg
+        
+        // Tratamento específico de erros
+        if (error.response?.status === 403) {
+          this.errorMessage = 'Você não tem permissão para votar. Apenas anotadores podem votar nas regras de anotação.'
+        } else if (error.response?.status === 400) {
+          const detail = error.response.data?.detail
+          if (detail?.includes('já votou')) {
+            this.errorMessage = 'Você já votou em uma ou mais dessas regras. Atualizando a página...'
+            // Recarregar dados para sincronizar
+            setTimeout(() => {
+              this.$fetch()
+            }, 2000)
+          } else if (detail?.includes('votação já foi fechada')) {
+            this.errorMessage = 'Esta votação já foi fechada. Não é mais possível votar.'
+          } else if (detail?.includes('regra já foi finalizada')) {
+            this.errorMessage = 'Uma ou mais regras já foram finalizadas. Não é mais possível votar nelas.'
+          } else if (detail?.includes('ainda não começou')) {
+            this.errorMessage = detail
+            // Recarregar dados para atualizar status
+            setTimeout(() => {
+              this.$fetch()
+            }, 2000)
+          } else if (detail?.includes('já expirou')) {
+            this.errorMessage = detail
+            // Recarregar dados para atualizar status
+            setTimeout(() => {
+              this.$fetch()
+            }, 2000)
+          } else {
+            this.errorMessage = detail || 'Erro ao submeter votos. Verifique se todas as regras ainda estão disponíveis para votação.'
+          }
+        } else if (error.response?.status === 404) {
+          this.errorMessage = 'Uma ou mais regras não foram encontradas. A votação pode ter sido alterada.'
+        } else {
+          this.errorMessage = 'Erro inesperado ao submeter votos. Tente novamente em alguns instantes.'
+        }
+        
+        // Limpar votos locais em caso de erro para evitar confusão
+        this.localVotes = {}
       }
     },
     stripExtension(filename?: string): string {
       return filename ? filename.replace(/\.[^/.]+$/, '') : ''
+    },
+    removeVote(ruleId: number) {
+      // Remover completamente o voto da regra
+      this.$delete(this.localVotes, ruleId)
+    },
+    formatDate(date: Date): string {
+      return date.toLocaleString('pt-PT', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     }
   }
 })
@@ -448,13 +647,23 @@ export default Vue.extend({
 }
 
 .rule-card {
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   border-radius: 8px;
 }
 
 .rule-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.rule-card.voted {
+  border: 2px solid #1976d2;
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+}
+
+.rule-card.voted:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(25, 118, 210, 0.15) !important;
 }
 
 ::v-deep .v-card__title {
@@ -465,7 +674,27 @@ export default Vue.extend({
   padding: 16px;
 }
 
-::v-deep .v-card__actions {
-  padding: 8px 16px;
+/* Animação para botões de voto */
+.v-btn {
+  transition: all 0.3s ease;
+}
+
+.v-btn:not(.v-btn--outlined) {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.v-btn:not(.v-btn--outlined):hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Estilo para alertas */
+.v-alert {
+  border-radius: 8px;
+}
+
+/* Estilo para chips de voto */
+.v-chip {
+  font-weight: 500;
 }
 </style>

@@ -6,6 +6,8 @@ from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.core.mail import send_mail
+from django.utils import timezone
+from datetime import datetime
 
 from projects.models import (
     Project,
@@ -15,7 +17,7 @@ from projects.models import (
     AnnotationRuleAnswers,
     Member
 )
-from projects.permissions import IsProjectAdmin, IsProjectMember
+from projects.permissions import IsProjectAdmin, IsProjectMember, IsAnnotatorForVoting
 from projects.serializers import (
     AnnotationRuleTypeSerializer,
     AnnotationRuleSerializer,
@@ -45,7 +47,7 @@ class AnnotationRules(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = None
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    search_fields = ("description",)
+    search_fields = ("name",)
 
     def get_queryset(self):
         project_id = self.kwargs['project_id']
@@ -169,9 +171,76 @@ class AnnotationRuleAnswersList(generics.ListAPIView):
 
 class AnnotationRuleAnswersCreation(generics.CreateAPIView):
     serializer_class = AnnotationRuleAnswersSerializer
-    permission_classes = [IsAuthenticated & IsProjectMember]
+    permission_classes = [IsAuthenticated & IsAnnotatorForVoting]
 
     def create(self, request, *args, **kwargs):
+        project_id = self.kwargs['project_id']
+        
+        # Verificar se o usuário é realmente um anotador do projeto
+        try:
+            member = Member.objects.get(
+                project_id=project_id, 
+                user=request.user,
+                role__name=settings.ROLE_ANNOTATOR
+            )
+        except Member.DoesNotExist:
+            return Response({
+                'detail': 'Apenas anotadores podem votar nas regras de anotação.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Verificar se já votou nesta regra
+        annotation_rule_id = request.data.get('annotation_rule')
+        if annotation_rule_id:
+            existing_vote = AnnotationRuleAnswers.objects.filter(
+                annotation_rule_id=annotation_rule_id,
+                member=member
+            ).exists()
+            
+            if existing_vote:
+                return Response({
+                    'detail': 'Você já votou nesta regra de anotação.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar se a regra pertence ao projeto
+        try:
+            annotation_rule = AnnotationRule.objects.get(
+                id=annotation_rule_id,
+                project_id=project_id
+            )
+        except AnnotationRule.DoesNotExist:
+            return Response({
+                'detail': 'Regra de anotação não encontrada neste projeto.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Verificar se a votação ainda está ativa
+        voting_config = annotation_rule.voting_configuration
+        if voting_config.is_closed:
+            return Response({
+                'detail': 'Esta votação já foi fechada.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar se a regra já foi finalizada
+        if annotation_rule.is_finalized:
+            return Response({
+                'detail': 'Esta regra já foi finalizada.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verificar se a votação está dentro do período definido
+        current_time = timezone.now()
+        
+        if current_time < voting_config.begin_date:
+            return Response({
+                'detail': f'Esta votação ainda não começou. Início: {voting_config.begin_date.strftime("%d/%m/%Y %H:%M")}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        if current_time > voting_config.end_date:
+            return Response({
+                'detail': f'Esta votação já expirou. Fim: {voting_config.end_date.strftime("%d/%m/%Y %H:%M")}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Garantir que o member no request data seja o member autenticado
+        request.data['member'] = member.id
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         rule_answer = self.perform_create(serializer)
@@ -179,7 +248,6 @@ class AnnotationRuleAnswersCreation(generics.CreateAPIView):
         return Response(AnnotationRuleAnswersSerializer(rule_answer).data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        queryset = AnnotationRuleAnswers.objects.all()
         serializer.save()
 
 class AnnotationRuleTypeDetail(RetrieveAPIView):

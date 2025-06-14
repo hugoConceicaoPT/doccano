@@ -33,6 +33,7 @@ class IsProjectAdmin(RolePermission):
 
 
 class IsAnnotatorAndReadOnly(RolePermission):
+    unsafe_methods_check = False
     role_name = settings.ROLE_ANNOTATOR
 
 
@@ -42,12 +43,31 @@ class IsAnnotator(RolePermission):
 
 
 class IsAnnotationApproverAndReadOnly(RolePermission):
+    unsafe_methods_check = False
     role_name = settings.ROLE_ANNOTATION_APPROVER
 
 
 class IsAnnotationApprover(RolePermission):
     unsafe_methods_check = False
     role_name = settings.ROLE_ANNOTATION_APPROVER
+
+
+class IsAnnotatorForVoting(BasePermission):
+    """
+    Permissão específica para votação em regras de anotação.
+    Permite que apenas anotadores votem nas regras.
+    """
+    
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return True
+            
+        project_id = view.kwargs.get("project_id")
+        if not project_id:
+            return False
+            
+        # Verificar se o usuário é um anotador do projeto
+        return Member.objects.has_role(project_id, request.user, settings.ROLE_ANNOTATOR)
 
 
 IsProjectMember = IsAnnotator | IsAnnotationApprover | IsProjectAdmin  # type: ignore

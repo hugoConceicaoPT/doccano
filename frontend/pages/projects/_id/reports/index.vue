@@ -15,18 +15,9 @@
             <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
             Relatórios sobre Anotadores
             <v-spacer />
-            <v-btn color="white" text :loading="isGenerating" @click="generateReport">
+            <v-btn color="white" text :loading="isGenerating" @click="generateAndExportReport">
               <v-icon left>{{ mdiRefresh }}</v-icon>
-              Gerar Relatório
-            </v-btn>
-            <v-btn
-              v-if="reportData && reportData.length > 0"
-              color="success"
-              class="ml-2"
-              @click="showExportDialog = true"
-            >
-              <v-icon left>{{ mdiDownload }}</v-icon>
-              Exportar
+              {{ filters.export_formats.length > 0 ? 'Gerar e Exportar Relatório' : 'Gerar Relatório' }}
             </v-btn>
           </v-card-title>
 
@@ -127,42 +118,92 @@
                     </v-autocomplete>
                   </v-col>
 
-                  <!-- Filtro de Tipos de Tarefa -->
-                  <v-col cols="12">
-                    <v-select
-                      v-model="filters.task_types"
-                      :items="taskTypes"
-                      label="Tipos de Tarefa"
+                  <!-- Filtro de Perspectivas -->
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="filters.perspectives"
+                      :items="availablePerspectives"
+                      item-text="name"
+                      item-value="id"
+                      label="Perspectivas"
                       multiple
                       chips
                       deletable-chips
                       clearable
                       outlined
                       dense
-                      :prepend-inner-icon="mdiCog"
-                      hint="Selecione os tipos de tarefa ou deixe vazio para todos"
+                      :prepend-inner-icon="mdiEye"
+                      hint="Selecione perspectivas específicas ou deixe vazio para todas"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
                         <v-chip
-                          v-if="index < 4"
+                          v-if="index < 2"
                           small
                           close
-                          color="secondary"
+                          color="purple"
                           text-color="white"
-                          @click:close="removeTaskType(item)"
+                          @click:close="removePerspective(item.id)"
                         >
-                          {{ getTaskTypeLabel(item) }}
+                          {{ item.name }}
                         </v-chip>
-                        <span v-if="index === 4" class="grey--text text-caption">
-                          (+{{ filters.task_types.length - 4 }} outros)
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.perspectives.length - 2 }} outras)
                         </span>
                       </template>
                       <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon color="purple">{{ mdiEye }}</v-icon>
+                        </v-list-item-avatar>
                         <v-list-item-content>
-                          <v-list-item-title>{{ getTaskTypeLabel(item) }}</v-list-item-title>
+                          <v-list-item-title>{{ item.name }}</v-list-item-title>
+                        </v-list-item-content>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+
+                  <!-- Filtro de Opções de Exportação -->
+                  <v-col cols="12">
+                    <v-select
+                      v-model="filters.export_formats"
+                      :items="exportFormatOptions"
+                      item-text="text"
+                      item-value="value"
+                      label="Formatos de Exportação"
+                      multiple
+                      chips
+                      deletable-chips
+                      clearable
+                      outlined
+                      dense
+                      :prepend-inner-icon="mdiDownload"
+                      hint="Selecione os formatos de exportação desejados (PDF, CSV ou ambos)"
+                      persistent-hint
+                    >
+                      <template #selection="{ item, index }">
+                        <v-chip
+                          v-if="index < 3"
+                          small
+                          close
+                          :color="getExportFormatColor(item.value)"
+                          text-color="white"
+                          @click:close="removeExportFormat(item.value)"
+                        >
+                          <v-icon small left>{{ item.icon }}</v-icon>
+                          {{ item.value.toUpperCase() }}
+                        </v-chip>
+                        <span v-if="index === 3" class="grey--text text-caption">
+                          (+{{ filters.export_formats.length - 3 }} outros)
+                        </span>
+                      </template>
+                      <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon :color="getExportFormatColor(item.value)">{{ item.icon }}</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                          <v-list-item-title>{{ item.text }}</v-list-item-title>
                           <v-list-item-subtitle class="text-caption">{{
-                            item
+                            item.description
                           }}</v-list-item-subtitle>
                         </v-list-item-content>
                       </template>
@@ -255,7 +296,7 @@
                   Configure os filtros desejados e clique em "Gerar Relatório" para visualizar os
                   dados dos anotadores
                 </p>
-                <v-btn color="primary" large @click="generateReport">
+                <v-btn color="primary" large @click="generateAndExportReport">
                   <v-icon left>{{ mdiRefresh }}</v-icon>
                   Gerar Primeiro Relatório
                 </v-btn>
@@ -283,7 +324,7 @@
                   color="white" 
                   text 
                   :loading="isGeneratingAnnotations || isExportingAnnotation" 
-                  @click="generateAndExportReport"
+                  @click="generateAndExportAnnotationReport"
                 >
                   <v-icon left>{{ mdiDownload }}</v-icon>
                   Gerar e Exportar Relatório
@@ -515,70 +556,7 @@
       </v-col>
     </v-row>
 
-    <!-- Diálogo de Exportação -->
-    <v-dialog v-model="showExportDialog" max-width="500px">
-      <v-card>
-        <v-card-title class="text-h5">
-          <v-icon left color="primary">{{ mdiDownload }}</v-icon>
-          Exportar Relatório
-        </v-card-title>
 
-        <v-card-text>
-          <p class="mb-4">Escolha o formato para exportar o relatório:</p>
-
-          <v-radio-group v-model="selectedExportFormat" column>
-            <v-radio label="CSV (Comma Separated Values)" value="csv" color="primary">
-              <template #label>
-                <div class="d-flex align-center">
-                  <v-icon class="mr-2" color="green">{{ mdiFileDelimited }}</v-icon>
-                  <div>
-                    <div class="font-weight-medium">CSV (Comma Separated Values)</div>
-                    <div class="text-caption grey--text">Ideal para Excel e análise de dados</div>
-                  </div>
-                </div>
-              </template>
-            </v-radio>
-
-            <v-radio label="TSV (Tab Separated Values)" value="tsv" color="primary">
-              <template #label>
-                <div class="d-flex align-center">
-                  <v-icon class="mr-2" color="blue">{{ mdiFileDelimited }}</v-icon>
-                  <div>
-                    <div class="font-weight-medium">TSV (Tab Separated Values)</div>
-                    <div class="text-caption grey--text">
-                      Separado por tabs, compatível com muitas ferramentas
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </v-radio>
-
-            <v-radio label="PDF (Portable Document Format)" value="pdf" color="primary">
-              <template #label>
-                <div class="d-flex align-center">
-                  <v-icon class="mr-2" color="red">{{ mdiFilePdfBox }}</v-icon>
-                  <div>
-                    <div class="font-weight-medium">PDF (Portable Document Format)</div>
-                    <div class="text-caption grey--text">
-                      Documento formatado para visualização e impressão
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </v-radio>
-          </v-radio-group>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
-          <v-btn text @click="showExportDialog = false"> Cancelar </v-btn>
-          <v-btn color="primary" :loading="isExporting" @click="exportReport">
-            <v-icon left>{{ mdiDownload }}</v-icon>
-            Exportar
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </v-container>
 </template>
 
@@ -594,14 +572,14 @@ import {
   mdiTag,
   mdiCalendarStart,
   mdiCalendarEnd,
-  mdiCog,
   mdiInformation,
   mdiAlertCircle,
   mdiInformationOutline,
   mdiClose,
   mdiTable,
   mdiFileDelimited,
-  mdiFilePdfBox
+  mdiFilePdfBox,
+  mdiEye
 } from '@mdi/js'
 
 declare module 'vue/types/vue' {
@@ -625,7 +603,7 @@ export default Vue.extend({
     mdiTag: string;
     mdiCalendarStart: string;
     mdiCalendarEnd: string;
-    mdiCog: string;
+
     mdiInformation: string;
     mdiTable: string;
     mdiFileDelimited: string;
@@ -633,6 +611,7 @@ export default Vue.extend({
     mdiInformationOutline: string;
     mdiAlertCircle: string;
     mdiClose: string;
+    mdiEye: string;
     isGenerating: boolean;
     dateFromMenu: boolean;
     dateToMenu: boolean;
@@ -641,15 +620,16 @@ export default Vue.extend({
       date_from: string | null;
       date_to: string | null;
       labels: number[];
-      task_types: Array<string | {value: string; text: string}>;
+      perspectives: number[];
+      export_formats: string[];
     };
     availableUsers: Array<{id: number; username: string}>;
     availableLabels: Array<{id: number; text: string; type: string}>;
-    taskTypes: Array<{text: string; value: string}>;
+
     reportData: any[];
     tableHeaders: Array<{text: string; value: string; sortable?: boolean; width?: string}>;
-    showExportDialog: boolean;
-    selectedExportFormat: string;
+
+    
     isExporting: boolean;
     activeTab: string;
     annotationFilters: {
@@ -668,6 +648,7 @@ export default Vue.extend({
     isExportingAnnotation: boolean;
     availableExamples: Array<{id: number; text: string}>;
     exportFormatOptions: Array<{value: string; text: string; icon: string; description: string}>;
+    availablePerspectives: Array<{id: number; name: string}>;
   } {
     return {
       mdiFileDocumentOutline,
@@ -679,7 +660,6 @@ export default Vue.extend({
       mdiTag,
       mdiCalendarStart,
       mdiCalendarEnd,
-      mdiCog,
       mdiInformation,
       mdiTable,
       mdiFileDelimited,
@@ -687,6 +667,7 @@ export default Vue.extend({
       mdiInformationOutline,
       mdiAlertCircle,
       mdiClose,
+      mdiEye,
 
       isGenerating: false,
       dateFromMenu: false,
@@ -697,21 +678,12 @@ export default Vue.extend({
         date_from: null as string | null,
         date_to: null as string | null,
         labels: [] as number[],
-        task_types: [] as Array<string | {value: string; text: string}>
+        perspectives: [] as number[],
+        export_formats: [] as string[]
       },
 
       availableUsers: [] as Array<{id: number; username: string}>,
       availableLabels: [] as Array<{id: number; text: string; type: string}>,
-      taskTypes: [
-        { text: 'Classificação de Documentos', value: 'DOCUMENT_CLASSIFICATION' },
-        { text: 'Rotulagem de Sequências', value: 'SEQUENCE_LABELING' },
-        { text: 'Sequência para Sequência', value: 'SEQUENCE_TO_SEQUENCE' },
-        { text: 'Classificação de Imagens', value: 'IMAGE_CLASSIFICATION' },
-        { text: 'Fala para Texto', value: 'SPEECH_TO_TEXT' },
-        { text: 'Deteção de Intenção e Slot Filling', value: 'INTENT_DETECTION_AND_SLOT_FILLING' },
-        { text: 'Caixa Delimitadora', value: 'BOUNDING_BOX' },
-        { text: 'Segmentação', value: 'SEGMENTATION' }
-      ],
 
       reportData: [] as any[],
 
@@ -723,8 +695,6 @@ export default Vue.extend({
         { text: 'Última', value: 'last_annotation_date', sortable: true, width: '150px' }
       ],
 
-      showExportDialog: false,
-      selectedExportFormat: 'csv',
       isExporting: false,
 
       activeTab: 'annotators',
@@ -754,9 +724,9 @@ export default Vue.extend({
       availableExamples: [] as Array<{id: number; text: string}>,
       exportFormatOptions: [
         { value: 'csv', text: 'CSV (Comma Separated Values)', icon: mdiFileDelimited, description: 'Ideal para Excel e análise de dados' },
-        { value: 'tsv', text: 'TSV (Tab Separated Values)', icon: mdiFileDelimited, description: 'Separado por tabs, compatível com muitas ferramentas' },
         { value: 'pdf', text: 'PDF (Portable Document Format)', icon: mdiFilePdfBox, description: 'Documento formatado para visualização e impressão' }
-      ]
+      ],
+      availablePerspectives: [] as Array<{id: number; name: string}>
     }
   },
 
@@ -769,7 +739,8 @@ export default Vue.extend({
       return (
         this.filters.users.length > 0 ||
         this.filters.labels.length > 0 ||
-        this.filters.task_types.length > 0 ||
+        this.filters.perspectives.length > 0 ||
+        this.filters.export_formats.length > 0 ||
         this.filters.date_from ||
         this.filters.date_to
       )
@@ -779,7 +750,8 @@ export default Vue.extend({
       let count = 0
       if (this.filters.users.length > 0) count++
       if (this.filters.labels.length > 0) count++
-      if (this.filters.task_types.length > 0) count++
+      if (this.filters.perspectives.length > 0) count++
+      if (this.filters.export_formats.length > 0) count++
       if (this.filters.date_from) count++
       if (this.filters.date_to) count++
       return count
@@ -837,6 +809,22 @@ export default Vue.extend({
           )
         }
 
+        // Carregar perspectivas disponíveis
+        try {
+          const perspective = await this.$repositories.perspective.list(this.projectId)
+          if (perspective) {
+            this.availablePerspectives = [{
+              id: perspective.id,
+              name: perspective.name
+            }]
+          } else {
+            this.availablePerspectives = []
+          }
+        } catch (error) {
+          console.error('Erro ao carregar perspectivas:', error)
+          this.availablePerspectives = []
+        }
+
         // Carregar exemplos para filtro
         try {
           const examples = await this.$repositories.example.list(this.projectId, {offset: '0', limit: '1000'})
@@ -853,8 +841,25 @@ export default Vue.extend({
       }
     },
 
-    async generateReport() {
+    async generateAndExportReport() {
       this.isGenerating = true
+      try {
+        // Primeiro gerar o relatório
+        await this.generateReport()
+        
+        // Se há formatos de exportação selecionados e o relatório foi gerado com sucesso, exportar automaticamente
+        if (this.filters.export_formats.length > 0 && this.reportData && this.reportData.length > 0) {
+          await this.exportReport()
+        }
+      } catch (error) {
+        console.error('Erro ao gerar e exportar relatório:', error)
+        this.showError('Erro ao gerar e exportar relatório')
+      } finally {
+        this.isGenerating = false
+      }
+    },
+
+    async generateReport() {
       try {
         // Preparar parâmetros de filtro com nomes corretos para a API
         const params = new URLSearchParams()
@@ -878,13 +883,8 @@ export default Vue.extend({
           params.append('label_ids', this.filters.labels.join(','))
         }
 
-        if (this.filters.task_types.length > 0) {
-          params.append(
-            'task_types',
-            this.filters.task_types.map((item: any) => {
-              return typeof item === 'object' ? item.value : item
-            }).join(',')
-          )
+        if (this.filters.perspectives.length > 0) {
+          params.append('perspective_ids', this.filters.perspectives.join(','))
         }
 
         console.log('[FRONTEND DEBUG] Parâmetros enviados:', params.toString())
@@ -911,9 +911,12 @@ export default Vue.extend({
           this.reportData = []
         }
 
-        this.showSuccess(
-          `Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`
-        )
+        // Só mostrar mensagem de sucesso se não há exportação automática
+        if (this.filters.export_formats.length === 0) {
+          this.showSuccess(
+            `Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`
+          )
+        }
       } catch (error: any) {
         console.error('[FRONTEND DEBUG] Erro completo:', error)
         console.error('[FRONTEND DEBUG] Erro response:', error.response)
@@ -936,10 +939,7 @@ export default Vue.extend({
           console.error('[FRONTEND DEBUG] Erro de request:', error.request)
         }
 
-        this.showError(errorMessage)
-      } finally {
-        this.isGenerating = false
-        console.log('[FRONTEND DEBUG] Loading finalizado')
+        throw new Error(errorMessage)
       }
     },
 
@@ -968,79 +968,76 @@ export default Vue.extend({
           params.append('label_ids', this.filters.labels.join(','))
         }
 
-        if (this.filters.task_types.length > 0) {
-          params.append(
-            'task_types',
-            this.filters.task_types.map((item: any) => {
-              return typeof item === 'object' ? item.value : item
-            }).join(',')
+        if (this.filters.perspectives.length > 0) {
+          params.append('perspective_ids', this.filters.perspectives.join(','))
+        }
+
+        // Usar os formatos selecionados nos filtros
+        const exportFormats = this.filters.export_formats
+        if (exportFormats.length === 0) {
+          // Se nenhum formato foi selecionado, não exportar
+          return
+        }
+        
+        console.log('[EXPORT DEBUG] Formatos selecionados:', exportFormats)
+        console.log('[EXPORT DEBUG] Parâmetros base:', params.toString())
+
+        // Fazer download para cada formato selecionado
+        for (const format of exportFormats) {
+          const exportParams = new URLSearchParams(params)
+          exportParams.append('export_format', format)
+          
+          console.log('[EXPORT DEBUG] Exportando formato:', format)
+          
+          const response = await this.$axios.get(
+            `/v1/reports/annotators/export/?${exportParams.toString()}`,
+            {
+              responseType: 'blob'
+            }
           )
-        }
 
-        // Adicionar formato de exportação
-        params.append('export_format', this.selectedExportFormat)
-
-        console.log('[EXPORT DEBUG] Formato selecionado:', this.selectedExportFormat)
-        console.log('[EXPORT DEBUG] Parâmetros de exportação:', params.toString())
-
-        // Fazer download do arquivo
-        const response = await this.$axios.get(
-          `/v1/reports/annotators/export/?${params.toString()}`,
-          {
-            responseType: 'blob'
+          // Determinar nome do arquivo e tipo MIME baseado no formato
+          let filename, mimeType
+          switch (format) {
+            case 'csv':
+              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.csv`
+              mimeType = 'text/csv'
+              break
+            case 'pdf':
+              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.pdf`
+              mimeType = 'application/pdf'
+              break
+            default:
+              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.${format}`
+              mimeType = 'application/octet-stream'
           }
-        )
 
-        // Determinar nome do arquivo e tipo MIME baseado no formato
-        let filename, mimeType
-        switch (this.selectedExportFormat) {
-          case 'csv':
-            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.csv`
-            mimeType = 'text/csv'
-            break
-          case 'tsv':
-            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.tsv`
-            mimeType = 'text/tab-separated-values'
-            break
-          case 'pdf':
-            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.pdf`
-            mimeType = 'application/pdf'
-            break
-          default:
-            filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.${
-              this.selectedExportFormat
-            }`
-            mimeType = 'application/octet-stream'
+          // Criar link de download
+          const blob = new Blob([response.data], { type: mimeType })
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
         }
 
-        // Criar link de download
-        const blob = new Blob([response.data], { type: mimeType })
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = filename
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-
-        // Fechar diálogo e mostrar sucesso
-        this.showExportDialog = false
-        this.showSuccess(
-          `Relatório exportado em ${this.selectedExportFormat.toUpperCase()} com sucesso!`
-        )
+        // Mostrar mensagem de sucesso
+        let message = `Relatório gerado e exportado com sucesso!`
+        if (exportFormats.length === 1) {
+          message = `Relatório gerado e exportado em ${exportFormats[0].toUpperCase()} com sucesso!`
+        } else {
+          message = `Relatório gerado e exportado em ${exportFormats.length} formatos com sucesso!`
+        }
+        this.showSuccess(message)
       } catch (error: any) {
         console.error('[EXPORT DEBUG] Erro ao exportar:', error)
-        this.showError(`Erro ao exportar relatório em ${this.selectedExportFormat.toUpperCase()}`)
+        this.showError('Erro ao exportar relatório')
       } finally {
         this.isExporting = false
       }
-    },
-
-    async exportToCSV() {
-      // Método mantido para compatibilidade, mas agora usa o método unificado
-      this.selectedExportFormat = 'csv'
-      await this.exportReport()
     },
 
     clearFilters() {
@@ -1049,7 +1046,8 @@ export default Vue.extend({
         date_from: null,
         date_to: null,
         labels: [],
-        task_types: []
+        perspectives: [],
+        export_formats: []
       }
       this.showSuccess('Filtros limpos')
     },
@@ -1062,8 +1060,12 @@ export default Vue.extend({
       this.filters.labels = this.filters.labels.filter((id) => id !== labelId)
     },
 
-    removeTaskType(taskType: string | {value: string; text: string}) {
-      this.filters.task_types = this.filters.task_types.filter((type) => type !== taskType)
+    removePerspective(perspectiveId: number) {
+      this.filters.perspectives = this.filters.perspectives.filter((id) => id !== perspectiveId)
+    },
+
+    removeExportFormat(format: string) {
+      this.filters.export_formats = this.filters.export_formats.filter((f) => f !== format)
     },
 
     getLabelTypeColor(type: string) {
@@ -1073,14 +1075,6 @@ export default Vue.extend({
         relation: 'orange'
       }
       return colors[type] || 'grey'
-    },
-
-    getTaskTypeLabel(taskType: any) {
-      if (typeof taskType === 'object') {
-        return taskType.text
-      }
-      const found = this.taskTypes.find((t) => t.value === taskType)
-      return found ? found.text : taskType
     },
 
     formatDate(dateString: string) {
@@ -1118,7 +1112,7 @@ export default Vue.extend({
       this.annotationReportError = null
     },
     
-    async generateAndExportReport() {
+    async generateAndExportAnnotationReport() {
       this.isGeneratingAnnotations = true
       
       try {
@@ -1234,7 +1228,6 @@ export default Vue.extend({
     getExportFormatColor(value: string) {
       const colors: {[key: string]: string} = {
         csv: 'green',
-        tsv: 'blue',
         pdf: 'red'
       }
       return colors[value] || 'grey'

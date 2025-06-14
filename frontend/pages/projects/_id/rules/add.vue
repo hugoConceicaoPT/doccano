@@ -38,7 +38,6 @@ export default Vue.extend({
       errorMessage: '',
       editedItem: {
         project: 0,
-        description: '',
         voting_configuration: 0,
         example: 0,
         voting_threshold: 0,
@@ -206,7 +205,6 @@ export default Vue.extend({
           const rulePayload = {
             project: projectId,
             name: rule.name,
-            description: rule.description,
             voting_configuration: this.votingConfigurationId,
             is_finalized: false,
             final_result: ''

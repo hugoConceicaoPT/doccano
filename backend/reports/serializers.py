@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from projects.models import Project
+from projects.models import Project, Perspective
 from label_types.models import CategoryType, SpanType
 
 
@@ -33,11 +33,11 @@ class AnnotatorReportFilterSerializer(serializers.Serializer):
         allow_empty=True,
         help_text="Lista de IDs dos rótulos (vazio = todos)"
     )
-    task_types = serializers.ListField(
-        child=serializers.CharField(),
+    perspective_ids = serializers.ListField(
+        child=serializers.IntegerField(),
         required=False,
         allow_empty=True,
-        help_text="Lista de tipos de tarefa"
+        help_text="Lista de IDs das perspectivas (vazio = todas)"
     )
 
     def validate_project_ids(self, value):
@@ -57,6 +57,15 @@ class AnnotatorReportFilterSerializer(serializers.Serializer):
             existing_users = User.objects.filter(id__in=value).count()
             if existing_users != len(value):
                 raise serializers.ValidationError("Alguns utilizadores especificados não existem")
+        
+        return value
+
+    def validate_perspective_ids(self, value):
+        """Validar se as perspectivas existem"""
+        if value:
+            existing_perspectives = Perspective.objects.filter(id__in=value).count()
+            if existing_perspectives != len(value):
+                raise serializers.ValidationError("Algumas perspectivas especificadas não existem")
         
         return value
 

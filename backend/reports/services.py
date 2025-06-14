@@ -5,7 +5,7 @@ from django.utils import timezone
 from collections import defaultdict
 
 from labels.models import Category, Span, TextLabel, Relation
-from projects.models import Project
+from projects.models import Project, Member
 from label_types.models import CategoryType, SpanType, RelationType
 from examples.models import Example
 
@@ -20,7 +20,7 @@ class AnnotatorReportService:
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
-        task_types: Optional[List[str]] = None
+        perspective_ids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
         Gera relatório sobre anotadores com filtros especificados
@@ -31,7 +31,7 @@ class AnnotatorReportService:
             date_from: Data de início (opcional)
             date_to: Data de fim (opcional)
             label_ids: Lista de IDs dos rótulos (opcional)
-            task_types: Lista de tipos de tarefa (opcional)
+            perspective_ids: Lista de IDs das perspectivas (opcional)
             
         Returns:
             Dicionário com summary e data do relatório
@@ -39,13 +39,13 @@ class AnnotatorReportService:
         
         # Obter dados agregados por utilizador
         annotator_data = AnnotatorReportService._get_annotator_data(
-            project_ids, user_ids, date_from, date_to, label_ids, task_types
+            project_ids, user_ids, date_from, date_to, label_ids, perspective_ids
         )
         
         # Calcular breakdown de rótulos para cada anotador
         for annotator in annotator_data:
             annotator['label_breakdown'] = AnnotatorReportService._get_label_breakdown(
-                annotator['annotator_id'], project_ids, date_from, date_to, label_ids
+                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids
             )
         
         # Calcular resumo geral
@@ -67,7 +67,7 @@ class AnnotatorReportService:
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
-        task_types: Optional[List[str]] = None
+        perspective_ids: Optional[List[int]] = None
     ) -> List[Dict[str, Any]]:
         """Obter dados agregados por anotador"""
         
@@ -84,6 +84,20 @@ class AnnotatorReportService:
         if user_ids:
             base_filter &= Q(user_id__in=user_ids)
         
+        # Aplicar filtro de perspectivas - obter utilizadores das perspectivas especificadas
+        if perspective_ids:
+            # Obter IDs dos utilizadores que pertencem às perspectivas especificadas
+            perspective_user_ids = Member.objects.filter(
+                perspective_id__in=perspective_ids,
+                project_id__in=project_ids
+            ).values_list('user_id', flat=True)
+            
+            if perspective_user_ids:
+                base_filter &= Q(user_id__in=perspective_user_ids)
+            else:
+                # Se não há utilizadores nas perspectivas especificadas, retornar vazio
+                return []
+
         # Obter dados de Categories
         categories_filter = base_filter
         if label_ids:
@@ -209,7 +223,8 @@ class AnnotatorReportService:
         project_ids: List[int],
         date_from: Optional[timezone.datetime] = None,
         date_to: Optional[timezone.datetime] = None,
-        label_ids: Optional[List[int]] = None
+        label_ids: Optional[List[int]] = None,
+        perspective_ids: Optional[List[int]] = None
     ) -> Dict[str, int]:
         """Obter breakdown de rótulos para um utilizador específico"""
         
@@ -219,6 +234,19 @@ class AnnotatorReportService:
             base_filter &= Q(created_at__gte=date_from)
         if date_to:
             base_filter &= Q(created_at__lte=date_to)
+        
+        # Aplicar filtro de perspectivas - verificar se o utilizador pertence às perspectivas especificadas
+        if perspective_ids:
+            # Verificar se o utilizador pertence a alguma das perspectivas especificadas
+            user_in_perspectives = Member.objects.filter(
+                user_id=user_id,
+                perspective_id__in=perspective_ids,
+                project_id__in=project_ids
+            ).exists()
+            
+            if not user_in_perspectives:
+                # Se o utilizador não pertence às perspectivas especificadas, retornar vazio
+                return {}
         
         breakdown = {}
         

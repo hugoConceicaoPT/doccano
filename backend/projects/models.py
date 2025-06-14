@@ -287,7 +287,6 @@ class VotingCofiguration(models.Model):
 class AnnotationRule(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="annotation_rules")
     name = models.CharField(max_length=255, default="")
-    description = models.TextField(default="")
     voting_configuration = models.ForeignKey(
         VotingCofiguration, on_delete=models.CASCADE, related_name="annotation_rules"
     )

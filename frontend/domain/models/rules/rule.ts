@@ -9,7 +9,6 @@ export class AnnotationRuleItem {
     readonly id: number,
     readonly project: number,
     readonly name: string,
-    readonly description: string,
     readonly voting_configuration: number,
     readonly final_result: string,
     readonly is_finalized: boolean
@@ -18,10 +17,9 @@ export class AnnotationRuleItem {
   static create(
     project: number,
     name: string,
-    description: string,
     voting_configuration: number
   ): AnnotationRuleItem {
-    return new AnnotationRuleItem(0, project, name, description, voting_configuration, '', false)
+    return new AnnotationRuleItem(0, project, name, voting_configuration, '', false)
   }
 
   static async list(
@@ -46,7 +44,6 @@ export class AnnotationRuleItem {
     const updatedFields: Record<string, any> = {
       project: this.project,
       name: this.name,
-      description: this.description,
       voting_configuration: this.voting_configuration
     }
 

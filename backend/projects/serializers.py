@@ -290,7 +290,6 @@ class AnnotationRuleSerializer(serializers.ModelSerializer):
             "id",
             "project",
             "name",
-            "description",
             "voting_configuration",
             "is_finalized",
             "final_result",

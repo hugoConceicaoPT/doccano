@@ -79,9 +79,9 @@ class AnnotatorReportView(APIView):
                 required=False
             ),
             openapi.Parameter(
-                'task_types',
+                'perspective_ids',
                 openapi.IN_QUERY,
-                description="Lista de tipos de tarefa (separados por vírgula, opcional)",
+                description="Lista de IDs das perspectivas (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
             )
@@ -159,11 +159,14 @@ class AnnotatorReportView(APIView):
             except ValueError:
                 processed['label_ids'] = []
         
-        # Processar task_types (opcional)
-        if 'task_types' in query_params and query_params['task_types']:
-            processed['task_types'] = [
-                x.strip() for x in query_params['task_types'].split(',') if x.strip()
-            ]
+        # Processar perspective_ids (opcional)
+        if 'perspective_ids' in query_params and query_params['perspective_ids']:
+            try:
+                processed['perspective_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_ids'] = []
         
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:
@@ -218,9 +221,9 @@ class AnnotatorReportExportView(APIView):
             openapi.Parameter(
                 'export_format',
                 openapi.IN_QUERY,
-                description="Formato de exportação: csv, pdf ou tsv",
+                description="Formato de exportação: csv ou pdf",
                 type=openapi.TYPE_STRING,
-                enum=['csv', 'pdf', 'tsv'],
+                enum=['csv', 'pdf'],
                 default='csv',
                 required=False
             ),
@@ -262,9 +265,9 @@ class AnnotatorReportExportView(APIView):
                 required=False
             ),
             openapi.Parameter(
-                'task_types',
+                'perspective_ids',
                 openapi.IN_QUERY,
-                description="Lista de tipos de tarefa (separados por vírgula, opcional)",
+                description="Lista de IDs das perspectivas (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
             )
@@ -361,11 +364,7 @@ class AnnotatorReportExportView(APIView):
             except ValueError:
                 processed['label_ids'] = []
         
-        # Processar task_types (opcional)
-        if 'task_types' in query_params and query_params['task_types']:
-            processed['task_types'] = [
-                x.strip() for x in query_params['task_types'].split(',') if x.strip()
-            ]
+
         
         # Processar datas (opcional)
         if 'date_from' in query_params and query_params['date_from']:
@@ -581,20 +580,7 @@ class AnnotatorReportExportView(APIView):
             except Exception:
                 elements.append(Paragraph(f"Labels: {query_params['label_ids']}", styles['Normal']))
         
-        # Exemplos - converter IDs para nomes
-        if 'task_types' in query_params and query_params['task_types']:
-            try:
-                from projects.models import Project
-                task_types = [x.strip() for x in query_params['task_types'].split(',') if x.strip()]
-                projects = Project.objects.filter(task_type__in=task_types)
-                
-                project_names = []
-                for project in projects:
-                    project_names.append(project.name)
-                
-                elements.append(Paragraph(f"Projetos: {', '.join(project_names)}", styles['Normal']))
-            except Exception:
-                elements.append(Paragraph(f"Projetos: {query_params['task_types']}", styles['Normal']))
+
         
         elements.append(Spacer(1, 20))
         
