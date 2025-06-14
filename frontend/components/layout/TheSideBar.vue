@@ -43,7 +43,8 @@ import {
   mdiChartBoxOutline,
   mdiProgressPencil,
   mdiFileDocumentOutline,
-  mdiCompare
+  mdiCompare,
+  mdiVote
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
 
@@ -121,7 +122,13 @@ export default {
           icon: mdiProgressPencil,
           text: 'Annotations Rules',
           link: 'rules',
-          isVisible: true
+          isVisible: this.isProjectAdmin
+        },
+        {
+          icon: mdiVote,
+          text: 'Votação',
+          link: 'voting',
+          isVisible: !this.isProjectAdmin
         },
         {
           icon: mdiCompare,
