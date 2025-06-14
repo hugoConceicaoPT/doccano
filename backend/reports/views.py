@@ -1371,7 +1371,11 @@ class AnnotationReportExportView(APIView):
         writer.writerow(['Filtros aplicados:'])
         
         # Recuperar os filtros da query string original
-        query_params = getattr(self.request, 'query_params', self.request.GET)
+        query_params = getattr(self, 'request', None)
+        if query_params:
+            query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
+        else:
+            query_params = {}
         
         # Usuários - converter IDs para nomes
         if 'user_ids' in query_params and query_params['user_ids']:
@@ -1431,7 +1435,6 @@ class AnnotationReportExportView(APIView):
         
         # Cabeçalho da tabela
         writer.writerow([
-            'ID',
             'Exemplo',
             'Utilizador',
             'Label',
@@ -1462,7 +1465,6 @@ class AnnotationReportExportView(APIView):
                     date_str = item['created_at']
             
             writer.writerow([
-                item['id'],
                 item['example_name'],
                 item['username'],
                 item['label_text'] or '-',
@@ -1475,36 +1477,159 @@ class AnnotationReportExportView(APIView):
     def _export_tsv(self, report_data):
         """Exportar relatório em formato TSV"""
         response = HttpResponse(content_type='text/tab-separated-values; charset=utf-8')
-        response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.tsv"'
+        response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.tsv"'
         
         # Adicionar BOM para UTF-8
         response.write('\ufeff')
         
         writer = csv.writer(response, delimiter='\t')
         
-        # Cabeçalho
+        # Obter informações do projeto (assumindo que todas as anotações são do mesmo projeto)
+        project_name = ""
+        project_type = ""
+        if report_data.get('data') and len(report_data['data']) > 0:
+            project_name = report_data['data'][0].get('project_name', "")
+            project_type = report_data['data'][0].get('project_type', "")
+        
+        # Adicionar cabeçalho com informações do projeto
+        writer.writerow(['Relatório de Anotações'])
+        writer.writerow(['Projeto:', project_name])
+        writer.writerow(['Tipo:', project_type])
+        
+        # Adicionar informações sobre os filtros utilizados
+        writer.writerow(['Filtros aplicados:'])
+        
+        # Recuperar os filtros da query string original
+        query_params = getattr(self, 'request', None)
+        if query_params:
+            query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
+        else:
+            query_params = {}
+        
+        # Usuários - converter IDs para nomes
+        if 'user_ids' in query_params and query_params['user_ids']:
+            try:
+                from django.contrib.auth.models import User
+                user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
+                users = User.objects.filter(id__in=user_ids)
+                user_names = [user.username for user in users]
+                writer.writerow(['Utilizadores:', ', '.join(user_names)])
+            except Exception:
+                writer.writerow(['Utilizadores:', query_params['user_ids']])
+        
+        # Labels - converter IDs para nomes
+        if 'label_ids' in query_params and query_params['label_ids']:
+            try:
+                from label_types.models import CategoryType, SpanType, RelationType
+                label_ids = [int(lid.strip()) for lid in query_params['label_ids'].split(',') if lid.strip()]
+                
+                # Buscar em todos os tipos de label
+                category_labels = CategoryType.objects.filter(id__in=label_ids)
+                span_labels = SpanType.objects.filter(id__in=label_ids)
+                relation_labels = RelationType.objects.filter(id__in=label_ids)
+                
+                label_names = []
+                label_names.extend([label.text for label in category_labels])
+                label_names.extend([label.text for label in span_labels])
+                label_names.extend([label.text for label in relation_labels])
+                
+                writer.writerow(['Labels:', ', '.join(label_names)])
+            except Exception:
+                writer.writerow(['Labels:', query_params['label_ids']])
+        
+        # Exemplos - converter IDs para nomes
+        if 'example_ids' in query_params and query_params['example_ids']:
+            try:
+                from examples.models import Example
+                example_ids = [int(eid.strip()) for eid in query_params['example_ids'].split(',') if eid.strip()]
+                examples = Example.objects.filter(id__in=example_ids)
+                
+                example_names = []
+                for example in examples:
+                    if hasattr(example, 'upload_name') and example.upload_name:
+                        example_names.append(str(example.upload_name))
+                    elif hasattr(example, 'filename') and example.filename:
+                        example_names.append(str(example.filename))
+                    elif hasattr(example, 'text') and example.text:
+                        text = str(example.text)
+                        example_names.append(text[:50] + ('...' if len(text) > 50 else ''))
+                    else:
+                        example_names.append(f"Exemplo {example.id}")
+                
+                writer.writerow(['Exemplos:', ', '.join(example_names)])
+            except Exception:
+                writer.writerow(['Exemplos:', query_params['example_ids']])
+        
+        # Filtro de discrepâncias
+        if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
+            discrepancy_map = {
+                'all': 'Todas as anotações',
+                'with_discrepancy': 'Apenas com discrepâncias',
+                'without_discrepancy': 'Apenas sem discrepâncias'
+            }
+            writer.writerow(['Filtro de Discrepâncias:', discrepancy_map.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])])
+        
+        # Perguntas da perspectiva
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                from projects.models import Question
+                question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                questions = Question.objects.filter(id__in=question_ids)
+                question_texts = [q.question for q in questions]
+                writer.writerow(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+            except Exception:
+                writer.writerow(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
+        
+        # Respostas da perspectiva
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                from projects.models import Answer
+                answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                answers = Answer.objects.filter(id__in=answer_ids)
+                answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
+                writer.writerow(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+            except Exception:
+                writer.writerow(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
+        
+        writer.writerow([])  # Linha em branco
+        
+        # Cabeçalho da tabela
         writer.writerow([
+            'Exemplo',
             'Utilizador',
-            'Nome',
-            'Labels Breakdown',
-            'Total de Anotações'
+            'Label',
+            'Data Criação',
+            'Detalhes'
         ])
         
         # Dados
         data_items = report_data.get('data', [])
         
         for item in data_items:
-            # Formatar label breakdown
-            label_breakdown = '; '.join([f"{label}: {count}" for label, count in item.get('label_breakdown', {}).items()])
+            # Formatar detalhes como string JSON simplificada
+            detail_str = ""
+            if item['detail']:
+                detail_str = "; ".join([f"{k}: {v}" for k, v in item['detail'].items()])
             
-            # Calcular total de anotações
-            total_annotations = sum(item.get('label_breakdown', {}).values())
+            # Formatar data (agora é uma string ISO)
+            date_str = '-'
+            if item['created_at']:
+                # Se já for string, usar diretamente ou formatar
+                try:
+                    from datetime import datetime
+                    # Tentar converter para datetime e formatar
+                    dt = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                    date_str = dt.strftime('%Y-%m-%d %H:%M')
+                except (ValueError, AttributeError, TypeError):
+                    # Se falhar, usar a string original
+                    date_str = item['created_at']
             
             writer.writerow([
-                item.get('annotator_username', 'N/A'),
-                item.get('annotator_name', 'N/A'),
-                label_breakdown,
-                total_annotations
+                item['example_name'],
+                item['username'],
+                item['label_text'] or '-',
+                date_str,
+                detail_str
             ])
         
         return response
@@ -1576,7 +1701,7 @@ class AnnotationReportExportView(APIView):
             elements = []
             
             # Título do relatório
-            elements.append(Paragraph("Relatório sobre Anotadores", styles['TitleStyle']))
+            elements.append(Paragraph("Relatório sobre Anotações", styles['TitleStyle']))
             elements.append(Spacer(1, 10))
             
             # Obter informações do projeto
@@ -1596,7 +1721,11 @@ class AnnotationReportExportView(APIView):
             elements.append(Paragraph("Filtros aplicados:", styles['SubtitleStyle']))
             
             # Recuperar os filtros da query string original
-            query_params = getattr(self.request, 'query_params', self.request.GET)
+            query_params = getattr(self, 'request', None)
+            if query_params:
+                query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
+            else:
+                query_params = {}
             
             # Usuários - converter IDs para nomes
             if 'user_ids' in query_params and query_params['user_ids']:
@@ -1631,15 +1760,65 @@ class AnnotationReportExportView(APIView):
                     print(f"[PDF DEBUG] Erro ao processar label_ids: {e}")
                     elements.append(Paragraph(f"Labels: {query_params['label_ids']}", styles['Normal']))
             
-            # Datasets
-            if 'dataset_names' in query_params and query_params['dataset_names']:
-                elements.append(Paragraph(f"Datasets: {query_params['dataset_names']}", styles['Normal']))
+            # Exemplos - converter IDs para nomes
+            if 'example_ids' in query_params and query_params['example_ids']:
+                try:
+                    from examples.models import Example
+                    example_ids = [int(eid.strip()) for eid in query_params['example_ids'].split(',') if eid.strip()]
+                    examples = Example.objects.filter(id__in=example_ids)
+                    
+                    example_names = []
+                    for example in examples:
+                        if hasattr(example, 'upload_name') and example.upload_name:
+                            example_names.append(str(example.upload_name))
+                        elif hasattr(example, 'filename') and example.filename:
+                            example_names.append(str(example.filename))
+                        elif hasattr(example, 'text') and example.text:
+                            text = str(example.text)
+                            example_names.append(text[:30] + ('...' if len(text) > 30 else ''))
+                        else:
+                            example_names.append(f"Exemplo {example.id}")
+                    
+                    elements.append(Paragraph(f"Exemplos: {', '.join(example_names)}", styles['Normal']))
+                except Exception:
+                    elements.append(Paragraph(f"Exemplos: {query_params['example_ids']}", styles['Normal']))
+            
+            # Filtro de discrepâncias
+            if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
+                discrepancy_map = {
+                    'all': 'Todas as anotações',
+                    'with_discrepancy': 'Apenas com discrepâncias',
+                    'without_discrepancy': 'Apenas sem discrepâncias'
+                }
+                elements.append(Paragraph(f"Filtro de Discrepâncias: {discrepancy_map.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])}", styles['Normal']))
+            
+            # Perguntas da perspectiva
+            if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+                try:
+                    from projects.models import Question
+                    question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                    questions = Question.objects.filter(id__in=question_ids)
+                    question_texts = [q.question for q in questions]
+                    elements.append(Paragraph(f"Perguntas da Perspectiva: {', '.join(question_texts)}", styles['Normal']))
+                except Exception:
+                    elements.append(Paragraph(f"Perguntas da Perspectiva: {query_params['perspective_question_ids']}", styles['Normal']))
+            
+            # Respostas da perspectiva
+            if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+                try:
+                    from projects.models import Answer
+                    answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                    answers = Answer.objects.filter(id__in=answer_ids)
+                    answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
+                    elements.append(Paragraph(f"Respostas da Perspectiva: {', '.join(answer_texts)}", styles['Normal']))
+                except Exception:
+                    elements.append(Paragraph(f"Respostas da Perspectiva: {query_params['perspective_answer_ids']}", styles['Normal']))
             
             elements.append(Spacer(1, 20))
             
             # Preparar dados para tabela principal
             table_data = [
-                ['Utilizador', 'Nome', 'Total por Label', 'Labels por Dataset']
+                ['Exemplo', 'Utilizador', 'Label', 'Data']
             ]
             
             # Adicionar dados à tabela
@@ -1648,52 +1827,36 @@ class AnnotationReportExportView(APIView):
             
             for i, item in enumerate(data_items):
                 try:
-                    # Formatar breakdown de labels totais
-                    label_breakdown = item.get('label_breakdown', {})
-                    total_labels_text = ""
-                    if label_breakdown:
-                        label_parts = []
-                        for label, count in label_breakdown.items():
-                            label_parts.append(f"{label}: {count}")
-                        total_labels_text = "; ".join(label_parts)
-                    else:
-                        total_labels_text = "Nenhuma label"
-                    
-                    # Formatar breakdown de labels por dataset
-                    dataset_breakdown = item.get('dataset_label_breakdown', {})
-                    dataset_labels_text = ""
-                    if dataset_breakdown:
-                        dataset_parts = []
-                        for dataset, labels in dataset_breakdown.items():
-                            if labels:
-                                label_list = ", ".join(labels.keys())
-                                dataset_parts.append(f"{dataset}: {label_list}")
-                        dataset_labels_text = "; ".join(dataset_parts)
-                    else:
-                        dataset_labels_text = "Nenhuma anotação"
+                    # Formatar data
+                    date_str = '-'
+                    if item['created_at']:
+                        try:
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                            date_str = dt.strftime('%Y-%m-%d %H:%M')
+                        except (ValueError, AttributeError, TypeError):
+                            date_str = item['created_at']
                     
                     # Truncar textos se muito longos
-                    if len(total_labels_text) > 100:
-                        total_labels_text = total_labels_text[:97] + "..."
-                    if len(dataset_labels_text) > 150:
-                        dataset_labels_text = dataset_labels_text[:147] + "..."
+                    example_name = item['example_name']
+                    if len(example_name) > 35:
+                        example_name = example_name[:32] + "..."
                     
-                    # Truncar nome se muito longo
-                    name = item.get('annotator_name', 'N/A')
-                    if len(name) > 25:
-                        name = name[:22] + '...'
+                    label_text = item['label_text'] or '-'
+                    if len(label_text) > 30:
+                        label_text = label_text[:27] + "..."
                     
                     table_data.append([
-                        item.get('annotator_username', 'N/A'),
-                        name,
-                        total_labels_text,
-                        dataset_labels_text
+                        example_name,
+                        item['username'],
+                        label_text,
+                        date_str
                     ])
                 except Exception as e:
                     print(f"[PDF DEBUG] Erro ao processar item {i}: {e}")
                     table_data.append([
-                        'Erro',
                         'Erro ao processar',
+                        'Erro',
                         'Erro',
                         'Erro'
                     ])
@@ -1701,7 +1864,7 @@ class AnnotationReportExportView(APIView):
             print(f"[PDF DEBUG] Tabela criada com {len(table_data)} linhas")
             
             # Criar tabela com larguras específicas
-            col_widths = [1.5*inch, 2*inch, 3*inch, 4*inch]  # Ajustar larguras das colunas
+            col_widths = [3*inch, 1.8*inch, 2.2*inch, 1.5*inch]  # Ajustar larguras das colunas
             table = Table(table_data, repeatRows=1, colWidths=col_widths)
             
             # Estilo da tabela
@@ -1740,24 +1903,22 @@ class AnnotationReportExportView(APIView):
             # Adicionar resumo no final
             elements.append(Spacer(1, 20))
             elements.append(Paragraph("Resumo:", styles['SubtitleStyle']))
-            elements.append(Paragraph(f"Total de anotadores: {len(data_items)}", styles['Normal']))
+            elements.append(Paragraph(f"Total de anotações: {len(data_items)}", styles['Normal']))
             
             # Calcular estatísticas gerais
-            total_annotations = 0
+            all_users = set()
             all_labels = set()
-            all_datasets = set()
+            all_examples = set()
             
             for item in data_items:
-                label_breakdown = item.get('label_breakdown', {})
-                total_annotations += sum(label_breakdown.values())
-                all_labels.update(label_breakdown.keys())
-                
-                dataset_breakdown = item.get('dataset_label_breakdown', {})
-                all_datasets.update(dataset_breakdown.keys())
+                all_users.add(item['username'])
+                if item['label_text']:
+                    all_labels.add(item['label_text'])
+                all_examples.add(item['example_name'])
             
-            elements.append(Paragraph(f"Total de anotações: {total_annotations}", styles['Normal']))
+            elements.append(Paragraph(f"Total de utilizadores: {len(all_users)}", styles['Normal']))
             elements.append(Paragraph(f"Labels únicas utilizadas: {len(all_labels)}", styles['Normal']))
-            elements.append(Paragraph(f"Datasets com anotações: {len(all_datasets)}", styles['Normal']))
+            elements.append(Paragraph(f"Exemplos únicos: {len(all_examples)}", styles['Normal']))
             
             print(f"[PDF DEBUG] Construindo documento PDF...")
             
@@ -1769,7 +1930,7 @@ class AnnotationReportExportView(APIView):
             # Preparar resposta
             buffer.seek(0)
             response = HttpResponse(buffer.read(), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.pdf"'
             
             return response
             

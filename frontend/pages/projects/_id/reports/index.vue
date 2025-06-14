@@ -521,14 +521,15 @@
                           :prepend-inner-icon="mdiHelpCircle"
                           hint="Selecione perguntas específicas da perspectiva"
                           persistent-hint
+                          @input="onPerspectiveQuestionsChange"
                         />
                       </v-col>
 
                       <!-- Filtro de Respostas da Perspectiva -->
-                      <v-col cols="12" md="6">
+                      <v-col cols="12" md="6" v-if="annotationFilters.perspective_questions && annotationFilters.perspective_questions.length > 0">
                         <v-autocomplete
                           v-model="annotationFilters.perspective_answers"
-                          :items="availablePerspectiveAnswers"
+                          :items="filteredPerspectiveAnswers"
                           item-text="text"
                           item-value="id"
                           label="Respostas da Perspectiva"
@@ -539,9 +540,25 @@
                           outlined
                           dense
                           :prepend-inner-icon="mdiCommentCheck"
-                          hint="Selecione respostas específicas da perspectiva"
+                          hint="Selecione respostas específicas das perguntas selecionadas"
                           persistent-hint
-                        />
+                        >
+                          <template #selection="{ item, index }">
+                            <v-chip
+                              v-if="index < 2"
+                              small
+                              close
+                              color="purple"
+                              text-color="white"
+                              @click:close="removePerspectiveAnswer(item)"
+                            >
+                              {{ getSelectedAnswerText(item) }}
+                            </v-chip>
+                            <span v-if="index === 2" class="grey--text text-caption">
+                              (+{{ annotationFilters.perspective_answers.length - 2 }} outras)
+                            </span>
+                          </template>
+                        </v-autocomplete>
                       </v-col>
 
                       <!-- Formato de Exportação -->
@@ -681,22 +698,23 @@
                       <template #[`item.created_at`]="{ item }">
                         {{ new Date(item.created_at).toLocaleString('pt-BR') }}
                       </template>
-                      <template #[`item.detail`]="{ item }">
-                        <v-tooltip bottom>
-                          <template #activator="{ on, attrs }">
-                            <v-btn
-                              x-small
-                              icon
-                              v-bind="attrs"
-                              v-on="on"
-                            >
-                              <v-icon small>{{ mdiInformationOutline }}</v-icon>
-                            </v-btn>
-                          </template>
-                          <span>
-                            {{ item.detail ? JSON.stringify(item.detail) : 'Sem detalhes' }}
+                      
+                      <template #[`item.label_text`]="{ item }">
+                        <div class="labels-container">
+                          <v-chip
+                            v-if="item.label_text && item.label_text !== 'Sem labels'"
+                            small
+                            color="primary"
+                            outlined
+                            class="ma-1"
+                          >
+                            {{ item.label_text }}
+                          </v-chip>
+                          <span v-else class="grey--text text-caption">
+                            <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                            Sem labels
                           </span>
-                        </v-tooltip>
+                        </div>
                       </template>
                     </v-data-table>
                   </v-card>
@@ -821,7 +839,8 @@ export default Vue.extend({
     availableDatasets: Array<{name: string; count: number}>;
     discrepancyOptions: Array<{value: string; text: string; description: string}>;
     availablePerspectiveQuestions: Array<{id: number; text: string}>;
-    availablePerspectiveAnswers: Array<{id: number; text: string}>;
+    availablePerspectiveAnswers: Array<{id: number; text: string; question_id: number}>;
+    filteredPerspectiveAnswers: Array<{id: number; text: string; question_id: number; ids?: number[]}>;
   } {
     return {
       mdiFileDocumentOutline,
@@ -891,12 +910,10 @@ export default Vue.extend({
       annotationReportError: null as string | null,
       annotationSearch: '',
       annotationHeaders: [
-        { text: 'ID', value: 'id', width: '70px' },
-        { text: 'Exemplo', value: 'example_name' },
+        { text: 'Exemplo', value: 'example_name', width: '200px' },
         { text: 'Utilizador', value: 'username', width: '130px' },
-        { text: 'Label', value: 'label_text', width: '150px' },
-        { text: 'Data', value: 'created_at', width: '180px' },
-        { text: 'Detalhes', value: 'detail', width: '80px', sortable: false }
+        { text: 'Labels Utilizadas', value: 'label_text', width: '300px' },
+        { text: 'Data', value: 'created_at', width: '180px' }
       ],
       annotationPage: 1,
       annotationExportFormats: [],
@@ -915,7 +932,8 @@ export default Vue.extend({
         { value: 'without_discrepancy', text: 'Sem Discrepância', description: 'Apenas anotações sem discrepâncias' }
       ] as Array<{value: string; text: string; description: string}>,
       availablePerspectiveQuestions: [] as Array<{id: number; text: string}>,
-      availablePerspectiveAnswers: [] as Array<{id: number; text: string}>
+      availablePerspectiveAnswers: [] as Array<{id: number; text: string; question_id: number}>,
+      filteredPerspectiveAnswers: [] as Array<{id: number; text: string; question_id: number; ids?: number[]}>
     }
   },
 
@@ -1406,10 +1424,10 @@ export default Vue.extend({
 
     getDatasetDisplayName(dataset: any) {
       if (typeof dataset === 'object') {
-        // Se é um objeto, usar diretamente
-        return this.getDatasetName(dataset)
+        // Se é um objeto, usar a propriedade name
+        return dataset.name || dataset
       }
-      // Se é uma string, criar um objeto com name
+      // Se é uma string, retornar diretamente
       return dataset
     },
 
@@ -1459,6 +1477,7 @@ export default Vue.extend({
       this.annotationExportFormats = []
       this.annotationReportData = null
       this.annotationReportError = null
+      this.filteredPerspectiveAnswers = []
     },
     
     async generateAndExportAnnotationReport() {
@@ -1516,7 +1535,22 @@ export default Vue.extend({
         }
         
         if (this.annotationFilters.perspective_answers && this.annotationFilters.perspective_answers.length > 0) {
-          params.append('perspective_answer_ids', this.annotationFilters.perspective_answers.join(','))
+          // Expandir as respostas agrupadas para incluir todos os IDs
+          const expandedAnswerIds = []
+          for (const selectedAnswerId of this.annotationFilters.perspective_answers) {
+            // Encontrar a resposta correspondente nas respostas filtradas
+            const selectedAnswer = this.filteredPerspectiveAnswers.find(answer => answer.id === selectedAnswerId)
+            if (selectedAnswer && selectedAnswer.ids) {
+              // Se tem IDs agrupados, adicionar todos
+              expandedAnswerIds.push(...selectedAnswer.ids)
+            } else {
+              // Se não tem IDs agrupados, usar o ID original
+              expandedAnswerIds.push(selectedAnswerId)
+            }
+          }
+          params.append('perspective_answer_ids', expandedAnswerIds.join(','))
+          console.log('[DEBUG] Respostas selecionadas:', this.annotationFilters.perspective_answers)
+          console.log('[DEBUG] IDs expandidos enviados:', expandedAnswerIds)
         }
         
         // Adicionar paginação
@@ -1579,7 +1613,22 @@ export default Vue.extend({
         }
         
         if (this.annotationFilters.perspective_answers && this.annotationFilters.perspective_answers.length > 0) {
-          params.append('perspective_answer_ids', this.annotationFilters.perspective_answers.join(','))
+          // Expandir as respostas agrupadas para incluir todos os IDs
+          const expandedAnswerIds = []
+          for (const selectedAnswerId of this.annotationFilters.perspective_answers) {
+            // Encontrar a resposta correspondente nas respostas filtradas
+            const selectedAnswer = this.filteredPerspectiveAnswers.find(answer => answer.id === selectedAnswerId)
+            if (selectedAnswer && selectedAnswer.ids) {
+              // Se tem IDs agrupados, adicionar todos
+              expandedAnswerIds.push(...selectedAnswer.ids)
+            } else {
+              // Se não tem IDs agrupados, usar o ID original
+              expandedAnswerIds.push(selectedAnswerId)
+            }
+          }
+          params.append('perspective_answer_ids', expandedAnswerIds.join(','))
+          console.log('[DEBUG] Respostas selecionadas:', this.annotationFilters.perspective_answers)
+          console.log('[DEBUG] IDs expandidos enviados:', expandedAnswerIds)
         }
         
         // Adicionar máximo de resultados
@@ -1713,6 +1762,58 @@ export default Vue.extend({
 
     removeAnnotationExportFormat(format: string) {
       this.annotationExportFormats = this.annotationExportFormats.filter((f) => f !== format)
+    },
+
+    onPerspectiveQuestionsChange() {
+      // Limpar respostas selecionadas quando as perguntas mudam
+      this.annotationFilters.perspective_answers = []
+      
+      // Se não há perguntas selecionadas, limpar respostas filtradas
+      if (!this.annotationFilters.perspective_questions || this.annotationFilters.perspective_questions.length === 0) {
+        this.filteredPerspectiveAnswers = []
+        return
+      }
+      
+      // Filtrar respostas que pertencem às perguntas selecionadas
+      const answersForSelectedQuestions = this.availablePerspectiveAnswers.filter(answer =>
+        this.annotationFilters.perspective_questions.includes(answer.question_id)
+      )
+      
+      // Agrupar respostas iguais (mesmo texto) numa única opção
+      const groupedAnswers = new Map()
+      
+      answersForSelectedQuestions.forEach(answer => {
+        const answerText = answer.text.trim().toLowerCase()
+        
+        if (groupedAnswers.has(answerText)) {
+          // Se já existe uma resposta com este texto, adicionar o ID à lista
+          const existing = groupedAnswers.get(answerText)
+          existing.ids.push(answer.id)
+        } else {
+          // Primeira resposta com este texto
+          groupedAnswers.set(answerText, {
+            id: answer.id, // Usar o primeiro ID encontrado
+            text: answer.text, // Manter a capitalização original
+            question_id: answer.question_id,
+            ids: [answer.id] // Lista de todos os IDs com este texto
+          })
+        }
+      })
+      
+      // Converter o Map de volta para array
+      this.filteredPerspectiveAnswers = Array.from(groupedAnswers.values())
+      
+      console.log('[DEBUG] Perguntas selecionadas:', this.annotationFilters.perspective_questions)
+      console.log('[DEBUG] Respostas filtradas:', this.filteredPerspectiveAnswers)
+    },
+
+    getSelectedAnswerText(answer: any) {
+      if (typeof answer === 'object') {
+        return answer.text;
+      } else if (typeof answer === 'string') {
+        return answer;
+      }
+      return '';
     }
   }
 })
@@ -1826,5 +1927,19 @@ export default Vue.extend({
   background: #f5f5f5;
   border-radius: 6px;
   border: 1px dashed #ccc;
+}
+
+/* Estilos para as anotações consolidadas */
+.labels-container {
+  max-width: 280px;
+  word-wrap: break-word;
+}
+
+.labels-container .v-chip {
+  max-width: 100%;
+  white-space: normal;
+  height: auto !important;
+  min-height: 24px;
+  padding: 4px 8px;
 }
 </style>
