@@ -272,7 +272,7 @@ export default Vue.extend({
     RuleList
   },
   layout: 'project',
-  middleware: ['check-auth', 'auth'],
+  middleware: ['check-auth', 'auth', 'setCurrentProject'],
   data() {
     return {
       successMessage: '',
@@ -383,6 +383,7 @@ export default Vue.extend({
       this.memberId = member.id
       this.isAdmin = member.isProjectAdmin
       this.isAnnotator = member.isAnnotator
+      
       // configs e regras
       this.votingConfigs = await this.$services.votingConfiguration.list(projectId)
       // Filtrar apenas as configurações do projeto atual
@@ -390,75 +391,97 @@ export default Vue.extend({
         (config) => config.project === Number(projectId)
       )
       
-      this.rules = await this.$services.annotationRule.list(projectId)
-
-      // Identificar a configuração de votação ativa (não fechada) para o projeto atual
-      this.activeVotingConfig = this.votingConfigs.find((config) => 
-        !config.is_closed && config.project === Number(projectId)
-      ) || null
-
-      // inicializa agrupamentos e estados
-      this.groupedRules = {}
-      this.answeredRules = {}
-      this.finalizedRules = {}
-      // processa todas as configurações
-      this.votingConfigs.forEach(async (cfg) => {
-        const list = this.rules.filter((r) => r.voting_configuration === cfg.id)
-        this.groupedRules[cfg.id] = list
-
-        for (const r of list) {
-          const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id)
-          const endTime = Date.parse(cfg.end_date) - 60 * 60 * 1000
-          const isExpired = this.currentTime >= endTime
-          const numberVersion = 'V_' + String(cfg.version).padStart(2, '0');
-
-
-          this.$set(this.votesYes, r.id, ans.filter((a) => a.answer).length)
-          this.$set(this.votesNo, r.id, ans.filter((a) => !a.answer).length)
-          const yes = this.votesYes[r.id] || 0
-          const no = this.votesNo[r.id] || 0
-          const total = yes + no
-
-          // marca finalizada quando todos os anotadores votaram
-          const votesFromAnnotators = ans.filter((a) => annotatorIds.includes(a.member)).length
-          if (votesFromAnnotators >= annotatorIds.length || isExpired) {
-            this.$set(this.finalizedRules, r.id, true)
-          }
-
-          const percentageFavor = total ? Math.round((yes / total) * 100) : 0
-
-          let result = ''
-          if (percentageFavor >= cfg.percentage_threshold) {
-            result = 'Approved'
-          } else {
-            result = 'Rejected'
-          }
-          // persiste finalização e resultado no backend
-          if (votesFromAnnotators >= annotatorIds.length || isExpired) {
-            await this.$services.annotationRule.update(projectId, r.id, {
-              is_finalized: true,
-              final_result: result
-            })
-          }
-          if (r.is_finalized === true) {
-            this.items.push({
-              numberVersion,
-              ruleDiscussion: r.name,
-              isFinalized: r.is_finalized,
-              result,
-              votesFor: this.votesYes[r.id] || 0,
-              votesAgainst: this.votesNo[r.id] || 0
-            })
-          }
-          if (ans.some((a) => a.member === this.memberId)) {
-            this.$set(this.answeredRules, r.id, true)
+      // Para anotadores, usar a nova API que retorna apenas regras não votadas
+      if (this.isAnnotator && !this.isAdmin) {
+        const unvotedData = await this.$services.annotationRule.listUnvoted(projectId)
+        this.rules = unvotedData.rules
+        this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
+        
+        // Atualizar informações de votação ativa baseado na resposta da API
+        if (unvotedData.activeVotings.length > 0) {
+          const activeVoting = unvotedData.activeVotings.find(v => v.is_active)
+          if (activeVoting) {
+            this.activeVotingConfig = this.votingConfigs.find(c => c.id === activeVoting.id) || null
           }
         }
-      })
+        
+        // Para anotadores, não precisamos processar histórico
+        this.items = []
+        this.answeredRules = {}
+        this.finalizedRules = {}
+        
+        console.log(`Anotador: ${unvotedData.totalUnvotedRules} regra(s) disponível(is) para votação`)
+      } else {
+        // Para administradores, manter o comportamento original
+        this.rules = await this.$services.annotationRule.list(projectId)
 
-      this.pendingRules = this.rules.filter(
-        (rule) => !this.answeredRules[rule.id]
-      ) as AnnotationRuleItem[]
+        // Identificar a configuração de votação ativa (não fechada) para o projeto atual
+        this.activeVotingConfig = this.votingConfigs.find((config) => 
+          !config.is_closed && config.project === Number(projectId)
+        ) || null
+
+        // inicializa agrupamentos e estados
+        this.groupedRules = {}
+        this.answeredRules = {}
+        this.finalizedRules = {}
+        // processa todas as configurações
+        this.votingConfigs.forEach(async (cfg) => {
+          const list = this.rules.filter((r) => r.voting_configuration === cfg.id)
+          this.groupedRules[cfg.id] = list
+
+          for (const r of list) {
+            const ans = await this.$services.annotationRuleAnswerService.list(projectId, r.id)
+            const endTime = Date.parse(cfg.end_date)
+            const isExpired = this.currentTime >= endTime
+            const numberVersion = 'V_' + String(cfg.version).padStart(2, '0');
+
+            this.$set(this.votesYes, r.id, ans.filter((a) => a.answer).length)
+            this.$set(this.votesNo, r.id, ans.filter((a) => !a.answer).length)
+            const yes = this.votesYes[r.id] || 0
+            const no = this.votesNo[r.id] || 0
+            const total = yes + no
+
+            // marca finalizada quando todos os anotadores votaram
+            const votesFromAnnotators = ans.filter((a) => annotatorIds.includes(a.member)).length
+            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
+              this.$set(this.finalizedRules, r.id, true)
+            }
+
+            const percentageFavor = total ? Math.round((yes / total) * 100) : 0
+
+            let result = ''
+            if (percentageFavor >= cfg.percentage_threshold) {
+              result = 'Approved'
+            } else {
+              result = 'Rejected'
+            }
+            // persiste finalização e resultado no backend
+            if (votesFromAnnotators >= annotatorIds.length || isExpired) {
+              await this.$services.annotationRule.update(projectId, r.id, {
+                is_finalized: true,
+                final_result: result
+              })
+            }
+            if (r.is_finalized === true) {
+              this.items.push({
+                numberVersion,
+                ruleDiscussion: r.name,
+                isFinalized: r.is_finalized,
+                result,
+                votesFor: this.votesYes[r.id] || 0,
+                votesAgainst: this.votesNo[r.id] || 0
+              })
+            }
+            if (ans.some((a) => a.member === this.memberId)) {
+              this.$set(this.answeredRules, r.id, true)
+            }
+          }
+        })
+
+        this.pendingRules = this.rules.filter(
+          (rule) => !this.answeredRules[rule.id]
+        ) as AnnotationRuleItem[]
+      }
     } catch (error) {
       this.handleError(error)
     } finally {
@@ -546,11 +569,60 @@ export default Vue.extend({
       if (answer) this.$set(this.votesYes, ruleId, (this.votesYes[ruleId] || 0) + 1)
       else this.$set(this.votesNo, ruleId, (this.votesNo[ruleId] || 0) + 1)
     },
+    removeVote(ruleId: number) {
+      // Remove o voto local
+      this.$delete(this.localVotes, ruleId)
+      
+      // Atualizar contadores visuais se necessário
+      if (this.votesYes[ruleId] > 0) {
+        this.$set(this.votesYes, ruleId, this.votesYes[ruleId] - 1)
+      }
+      if (this.votesNo[ruleId] > 0) {
+        this.$set(this.votesNo, ruleId, this.votesNo[ruleId] - 1)
+      }
+    },
     handleError(error: any) {
+      console.error('Erro na aplicação:', error)
+      
+      // Verificar se é erro de conexão com a base de dados (usando interceptor)
+      if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
+        this.errorMessage = error.userMessage
+        return
+      }
+      
+      // Verificar se é erro de conexão sem interceptor (fallback)
+      if (!error.response) {
+        this.errorMessage = 'Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+        return
+      }
+      
+      // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
+      if (error.response.status === 503) {
+        this.errorMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
+        return
+      }
+      
+      // Verificar se é erro 500 (erro interno do servidor/base de dados)
+      if (error.response.status >= 500) {
+        this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+        return
+      }
+      
+      // Verificar se é timeout ou erro de gateway
+      if (error.code === 'ECONNABORTED' || error.response.status === 502 || error.response.status === 504) {
+        this.errorMessage = 'Erro de conexão: O servidor está sobrecarregado ou a base de dados está indisponível. Tente novamente em alguns minutos.'
+        return
+      }
+      
+      // Tratamento específico de outros erros
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Error retrieving data.'
+        this.errorMessage = 'Erro ao carregar dados. Alguns dados podem estar inconsistentes.'
+      } else if (error.response && error.response.status === 403) {
+        this.errorMessage = 'Você não tem permissão para acessar estes dados.'
+      } else if (error.response && error.response.status === 404) {
+        this.errorMessage = 'Dados não encontrados. O projeto ou votação pode ter sido removido.'
       } else {
-        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
+        this.errorMessage = 'Erro inesperado ao carregar dados. Verifique sua conexão e tente novamente.'
       }
     },
     async submitVotes() {
@@ -567,10 +639,24 @@ export default Vue.extend({
         this.localVotes = {}
         this.successMessage = `Votos submetidos com sucesso! Você votou em ${Object.keys(this.localVotes).length || Object.keys(this.answeredRules).length} regra(s).`
 
-        // Atualizar a lista de regras pendentes
-        this.pendingRules = this.rules.filter(
-          (rule) => !this.answeredRules[rule.id]
-        ) as AnnotationRuleItem[]
+        // Para anotadores, recarregar apenas regras não votadas
+        if (this.isAnnotator && !this.isAdmin) {
+          const unvotedData = await this.$services.annotationRule.listUnvoted(this.projectId)
+          this.rules = unvotedData.rules
+          this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
+          
+          console.log(`Após votação: ${unvotedData.totalUnvotedRules} regra(s) restante(s) para votação`)
+          
+          // Se não há mais regras para votar, mostrar mensagem específica
+          if (unvotedData.totalUnvotedRules === 0) {
+            this.successMessage = 'Parabéns! Você votou em todas as regras disponíveis.'
+          }
+        } else {
+          // Para administradores, manter comportamento original
+          this.pendingRules = this.rules.filter(
+            (rule) => !this.answeredRules[rule.id]
+          ) as AnnotationRuleItem[]
+        }
 
         // Verificar se a votação pode ser fechada agora
         if (this.activeVotingConfig) {
@@ -579,7 +665,37 @@ export default Vue.extend({
       } catch (error: any) {
         console.error('Erro ao submeter votos:', error)
         
-        // Tratamento específico de erros
+        // Verificar se é erro de conexão com a base de dados (usando interceptor)
+        if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
+          this.errorMessage = error.userMessage
+          return
+        }
+        
+        // Verificar se é erro de conexão sem interceptor (fallback)
+        if (!error.response) {
+          this.errorMessage = 'Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+          return
+        }
+        
+        // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
+        if (error.response.status === 503) {
+          this.errorMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
+          return
+        }
+        
+        // Verificar se é erro 500 (erro interno do servidor/base de dados)
+        if (error.response.status >= 500) {
+          this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+          return
+        }
+        
+        // Verificar se é timeout ou erro de gateway
+        if (error.code === 'ECONNABORTED' || error.response.status === 502 || error.response.status === 504) {
+          this.errorMessage = 'Erro de conexão: O servidor está sobrecarregado ou a base de dados está indisponível. Tente novamente em alguns minutos.'
+          return
+        }
+        
+        // Tratamento específico de outros erros
         if (error.response?.status === 403) {
           this.errorMessage = 'Você não tem permissão para votar. Apenas anotadores podem votar nas regras de anotação.'
         } else if (error.response?.status === 400) {
@@ -607,24 +723,15 @@ export default Vue.extend({
               this.$fetch()
             }, 2000)
           } else {
-            this.errorMessage = detail || 'Erro ao submeter votos. Verifique se todas as regras ainda estão disponíveis para votação.'
+            this.errorMessage = 'Erro ao submeter votos. Tente novamente.'
           }
-        } else if (error.response?.status === 404) {
-          this.errorMessage = 'Uma ou mais regras não foram encontradas. A votação pode ter sido alterada.'
         } else {
-          this.errorMessage = 'Erro inesperado ao submeter votos. Tente novamente em alguns instantes.'
+          this.errorMessage = 'Erro inesperado. Verifique sua conexão e tente novamente.'
         }
-        
-        // Limpar votos locais em caso de erro para evitar confusão
-        this.localVotes = {}
       }
     },
     stripExtension(filename?: string): string {
       return filename ? filename.replace(/\.[^/.]+$/, '') : ''
-    },
-    removeVote(ruleId: number) {
-      // Remover completamente o voto da regra
-      this.$delete(this.localVotes, ruleId)
     },
     formatDate(date: Date): string {
       return date.toLocaleString('pt-PT', {

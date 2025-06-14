@@ -7,6 +7,11 @@ import {
 export interface AnnotationRuleRepository {
   create(projectId: string, item: AnnotationRuleItem): Promise<AnnotationRuleItem>
   list(projectId: string): Promise<AnnotationRuleItem[]>
+  listUnvoted(projectId: string): Promise<{
+    rules: AnnotationRuleItem[],
+    activeVotings: any[],
+    totalUnvotedRules: number
+  }>
   delete(projectId: string, id: number): Promise<AnnotationRuleItem>
   update(
     projectId: string,

@@ -38,6 +38,14 @@ export class AnnotationRuleApplicationService {
     return await this.repository.list(projectId)
   }
 
+  public async listUnvoted(projectId: string): Promise<{
+    rules: AnnotationRuleItem[],
+    activeVotings: any[],
+    totalUnvotedRules: number
+  }> {
+    return await this.repository.listUnvoted(projectId)
+  }
+
   public async findById(projectId: string, id: number): Promise<AnnotationRuleDTO> {
     const item = await this.repository.findById(projectId, id)
     if (!item) {

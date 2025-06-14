@@ -24,6 +24,7 @@ from .views.rule import (
     AnnotationRuleAnswerDetail,
     VotingConfigurations,
     VotingConfigurationCreation,
+    UnvotedAnnotationRules,
     )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
@@ -51,6 +52,7 @@ urlpatterns = [
     path(route="projects/<int:project_id>/options-question/create",view=OptionsQuestionCreation.as_view(),name="options_question_create",),
     path(route="projects/<int:project_id>/annotation-rules/create",view=AnnotationRuleCreation.as_view(),name="annotation_rule_create",),
     path(route="projects/<int:project_id>/annotation-rules/list",view=AnnotationRules.as_view(),name="annotation_rule_list",),
+    path(route="projects/<int:project_id>/annotation-rules/unvoted",view=UnvotedAnnotationRules.as_view(),name="unvoted_annotation_rules",),
     path(route="projects/<int:project_id>/annotation-rules/<int:annotation_rule_id>",view=AnnotationRuleDetail.as_view(),name="annotation_rule_detail",),
     path(route="projects/<int:project_id>/rules/create",view=VotingConfigurationCreation.as_view(),name="voting-configuration",),
     path(route="projects/<int:project_id>/rules/list",view=VotingConfigurations.as_view(),name="voting_configuration_list",),

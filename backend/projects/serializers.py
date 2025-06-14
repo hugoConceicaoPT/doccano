@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from examples.models import Example
+import pytz
+from django.utils import timezone
+from datetime import datetime
 
 from .models import (
     Answer,
@@ -297,7 +300,39 @@ class VotingCofigurationSerializer(serializers.ModelSerializer):
         model = VotingCofiguration
         fields = ['id', 'project', 'voting_threshold', 'percentage_threshold', 'created_by', 'begin_date', 'end_date', 'is_closed', 'version']
 
+    def to_representation(self, instance):
+        # Converter datas de UTC para timezone local (Lisboa) na resposta
+        data = super().to_representation(instance)
+        lisbon_tz = pytz.timezone('Europe/Lisbon')
+        
+        if data.get('begin_date') and instance.begin_date:
+            # Converter diretamente do objeto datetime do modelo
+            local_begin = instance.begin_date.astimezone(lisbon_tz)
+            data['begin_date'] = local_begin.strftime('%Y-%m-%dT%H:%M:%S')
+        
+        if data.get('end_date') and instance.end_date:
+            # Converter diretamente do objeto datetime do modelo
+            local_end = instance.end_date.astimezone(lisbon_tz)
+            data['end_date'] = local_end.strftime('%Y-%m-%dT%H:%M:%S')
+        
+        return data
+
     def validate(self, attrs):
+        # Converter datas do timezone local (Lisboa) para UTC
+        lisbon_tz = pytz.timezone('Europe/Lisbon')
+        
+        if 'begin_date' in attrs and attrs['begin_date']:
+            # Se a data não tem timezone, assumir que é Lisboa
+            if timezone.is_naive(attrs['begin_date']):
+                local_begin = lisbon_tz.localize(attrs['begin_date'])
+                attrs['begin_date'] = local_begin.astimezone(pytz.UTC)
+        
+        if 'end_date' in attrs and attrs['end_date']:
+            # Se a data não tem timezone, assumir que é Lisboa
+            if timezone.is_naive(attrs['end_date']):
+                local_end = lisbon_tz.localize(attrs['end_date'])
+                attrs['end_date'] = local_end.astimezone(pytz.UTC)
+        
         instance = VotingCofiguration(**attrs)
         instance.clean()
         return attrs

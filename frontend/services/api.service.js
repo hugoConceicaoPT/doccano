@@ -6,8 +6,38 @@ class ApiService {
   constructor() {
     this.instance = axios.create({
       baseURL: process.env.baseUrl,
-      timeout: 6000
+      timeout: 10000 // Aumentar timeout para 10 segundos
     })
+    
+    // Interceptor de resposta para tratar erros de conexão
+    this.instance.interceptors.response.use(
+      (response) => {
+        // Resposta bem-sucedida, retornar normalmente
+        return response
+      },
+      (error) => {
+        // Tratar erros de conexão
+        if (!error.response) {
+          // Erro de rede/conexão (sem resposta do servidor)
+          error.isNetworkError = true
+          error.userMessage = 'Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet.'
+        } else if (error.response.status === 503) {
+          // Service Unavailable - base de dados indisponível
+          error.isDatabaseError = true
+          error.userMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
+        } else if (error.response.status >= 500) {
+          // Erro interno do servidor
+          error.isServerError = true
+          error.userMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+        } else if (error.code === 'ECONNABORTED') {
+          // Timeout
+          error.isTimeoutError = true
+          error.userMessage = 'Timeout: A operação demorou muito tempo. A base de dados pode estar sobrecarregada.'
+        }
+        
+        return Promise.reject(error)
+      }
+    )
   }
 
   request(method, url, data = {}, config = {}) {

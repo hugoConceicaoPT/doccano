@@ -54,6 +54,20 @@ export class APIAnnotationRuleRepository implements AnnotationRuleRepository {
     return response.data.map((item: { [key: string]: any }) => toAnnotationRuleModel(item))
   }
 
+  async listUnvoted(projectId: string): Promise<{
+    rules: AnnotationRuleItem[],
+    activeVotings: any[],
+    totalUnvotedRules: number
+  }> {
+    const url = `/${this.baseUrl}/${projectId}/annotation-rules/unvoted`
+    const response = await this.request.get(url)
+    return {
+      rules: response.data.rules.map((item: { [key: string]: any }) => toAnnotationRuleModel(item)),
+      activeVotings: response.data.active_votings,
+      totalUnvotedRules: response.data.total_unvoted_rules
+    }
+  }
+
   async delete(projectId: string, id: number): Promise<AnnotationRuleItem> {
     const url = `/${this.baseUrl}/${projectId}/annotation-rules/${id}`
     const response = await this.request.delete(url)
