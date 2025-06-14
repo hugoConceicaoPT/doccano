@@ -186,17 +186,17 @@
                       hint="Selecione datasets específicos ou deixe vazio para todos"
                       persistent-hint
                     >
-                      <template #selection="{ item, index }">
+                      <template #selection="{ index }">
                         <v-chip
                           v-if="index < 2"
                           small
                           close
                           color="teal"
                           text-color="white"
-                          @click:close="removeDataset(item)"
+                          @click:close="removeDataset(filters.datasets[index])"
                         >
                           <v-icon small left>{{ mdiDatabase }}</v-icon>
-                          {{ getDatasetDisplayName(item) }}
+                          {{ filters.datasets[index] }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
                           (+{{ filters.datasets.length - 2 }} outros)
@@ -1391,12 +1391,8 @@ export default Vue.extend({
       this.filters.export_formats = this.filters.export_formats.filter((f) => f !== format)
     },
 
-    removeDataset(dataset: any) {
-      console.log('[DEBUG] Removendo dataset:', dataset)
-      let datasetName = dataset
-      if (typeof dataset === 'object') {
-        datasetName = dataset.name || dataset
-      }
+    removeDataset(datasetName: string) {
+      console.log('[DEBUG] Removendo dataset:', datasetName)
       const index = this.filters.datasets.indexOf(datasetName)
       if (index > -1) {
         this.filters.datasets.splice(index, 1)
@@ -1404,14 +1400,7 @@ export default Vue.extend({
       console.log('[DEBUG] Datasets depois:', this.filters.datasets)
     },
 
-    getDatasetDisplayName(dataset: any) {
-      if (typeof dataset === 'object') {
-        // Se é um objeto, usar diretamente
-        return this.getDatasetName(dataset)
-      }
-      // Se é uma string, criar um objeto com name
-      return dataset
-    },
+
 
     getLabelTypeColor(type: string) {
       const colors: {[key: string]: string} = {
