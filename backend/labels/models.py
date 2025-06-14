@@ -49,6 +49,24 @@ class ManualDiscrepancy(models.Model):
         return f"Manual discrepancy for example {self.example.id} by {self.user.username}"
 
 
+class DatasetReview(models.Model):
+    """Store dataset review information when discrepancies are detected."""
+    example = models.ForeignKey(to=Example, on_delete=models.CASCADE, related_name="dataset_reviews")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dataset_reviews")
+    is_approved = models.BooleanField(help_text="Whether the dataset is approved (True) or has discrepancies (False)")
+    comment = models.TextField(blank=True, help_text="Optional comment about the discrepancy")
+    label_agreements = models.JSONField(default=list, help_text="Label agreement details")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['example', 'user']
+
+    def __str__(self):
+        status = "Approved" if self.is_approved else "Discrepant"
+        return f"Dataset review for example {self.example.id} by {self.user.username}: {status}"
+
+
 class Category(Label):
     objects = CategoryManager()
     example = models.ForeignKey(to=Example, on_delete=models.CASCADE, related_name="categories")

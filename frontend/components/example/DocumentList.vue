@@ -819,7 +819,7 @@ export default Vue.extend({
 
     async realBackendCall(reviewData: any) {
       // Fazer chamada real ao backend para submeter a revisão
-      const response = await this.$axios.post('/api/dataset-reviews/', reviewData)
+      const response = await this.$axios.post('/v1/dataset-reviews/', reviewData)
       return response
     },
 
