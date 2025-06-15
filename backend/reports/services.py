@@ -256,8 +256,28 @@ class AnnotatorReportService:
         user_data = defaultdict(lambda: {
             'annotator_id': None,
             'annotator_username': '',
-            'annotator_name': ''
+            'annotator_name': '',
+            'project_name': '',
+            'project_id': None
         })
+        
+        # Obter informações dos projetos
+        projects_info = {}
+        for project_id in project_ids:
+            try:
+                project = Project.objects.get(id=project_id)
+                projects_info[project_id] = {
+                    'name': project.name,
+                    'id': project_id
+                }
+            except Project.DoesNotExist:
+                projects_info[project_id] = {
+                    'name': f"Projeto {project_id}",
+                    'id': project_id
+                }
+        
+        # Usar o primeiro projeto como referência para o nome do projeto
+        first_project = list(projects_info.values())[0] if projects_info else {'name': 'N/A', 'id': None}
         
         # Processar todos os dados para obter informações básicas dos utilizadores
         all_data = list(categories_data) + list(spans_data) + list(texts_data) + list(relations_data)
@@ -269,7 +289,9 @@ class AnnotatorReportService:
                 'annotator_username': item['user__username'],
                 'annotator_name': AnnotatorReportService._format_user_name(
                     item['user__first_name'], item['user__last_name'], item['user__username']
-                )
+                ),
+                'project_name': first_project['name'],
+                'project_id': first_project['id']
             })
         
         # Converter para lista
@@ -706,7 +728,7 @@ class AnnotatorReportService:
             print(f"[DEBUG] Erro ao obter perguntas e respostas das perspectivas: {e}")
             import traceback
             traceback.print_exc()
-            return {'questions': [], 'answers': []}
+            return {'questions': [], 'answers': []} 
 
 
 class AnnotationReportService:
@@ -953,6 +975,7 @@ class AnnotationReportService:
                         project_type = ""
                         if project_id:
                             try:
+                                from projects.models import Project
                                 project = Project.objects.only('name', 'project_type').get(id=project_id)
                                 project_name = project.name
                                 project_type = project.project_type

@@ -1,5 +1,28 @@
 <template>
   <v-container fluid>
+    <!-- Alertas de sucesso e erro no topo -->
+    <v-alert 
+      v-if="successMessage" 
+      type="success" 
+      dismissible 
+      class="mb-4"
+      @input="successMessage = ''"
+    >
+      <v-icon left>{{ mdiCheckCircle }}</v-icon>
+      {{ successMessage }}
+    </v-alert>
+    
+    <v-alert 
+      v-if="errorMessage" 
+      type="error" 
+      dismissible 
+      class="mb-4"
+      @input="errorMessage = ''"
+    >
+      <v-icon left>{{ mdiAlertCircle }}</v-icon>
+      {{ errorMessage }}
+    </v-alert>
+
     <v-row>
       <v-col cols="12">
         <v-card>
@@ -330,7 +353,7 @@
             <!-- Tabela de Resultados -->
             <div class="ma-4">
               <!-- Resumo do Relatório de Anotadores -->
-              <v-card v-if="reportData && reportData.length > 0" flat class="ma-4">
+              <v-card v-if="reportData" flat class="ma-4">
                 <v-card-title class="subtitle-1">
                   <v-icon left color="info">{{ mdiInformationOutline }}</v-icon>
                   Resumo do Relatório
@@ -360,7 +383,7 @@
               </v-card>
 
               <!-- Tabela de Anotadores -->
-              <v-card v-if="reportData && reportData.length > 0" flat class="ma-4">
+              <v-card v-if="reportData" flat class="ma-4">
                 <v-card-title>
                   <v-icon left color="primary">{{ mdiTable }}</v-icon>
                   Detalhes dos Anotadores
@@ -369,9 +392,9 @@
                     color="primary"
                     outlined
                     small
-                    @click="generateAndExportReport"
                     :loading="isGenerating"
                     class="mr-2"
+                    @click="generateAndExportReport"
                   >
                     <v-icon left small>{{ mdiRefresh }}</v-icon>
                     Atualizar
@@ -381,7 +404,7 @@
                   :headers="tableHeaders"
                   :items="reportData"
                   :loading="isGenerating"
-                  class="elevation-1"
+                  class="elevation-1 detailed-report-table"
                   :items-per-page="15"
                   :footer-props="{
                     'items-per-page-options': [10, 15, 25, 50, -1],
@@ -500,22 +523,8 @@
                 </v-data-table>
               </v-card>
 
-              <!-- Estado vazio -->
-              <v-card v-else-if="!isGenerating" flat class="text-center pa-12 elevation-2">
-                <v-icon size="80" color="grey lighten-2">{{ mdiFileDocumentOutline }}</v-icon>
-                <h3 class="grey--text mt-6 mb-2">Nenhum relatório gerado</h3>
-                <p class="grey--text mb-6">
-                  Configure os filtros desejados e clique em "Gerar Relatório" para visualizar os
-                  dados dos anotadores
-                </p>
-                <v-btn color="primary" large @click="generateAndExportReport">
-                  <v-icon left>{{ mdiRefresh }}</v-icon>
-                  Gerar Primeiro Relatório
-                </v-btn>
-              </v-card>
-
               <!-- Loading -->
-              <v-card v-else flat class="text-center pa-12 elevation-2">
+              <v-card v-if="isGenerating" flat class="text-center pa-12 elevation-2">
                 <v-progress-circular indeterminate color="primary" size="80" width="6" />
                 <h3 class="mt-6 mb-2">Gerando relatório...</h3>
                 <p class="grey--text">
@@ -664,7 +673,7 @@
                       </v-col>
 
                       <!-- Filtro de Respostas da Perspectiva -->
-                      <v-col cols="12" md="6" v-if="annotationFilters.perspective_questions && annotationFilters.perspective_questions.length > 0">
+                      <v-col v-if="annotationFilters.perspective_questions && annotationFilters.perspective_questions.length > 0" cols="12" md="6">
                         <v-autocomplete
                           v-model="annotationFilters.perspective_answers"
                           :items="filteredPerspectiveAnswers"
@@ -763,14 +772,9 @@
                   </v-btn>
                 </div>
                 
-                <div v-else-if="!annotationReportData" class="text-center py-5">
-                  <v-icon color="grey" size="64">{{ mdiFileDocumentOutline }}</v-icon>
-                  <div class="mt-3 grey--text">
-                    Configure os filtros acima e clique em "Gerar Relatório" para começar.
-                  </div>
-                </div>
+
                 
-                <div v-else>
+                <div v-else-if="annotationReportData">
                   <!-- Resumo do relatório -->
                   <v-card flat class="ma-4">
                     <v-card-title class="subtitle-1">
@@ -781,19 +785,19 @@
                       <v-row>
                         <v-col cols="12" sm="6" md="4">
                           <v-card outlined class="text-center pa-3">
-                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_annotations }}</div>
+                            <div class="text-h5 primary--text">{{ annotationReportData?.summary?.total_annotations || 0 }}</div>
                             <div class="caption">Total de Anotações</div>
                           </v-card>
                         </v-col>
                         <v-col cols="12" sm="6" md="4">
                           <v-card outlined class="text-center pa-3">
-                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_examples }}</div>
+                            <div class="text-h5 primary--text">{{ annotationReportData?.summary?.total_examples || 0 }}</div>
                             <div class="caption">Total de Exemplos</div>
                           </v-card>
                         </v-col>
                         <v-col cols="12" sm="6" md="4">
                           <v-card outlined class="text-center pa-3">
-                            <div class="text-h5 primary--text">{{ annotationReportData.summary.total_annotators }}</div>
+                            <div class="text-h5 primary--text">{{ annotationReportData?.summary?.total_annotators || 0 }}</div>
                             <div class="caption">Total de Anotadores</div>
                           </v-card>
                         </v-col>
@@ -821,10 +825,10 @@
                     </v-card-title>
                     <v-data-table
                       :headers="annotationHeaders"
-                      :items="annotationReportData.data"
+                      :items="annotationReportData?.data || []"
                       :items-per-page="10"
                       :search="annotationSearch"
-                      :server-items-length="annotationReportData.total_pages * 10"
+                      :server-items-length="(annotationReportData?.total_pages || 0) * 10"
                       :footer-props="{
                         'items-per-page-options': [10, 25, 50],
                         showFirstLastPage: true
@@ -864,6 +868,42 @@
       </v-col>
     </v-row>
 
+    <!-- Diálogo de Confirmação -->
+    <v-dialog v-model="showConfirmDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title class="headline primary white--text">
+          <v-icon left color="white">{{ mdiInformation }}</v-icon>
+          {{ confirmDialogTitle }}
+        </v-card-title>
+        
+        <v-card-text class="pt-4">
+          <div class="text-body-1">
+            {{ confirmDialogMessage }}
+          </div>
+        </v-card-text>
+        
+        <v-card-actions>
+          <v-spacer />
+          <v-btn 
+            text 
+            color="grey" 
+            :disabled="isGenerating"
+            @click="cancelConfirmDialog"
+          >
+            <v-icon left>{{ mdiClose }}</v-icon>
+            Cancelar
+          </v-btn>
+          <v-btn 
+            color="primary" 
+            :loading="isGenerating"
+            @click="executeConfirmAction"
+          >
+            <v-icon left>{{ mdiCheckCircle }}</v-icon>
+            Confirmar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
   </v-container>
   </template>
@@ -934,6 +974,16 @@ export default Vue.extend({
     isGenerating: boolean;
     dateFromMenu: boolean;
     dateToMenu: boolean;
+    
+    // Diálogo de confirmação
+    showConfirmDialog: boolean;
+    confirmDialogTitle: string;
+    confirmDialogMessage: string;
+    confirmDialogAction: (() => Promise<void>) | null;
+    
+    // Mensagens de alerta
+    successMessage: string;
+    errorMessage: string;
     filters: {
       users: number[];
       date_from: string | null;
@@ -1006,6 +1056,16 @@ export default Vue.extend({
       isGenerating: false,
       dateFromMenu: false,
       dateToMenu: false,
+      
+      // Diálogo de confirmação
+      showConfirmDialog: false,
+      confirmDialogTitle: '',
+      confirmDialogMessage: '',
+      confirmDialogAction: null as (() => Promise<void>) | null,
+      
+      // Mensagens de alerta
+      successMessage: '',
+      errorMessage: '',
 
       filters: {
         users: [] as number[],
@@ -1028,25 +1088,25 @@ export default Vue.extend({
           text: 'Utilizador', 
           value: 'annotator_username', 
           sortable: true, 
-          width: '200px'
+          width: '250px'
         },
         { 
           text: 'Perguntas e Respostas', 
           value: 'perspective_questions_answers', 
           sortable: false, 
-          width: '300px'
+          width: '400px'
         },
         { 
           text: 'Labels', 
           value: 'label_breakdown', 
           sortable: false, 
-          width: '250px'
+          width: '350px'
         },
         { 
           text: 'Datasets', 
           value: 'dataset_label_breakdown', 
           sortable: false, 
-          width: '400px'
+          width: '500px'
         }
       ],
 
@@ -1343,22 +1403,81 @@ export default Vue.extend({
       }
     },
 
-    async generateAndExportReport() {
+    generateAndExportReport() {
+      // Mostrar diálogo de confirmação
+      this.confirmDialogTitle = 'Confirmar Geração de Relatório'
+      
+      let message = 'Deseja gerar o relatório sobre anotadores?'
+      
+      // Adicionar informações sobre filtros ativos
+      if (this.hasActiveFilters) {
+        message += `\n\nFiltros ativos (${this.getActiveFiltersCount}):`
+        if (this.filters.users.length > 0) {
+          message += `\n• ${this.filters.users.length} anotador(es) selecionado(s)`
+        }
+        if (this.filters.labels.length > 0) {
+          message += `\n• ${this.filters.labels.length} label(s) selecionado(s)`
+        }
+        if (this.filters.datasets.length > 0) {
+          message += `\n• ${this.filters.datasets.length} dataset(s) selecionado(s)`
+        }
+        if (this.filters.date_from || this.filters.date_to) {
+          message += `\n• Filtro de datas aplicado`
+        }
+        if (this.filters.export_formats.length > 0) {
+          message += `\n• Exportação automática em ${this.filters.export_formats.join(', ').toUpperCase()}`
+        }
+      } else {
+        message += '\n\nNenhum filtro ativo - será gerado relatório completo.'
+      }
+      
+      this.confirmDialogMessage = message
+      this.confirmDialogAction = this.executeGenerateAndExportReport
+      this.showConfirmDialog = true
+    },
+
+    async executeGenerateAndExportReport() {
+      // Fechar o diálogo imediatamente para mostrar o relatório
+      this.showConfirmDialog = false
       this.isGenerating = true
+      
       try {
         // Primeiro gerar o relatório
         await this.generateReport()
         
+        // Mostrar mensagem de sucesso
+        if (this.reportData.length > 0) {
+          this.showSuccess(`✅ Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`)
+        } else {
+          this.showSuccess(`ℹ️ Relatório gerado! Nenhum anotador encontrado com os filtros aplicados.`)
+        }
+        
         // Se há formatos de exportação selecionados e o relatório foi gerado com sucesso, exportar automaticamente
-        if (this.filters.export_formats.length > 0 && this.reportData && this.reportData.length > 0) {
+        if (this.filters.export_formats.length > 0) {
           await this.exportReport()
         }
       } catch (error) {
-        console.error('Erro ao gerar e exportar relatório:', error)
-        this.showError('Erro ao gerar e exportar relatório')
+        console.error('Database is slow or unavailable. Please try again later.', error)
+        this.showError('Database is slow or unavailable. Please try again later.')
       } finally {
         this.isGenerating = false
       }
+    },
+
+    cancelConfirmDialog() {
+      this.showConfirmDialog = false
+      this.confirmDialogAction = null
+    },
+
+    async executeConfirmAction() {
+      if (this.confirmDialogAction) {
+        await this.confirmDialogAction()
+      }
+    },
+
+    getDiscrepancyText(value: string) {
+      const option = this.discrepancyOptions.find(opt => opt.value === value)
+      return option ? option.text : value
     },
 
     async generateReport() {
@@ -1421,31 +1540,40 @@ export default Vue.extend({
           this.reportData = []
         }
 
-        // Só mostrar mensagem de sucesso se não há exportação automática
-        if (this.filters.export_formats.length === 0) {
-          this.showSuccess(
-            `Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`
-          )
-        }
+        // Não mostrar mensagem de sucesso automática - o relatório aparece diretamente
       } catch (error: any) {
         console.error('[FRONTEND DEBUG] Erro completo:', error)
         console.error('[FRONTEND DEBUG] Erro response:', error.response)
         console.error('[FRONTEND DEBUG] Erro message:', error.message)
 
         let errorMessage = 'Erro ao gerar relatório'
-        if (error.response) {
+        
+        // Verificar se é erro de conexão com a base de dados (usando interceptor)
+        if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
+          errorMessage = error.userMessage
+        } else if (error.response) {
           console.error('[FRONTEND DEBUG] Status do erro:', error.response.status)
           console.error('[FRONTEND DEBUG] Data do erro:', error.response.data)
 
-          if (error.response.data) {
+          // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
+          if (error.response.status === 503) {
+            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+          } else if (error.response.status >= 500) {
+            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+          } else if (error.response.data) {
             if (error.response.data.detail) {
-              errorMessage = error.response.data.detail
+              // Se a mensagem já contém informação sobre base de dados, adicionar ícone
+              if (error.response.data.detail.toLowerCase().includes('base de dados')) {
+                errorMessage = '🔌 ' + error.response.data.detail
+              } else {
+                errorMessage = error.response.data.detail
+              }
             } else if (error.response.data.errors) {
               errorMessage = 'Parâmetros inválidos: ' + JSON.stringify(error.response.data.errors)
             }
           }
         } else if (error.request) {
-          errorMessage = 'Erro de rede - servidor não respondeu'
+          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
           console.error('[FRONTEND DEBUG] Erro de request:', error.request)
         }
 
@@ -1542,17 +1670,34 @@ export default Vue.extend({
           window.URL.revokeObjectURL(url)
         }
 
-        // Mostrar mensagem de sucesso
-        let message = `Relatório gerado e exportado com sucesso!`
-        if (exportFormats.length === 1) {
-          message = `Relatório gerado e exportado em ${exportFormats[0].toUpperCase()} com sucesso!`
-        } else {
-          message = `Relatório gerado e exportado em ${exportFormats.length} formatos com sucesso!`
-        }
-        this.showSuccess(message)
+        // Exportação concluída - não mostrar mensagem automática
       } catch (error: any) {
         console.error('[EXPORT DEBUG] Erro ao exportar:', error)
-        this.showError('Erro ao exportar relatório')
+        
+        let errorMessage = 'Erro ao exportar relatório'
+        
+        // Verificar se é erro de conexão com a base de dados (usando interceptor)
+        if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
+          errorMessage = error.userMessage
+        } else if (error.response) {
+          // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
+          if (error.response.status === 503) {
+            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+          } else if (error.response.status >= 500) {
+            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+          } else if (error.response.data?.detail) {
+            // Se a mensagem já contém informação sobre base de dados, adicionar ícone
+            if (error.response.data.detail.toLowerCase().includes('base de dados')) {
+              errorMessage = '🔌 ' + error.response.data.detail
+            } else {
+              errorMessage = error.response.data.detail
+            }
+          }
+        } else if (error.request) {
+          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
+        }
+        
+        this.showError(errorMessage)
       } finally {
         this.isExporting = false
       }
@@ -1627,17 +1772,15 @@ export default Vue.extend({
     },
 
     showSuccess(message: string) {
-      // Usar console.log apenas
-        console.log('SUCCESS:', message)
-      // Fallback para alert 
-        alert(message)
+      this.successMessage = message
+      this.errorMessage = '' // Limpar mensagem de erro
+      console.log('SUCCESS:', message)
     },
 
     showError(message: string) {
-      // Usar console.error apenas
-        console.error('ERROR:', message)
-      // Fallback para alert
-        alert('Erro: ' + message)
+      this.errorMessage = message
+      this.successMessage = '' // Limpar mensagem de sucesso
+      console.error('ERROR:', message)
     },
 
     clearAnnotationFilters() {
@@ -1655,19 +1798,58 @@ export default Vue.extend({
       this.filteredPerspectiveAnswers = []
     },
     
-    async generateAndExportAnnotationReport() {
+    generateAndExportAnnotationReport() {
+      // Mostrar diálogo de confirmação
+      this.confirmDialogTitle = 'Confirmar Geração de Relatório'
+      
+      let message = 'Deseja gerar o relatório sobre anotações?'
+      
+      // Adicionar informações sobre filtros ativos
+      if (this.hasActiveAnnotationFilters) {
+        message += '\n\nFiltros ativos:'
+        if (this.annotationFilters.users.length > 0) {
+          message += `\n• ${this.annotationFilters.users.length} anotador(es) selecionado(s)`
+        }
+        if (this.annotationFilters.labels.length > 0) {
+          message += `\n• ${this.annotationFilters.labels.length} label(s) selecionado(s)`
+        }
+        if (this.annotationFilters.examples.length > 0) {
+          message += `\n• ${this.annotationFilters.examples.length} exemplo(s) selecionado(s)`
+        }
+        if (this.annotationFilters.discrepancy_filter) {
+          message += `\n• Filtro de discrepâncias: ${this.getDiscrepancyText(this.annotationFilters.discrepancy_filter)}`
+        }
+        if (this.annotationExportFormats.length > 0) {
+          message += `\n• Exportação automática em ${this.annotationExportFormats.join(', ').toUpperCase()}`
+        }
+      } else {
+        message += '\n\nNenhum filtro ativo - será gerado relatório completo.'
+      }
+      
+      this.confirmDialogMessage = message
+      this.confirmDialogAction = this.executeGenerateAndExportAnnotationReport
+      this.showConfirmDialog = true
+    },
+
+    async executeGenerateAndExportAnnotationReport() {
+      // Fechar o diálogo imediatamente para mostrar o relatório
+      this.showConfirmDialog = false
       this.isGeneratingAnnotations = true
       
       try {
-        // Primeiro gerar o relatório
+                // Primeiro gerar o relatório
         await this.generateAnnotationReport()
         
+        // Mostrar mensagem de sucesso
+        if (this.annotationReportData && this.annotationReportData.data && this.annotationReportData.data.length > 0) {
+          this.showSuccess(`✅ Relatório gerado com sucesso! ${this.annotationReportData.data.length} anotação(ões) encontrada(s).`)
+        } else {
+          this.showSuccess(`ℹ️ Relatório gerado! Nenhuma anotação encontrada com os filtros aplicados.`)
+        }
+        
         // Se há formatos selecionados e o relatório foi gerado com sucesso, exportar
-        if (this.annotationExportFormats.length > 0 && this.annotationReportData && this.annotationReportData.data) {
+        if (this.annotationExportFormats.length > 0) {
           await this.exportAnnotationReport()
-        } else if (this.annotationExportFormats.length === 0) {
-          // Se não há formatos selecionados, apenas gerar e mostrar mensagem
-          this.showSuccess('Relatório gerado com sucesso! Visualize os resultados abaixo.')
         }
       } catch (error) {
         console.error('Erro ao gerar relatório:', error)
@@ -1738,7 +1920,36 @@ export default Vue.extend({
         
       } catch (error: any) {
         console.error('Erro ao gerar relatório de anotações:', error)
-        this.annotationReportError = error.response?.data?.detail || error.message || 'Erro desconhecido'
+        
+        let errorMessage = 'Erro ao gerar relatório'
+        
+        // Verificar se é erro de conexão com a base de dados (usando interceptor)
+        if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
+          errorMessage = error.userMessage
+        } else if (error.response) {
+          // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
+          if (error.response.status === 503) {
+            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+          } else if (error.response.status >= 500) {
+            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+          } else if (error.response.data) {
+            if (error.response.data.detail) {
+              // Se a mensagem já contém informação sobre base de dados, adicionar ícone
+              if (error.response.data.detail.toLowerCase().includes('base de dados')) {
+                errorMessage = '🔌 ' + error.response.data.detail
+              } else {
+                errorMessage = error.response.data.detail
+              }
+            } else if (error.response.data.errors) {
+              errorMessage = 'Parâmetros inválidos: ' + JSON.stringify(error.response.data.errors)
+            }
+          }
+        } else if (error.request) {
+          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
+        }
+        
+        this.annotationReportError = errorMessage
+        this.showError(errorMessage)
       } finally {
         this.isGeneratingAnnotations = false
       }
@@ -1848,12 +2059,7 @@ export default Vue.extend({
           window.URL.revokeObjectURL(downloadUrl)
         }
         
-        // Mostrar mensagem de sucesso
-        if (this.annotationExportFormats.length === 1) {
-          this.showSuccess(`Relatório exportado com sucesso em formato ${this.annotationExportFormats[0].toUpperCase()}`)
-        } else {
-          this.showSuccess(`Relatório exportado com sucesso em ${this.annotationExportFormats.length} formatos`)
-        }
+        // Exportação concluída - não mostrar mensagem automática
         
       } catch (error) {
         console.error('Erro ao exportar relatório:', error)
@@ -2341,5 +2547,74 @@ export default Vue.extend({
 
 .question-group {
   margin-bottom: 8px;
+}
+
+/* Estilos para melhorar espaçamento da tabela de dados detalhados */
+.detailed-report-table {
+  border-spacing: 0;
+}
+
+.detailed-report-table .v-data-table__wrapper table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.detailed-report-table .v-data-table__wrapper tbody tr td {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: top;
+}
+
+.detailed-report-table .v-data-table__wrapper thead tr th {
+  padding: 16px 24px !important;
+  border-bottom: 2px solid #1976d2;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.detailed-report-table .v-data-table__wrapper tbody tr:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Melhorar espaçamento dos chips dentro das células */
+.detailed-report-table .v-chip {
+  margin: 2px 4px 2px 0 !important;
+}
+
+/* Melhorar espaçamento dos containers de dados */
+.detailed-report-table .labels-container,
+.detailed-report-table .datasets-breakdown-modern,
+.detailed-report-table .qa-breakdown-modern {
+  padding: 8px;
+  line-height: 1.6;
+}
+
+/* Melhorar espaçamento entre seções de datasets */
+.detailed-report-table .dataset-section-modern {
+  margin-bottom: 16px !important;
+  padding: 8px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border-left: 3px solid #009688;
+}
+
+.detailed-report-table .dataset-header-modern {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Melhorar espaçamento entre seções de perguntas */
+.detailed-report-table .question-section-modern {
+  margin-bottom: 16px !important;
+  padding: 8px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  border-left: 3px solid #3f51b5;
+}
+
+.detailed-report-table .question-header-modern {
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 </style>
