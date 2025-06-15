@@ -97,7 +97,7 @@ export class VotingConfigurationItem {
 
   async update(repository: VotingConfigurationRepository, projectId: string): Promise<void> {
     if (this.id === 0) {
-      throw new Error('Não é possível atualizar uma configuração de votação sem ID válido.')
+      throw new Error('Cannot update a voting configuration without a valid ID.')
     }
 
     const updatedFields: Record<string, any> = {

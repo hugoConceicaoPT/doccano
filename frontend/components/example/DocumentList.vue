@@ -598,13 +598,13 @@ export default Vue.extend({
           this.reportedIds = parsedState.reportedIds || []
           this.reviewResults = parsedState.reviewResults || {}
 
-          console.log(`Carregado estado de reviews para projeto ${this.projectId}:`, {
+          console.log(`Loaded review state for project ${this.projectId}:`, {
             reportedIds: this.reportedIds,
             reviewResults: this.reviewResults
           })
         }
       } catch (error) {
-        console.error('Erro ao carregar estado dos reviews:', error)
+                  console.error('Error loading review state:', error)
         // Em caso de erro, inicializar com estado vazio
         this.reportedIds = []
         this.reviewResults = {}
@@ -622,9 +622,9 @@ export default Vue.extend({
         }
 
         localStorage.setItem(storageKey, JSON.stringify(stateToSave))
-        console.log(`Guardado estado de reviews para projeto ${this.projectId}:`, stateToSave)
+        console.log(`Saved review state for project ${this.projectId}:`, stateToSave)
       } catch (error) {
-        console.error('Erro ao guardar estado dos reviews:', error)
+                  console.error('Error saving review state:', error)
       }
     },
 
@@ -635,9 +635,9 @@ export default Vue.extend({
         localStorage.removeItem(storageKey)
         this.reportedIds = []
         this.reviewResults = {}
-        console.log(`Estado de reviews limpo para projeto ${this.projectId}`)
+        console.log(`Review state cleared for project ${this.projectId}`)
       } catch (error) {
-        console.error('Erro ao limpar estado dos reviews:', error)
+                  console.error('Error clearing review state:', error)
       }
     },
 
@@ -974,7 +974,7 @@ export default Vue.extend({
         this.datasetApproval = undefined
         this.datasetComment = ''
       } catch (error) {
-        console.error('Erro ao carregar concordância de labels:', error)
+        console.error('Error loading label agreement:', error)
         this.datasetLabels = []
         this.hasConnectionError = true
         this.showSnackbar = true
@@ -993,7 +993,7 @@ export default Vue.extend({
           this.snackbarMessage = '🔐 ' + this.connectionErrorMessage
         } else {
           this.connectionErrorMessage =
-            'Erro ao carregar concordância entre anotadores. Tente novamente.'
+            'Error loading agreement between annotators. Please try again.'
           this.snackbarMessage = '⚠️ ' + this.connectionErrorMessage
         }
       } finally {
@@ -1051,7 +1051,7 @@ export default Vue.extend({
 
         this.closeReportDialog()
       } catch (error) {
-        console.error('Erro ao submeter revisão:', error)
+        console.error('Error submitting review:', error)
         this.showSnackbar = true
         this.snackbarColor = 'error'
 

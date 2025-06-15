@@ -202,9 +202,9 @@ export default Vue.extend({
           this.items = []
         }
       } catch (error: any) {
-        console.error('Erro ao buscar perspectivas:', error)
+        console.error('Error fetching perspectives:', error)
         this.items = []
-        this.errorMessage = 'Erro ao carregar perspectivas.'
+                  this.errorMessage = 'Error loading perspectives.'
       } finally {
         this.isLoading = false
       }
@@ -227,7 +227,7 @@ export default Vue.extend({
           )
         })
       } catch (error) {
-        console.error('Erro ao buscar respostas:', error)
+        console.error('Error fetching answers:', error)
       }
     },
 
@@ -247,9 +247,9 @@ export default Vue.extend({
         // As questões já vêm filtradas por perspectiva do backend
         this.questionsList = questions
       } catch (error) {
-        console.error('Erro ao buscar perguntas:', error)
+        console.error('Error fetching questions:', error)
         this.questionsList = []
-        this.errorMessage = 'Erro ao carregar questões.'
+                  this.errorMessage = 'Error loading questions.'
       } finally {
         this.isLoading = false
       }
@@ -258,7 +258,7 @@ export default Vue.extend({
     async submitAnswers(
       formattedAnswers: { questionId: number; answer: string; answerType: string }[]
     ) {
-      console.log('Respostas submetidas:', formattedAnswers)
+              console.log('Submitted answers:', formattedAnswers)
       try {
         // Criar comandos de resposta baseado no answer_type
         const answersToSubmit: CreateAnswerCommand[] = formattedAnswers.map((formattedAnswer) => {
@@ -280,7 +280,7 @@ export default Vue.extend({
         window.scrollTo({ top: 0, behavior: 'smooth' })
         
       } catch (error: any) {
-        console.error('Erro ao submeter respostas:', error)
+                  console.error('Error submitting answers:', error)
         if (error.response && error.response.status === 400) {
           const errors = error.response.data
           if (errors.answer_text) {
@@ -289,9 +289,9 @@ export default Vue.extend({
             this.errorMessage = 'Dados inválidos. Verifique as suas respostas e tente novamente.'
           }
         } else if (error.response && error.response.status === 500) {
-          this.errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.'
+                      this.errorMessage = 'Internal server error. Please try again later.'
         } else {
-          this.errorMessage = 'Erro ao submeter respostas. Verifique a sua ligação à internet.'
+                      this.errorMessage = 'Error submitting answers. Please check your internet connection.'
         }
       }
     }

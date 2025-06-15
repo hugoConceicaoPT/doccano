@@ -97,10 +97,10 @@ export default Vue.extend({
                 ...activeConfig,
                 is_closed: true
               })
-              console.log(`Configuração de votação ${activeConfig.id} fechada automaticamente.`)
+              console.log(`Voting configuration ${activeConfig.id} automatically closed.`)
             } else {
               this.errorMessage =
-                'Não é possível configurar uma nova votação pois existe uma votação ativa com regras não finalizadas.'
+                'Cannot configure a new voting because there is an active voting with unfinalized rules.'
               setTimeout(() => {
                 this.$router.push(`/projects/${this.projectId}/rules`)
               }, 3000)
@@ -109,8 +109,8 @@ export default Vue.extend({
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar configurações de votação ativas:', error)
-        this.errorMessage = 'Erro ao verificar configurações de votação ativas.'
+                  console.error('Error checking active voting configurations:', error)
+          this.errorMessage = 'Error checking active voting configurations.'
       }
     },
 
@@ -143,14 +143,14 @@ export default Vue.extend({
               `Versões existentes no projeto ${this.projectId}: ${uniqueVersions.join(', ')}. Próxima versão: ${nextVersion}`
             )
           } else {
-            console.log(`Nenhuma configuração de votação encontrada para o projeto ${this.projectId}. Iniciando com versão 1.`)
+            console.log(`No voting configuration found for project ${this.projectId}. Starting with version 1.`)
           }
         }
 
         this.editedItem.version = nextVersion
       } catch (error) {
-        console.error('Erro ao determinar a próxima versão:', error)
-        this.errorMessage = 'Erro ao determinar a próxima versão da votação.'
+                  console.error('Error determining next version:', error)
+          this.errorMessage = 'Error determining the next voting version.'
       }
     },
 
@@ -202,7 +202,7 @@ export default Vue.extend({
           version: this.editedItem.version
         }
 
-        console.log('Enviando configuração de votação:', votingConfigPayload)
+        console.log('Sending voting configuration:', votingConfigPayload)
 
         await this.votingConfigurationService.create(this.projectId, votingConfigPayload)
 
@@ -211,9 +211,9 @@ export default Vue.extend({
           // Ordenar por ID para pegar o mais recente
           const sortedConfigs = [...votingConfigs].sort((a, b) => b.id - a.id)
           this.votingConfigurationId = sortedConfigs[0].id
-          console.log('ID da configuração de votação:', this.votingConfigurationId)
+          console.log('Voting configuration ID:', this.votingConfigurationId)
         } else {
-          throw new Error('Não foi possível obter o ID da configuração de votação')
+                      throw new Error('Unable to get voting configuration ID')
         }
 
         for (const rule of this.annotationRulesList) {
@@ -228,7 +228,7 @@ export default Vue.extend({
           await this.annotationRuleService.create(this.projectId, rulePayload)
         }
 
-        this.sucessMessage = 'Annotation rules saved successfully.'
+        this.successMessage = 'Annotation rules saved successfully.'
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/rules`)
         }, 1000)

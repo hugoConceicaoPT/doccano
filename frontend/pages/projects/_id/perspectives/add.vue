@@ -9,7 +9,7 @@
       outlined
       @input="errorMessage = ''"
     >
-      <strong>Erro ao criar perspectiva:</strong> {{ errorMessage }}
+      <strong>Error creating perspective:</strong> {{ errorMessage }}
     </v-alert>
 
     <!-- Mensagem de sucesso -->
@@ -20,7 +20,7 @@
       class="mb-4"
       outlined
     >
-      <strong>Perspectiva criada com sucesso!</strong> {{ sucessMessage }}
+      <strong>Perspective created successfully!</strong> {{ sucessMessage }}
     </v-alert>
 
     <!-- Componente principal -->
@@ -42,7 +42,7 @@
           @click="$router.back()"
         >
           <v-icon left>mdi-arrow-left</v-icon>
-          Cancelar
+          Cancel
         </v-btn>
         
         <v-btn 
@@ -54,7 +54,7 @@
           @click="save"
         >
           <v-icon left>mdi-content-save</v-icon>
-          Criar Perspectiva
+          Create Perspective
         </v-btn>
       </div>
     </form-create>
@@ -68,7 +68,7 @@
           color="primary"
           width="4"
         ></v-progress-circular>
-        <p class="mt-4 white--text">A criar perspectiva...</p>
+        <p class="mt-4 white--text">Creating perspective...</p>
       </div>
     </v-overlay>
   </div>
@@ -93,6 +93,12 @@ export default Vue.extend({
   layout: 'projects',
 
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
+
+  head() {
+    return {
+      title: 'Create Perspective'
+    }
+  },
 
   data() {
     return {
@@ -159,9 +165,9 @@ export default Vue.extend({
 
         await this.service.create(this.projectId, this.editedItem)
         
-        this.sucessMessage = 'A perspectiva foi criada com sucesso'
+        this.sucessMessage = 'The perspective was created successfully'
         
-        // Aguardar um pouco para mostrar a mensagem de sucesso
+        // Wait a bit to show the success message
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/perspectives`)
         }, 2000)
@@ -178,32 +184,32 @@ export default Vue.extend({
         const members = await this.$repositories.member.list(this.projectId)
         return members.filter((member) => member.rolename === 'annotator').map((member) => member.id)
       } catch (error) {
-        console.error('Erro ao buscar anotadores:', error)
+        console.error('Error fetching annotators:', error)
         return []
       }
     },
 
     handleError(error: any) {
-      console.error('Erro ao criar perspectiva:', error)
+              console.error('Error creating perspective:', error)
       
       if (error.response) {
         switch (error.response.status) {
           case 400:
-            this.errorMessage = 'Este projeto já tem uma perspectiva criada. Apenas uma perspectiva é permitida por projeto.'
+            this.errorMessage = 'This project already has a perspective created. Only one perspective is allowed per project.'
             break
           case 403:
-            this.errorMessage = 'Você não tem permissão para criar perspectivas neste projeto.'
+            this.errorMessage = 'You do not have permission to create perspectives in this project.'
             break
           case 500:
             this.errorMessage = 'Database is slow or unavailable. Please try again later.'
             break
           default:
-            this.errorMessage = 'Ocorreu um erro inesperado. Tente novamente.'
+            this.errorMessage = 'An unexpected error occurred. Please try again.'
         }
       } else if (error.message) {
         this.errorMessage = error.message
       } else {
-        this.errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.'
+        this.errorMessage = 'Connection error. Check your internet and try again.'
       }
     }
   }

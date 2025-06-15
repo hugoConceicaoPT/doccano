@@ -311,7 +311,7 @@ export default Vue.extend({
           const example = await this.$repositories.example.findById(this.projectId, Number(id))
           this.$set(this.exampleNameMap, id, example.filename.replace(/\.[^/.]+$/, ''))
         } catch (error) {
-          console.error('Erro ao carregar nome do exemplo:', error)
+          console.error('Error loading example name:', error)
         }
       }
       return this.exampleNameMap[id]
@@ -336,8 +336,8 @@ export default Vue.extend({
           this.exampleText = JSON.stringify(example, null, 2)
         }
       } catch (error) {
-        console.error('Erro ao buscar texto do exemplo:', error)
-        this.exampleText = 'Erro ao carregar o texto do exemplo.'
+        console.error('Error fetching example text:', error)
+                  this.exampleText = 'Error loading example text.'
       } finally {
         this.isLoadingExampleText = false
       }
@@ -406,8 +406,8 @@ export default Vue.extend({
               }
             })
           } catch (error: any) {
-            console.error('Erro ao buscar anotações:', error)
-            this.errorMessage = `Erro ao buscar anotações: ${error.message || 'Erro desconhecido'}`
+            console.error('Error fetching annotations:', error)
+            this.errorMessage = `Error fetching annotations: ${error.message || 'Unknown error'}`
           }
         } catch (error) {
           this.handleError(error)

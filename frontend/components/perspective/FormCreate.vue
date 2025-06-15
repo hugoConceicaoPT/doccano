@@ -8,7 +8,7 @@
     <v-card elevation="1" class="rounded-lg">
       <v-card-title class="primary white--text py-4">
         <v-icon left color="white">mdi-lightbulb-on</v-icon>
-        <span class="text-h6">Criar Perspectiva</span>
+        <span class="text-h6">Create Perspective</span>
       </v-card-title>
       
       <v-card-text class="pa-6">
@@ -19,7 +19,7 @@
               <div class="mb-6">
                 <h3 class="text-h6 mb-3 primary--text font-weight-medium">
                   <v-icon color="primary" class="mr-2">mdi-format-title</v-icon>
-                  Nome da Perspectiva
+                  Perspective Name
                 </h3>
                 
                 <v-autocomplete
@@ -27,7 +27,7 @@
                   :items="perspectiveOptions"
                   item-text="display"
                   item-value="value"
-                  label="Digite o nome da nova perspectiva ou selecione uma existente"
+                  label="Enter the name of the new perspective or select an existing one"
                   outlined
                   required
                   :rules="[rules.required]"
@@ -37,7 +37,7 @@
                   no-filter
                   prepend-inner-icon="mdi-lightbulb-on"
                   :menu-props="{ maxHeight: 300 }"
-                  placeholder="Ex: Perspectiva de Qualidade, Usabilidade..."
+                  placeholder="Ex: Quality Perspective, Usability..."
                   class="mt-2"
                   @change="onPerspectiveChange"
                   @input="onPerspectiveInput"
@@ -52,11 +52,11 @@
                     <v-list-item-title>{{ item.display }}</v-list-item-title>
                     <v-list-item-subtitle v-if="item.isExisting">
                       <v-icon small class="mr-1">mdi-folder</v-icon>
-                      {{ item.projectName }} • Reutilizar perspectiva
+                      {{ item.projectName }} • Reuse perspective
                     </v-list-item-subtitle>
                     <v-list-item-subtitle v-else>
                       <v-icon small class="mr-1">mdi-plus</v-icon>
-                      Criar nova perspectiva
+                                              Create new perspective
                     </v-list-item-subtitle>
                   </v-list-item-content>
                 </template>
@@ -77,9 +77,9 @@
                   <div class="d-flex align-center">
                     <v-icon color="info" class="mr-2" small>mdi-information</v-icon>
                     <div>
-                      <strong>Perspectiva reutilizada!</strong>
-                      {{ questionsList.length }} pergunta(s) da perspectiva "{{ selectedExistingPerspectiveName }}" 
-                      foram carregadas.
+                      <strong>Perspective reused!</strong>
+                      {{ questionsList.length }} question(s) from perspective "{{ selectedExistingPerspectiveName }}" 
+                      were loaded.
                     </div>
                   </div>
                 </v-alert>
@@ -94,17 +94,17 @@
             <div class="mb-6">
               <h3 class="text-h6 mb-4 primary--text font-weight-medium">
                 <v-icon color="primary" class="mr-2">mdi-help-circle</v-icon>
-                Adicionar Perguntas
+                Add Questions
               </h3>
 
               <v-row>
                 <v-col cols="12" md="8">
                   <v-text-field
                     v-model="newQuestion"
-                    label="Digite sua pergunta"
+                    label="Enter your question"
                     outlined
                     prepend-inner-icon="mdi-comment-question"
-                    hint="Pressione Enter para adicionar rapidamente"
+                    hint="Press Enter to add quickly"
                     persistent-hint
                     dense
                     @keyup.enter="addQuestion"
@@ -114,7 +114,7 @@
                   <v-select
                     v-model="answerType"
                     :items="answerTypeOptions"
-                    label="Tipo de resposta"
+                    label="Answer type"
                     outlined
                     prepend-inner-icon="mdi-format-list-bulleted-type"
                     dense
@@ -131,7 +131,7 @@
                   @click="addQuestion"
                 >
                   <v-icon left>mdi-plus</v-icon>
-                  Adicionar Pergunta
+                  Add Question
                 </v-btn>
               </div>
             </div>
@@ -144,7 +144,7 @@
             <div class="d-flex justify-space-between align-center mb-4">
               <h3 class="text-h6 primary--text font-weight-medium">
                 <v-icon color="primary" class="mr-2">mdi-format-list-numbered</v-icon>
-                Perguntas Adicionadas
+                Added Questions
                 <v-chip small color="primary" text-color="white" class="ml-2">{{ questionsList.length }}</v-chip>
               </h3>
               
@@ -156,7 +156,7 @@
                 @click="clearAllQuestions"
               >
                 <v-icon left small>mdi-delete-sweep</v-icon>
-                Limpar Todas
+                Clear All
               </v-btn>
             </div>
 
@@ -195,7 +195,7 @@
                         color="primary" 
                         small
                         class="delete-btn-modern"
-                        title="Remover pergunta"
+                        title="Remove question"
                         @click="removeQuestion(index)"
                       >
                         <v-icon small class="mr-1">mdi-minus-circle-outline</v-icon>
@@ -283,10 +283,10 @@ export default Vue.extend({
       questionToRemove: null as CreateQuestionCommand | null,
       questionIndexToRemove: -1,
       answerTypeOptions: [
-        { text: 'Verdadeiro/Falso', value: 'boolean', icon: 'mdi-check-circle', color: 'green' },
-        { text: 'Número Inteiro', value: 'int', icon: 'mdi-numeric', color: 'blue' },
-        { text: 'Número Decimal', value: 'double', icon: 'mdi-decimal', color: 'purple' },
-        { text: 'Texto', value: 'string', icon: 'mdi-text', color: 'orange' }
+        { text: 'True/False', value: 'boolean', icon: 'mdi-check-circle', color: 'green' },
+        { text: 'Integer Number', value: 'int', icon: 'mdi-numeric', color: 'blue' },
+        { text: 'Decimal Number', value: 'double', icon: 'mdi-decimal', color: 'purple' },
+        { text: 'Text', value: 'string', icon: 'mdi-text', color: 'orange' }
       ]
     }
   },
@@ -316,13 +316,13 @@ export default Vue.extend({
     perspectiveOptions(): Array<{display: string, value: string, isExisting: boolean, projectName?: string, perspectiveData?: PerspectiveDTO}> {
       const options: Array<{display: string, value: string, isExisting: boolean, projectName?: string, perspectiveData?: PerspectiveDTO}> = []
       
-      // Adicionar perspectivas existentes de outros projetos
+      // Add existing perspectives from other projects
       this.existingPerspectives.forEach(perspective => {
         options.push({
           display: perspective.name,
           value: perspective.name,
           isExisting: true,
-          projectName: `Projeto ${perspective.project_id}`,
+          projectName: `Project ${perspective.project_id}`,
           perspectiveData: perspective
         })
       })
@@ -353,7 +353,7 @@ export default Vue.extend({
   methods: {
     getAnswerTypeLabel(answerType: string): string {
       const option = this.answerTypeOptions.find(opt => opt.value === answerType)
-      return option ? option.text : 'Desconhecido'
+      return option ? option.text : 'Unknown'
     },
 
     getAnswerTypeIcon(answerType: string): string {
@@ -369,11 +369,11 @@ export default Vue.extend({
     addQuestion() {
       this.errorMessage = ''
       if (!this.newQuestion.trim()) {
-        this.errorMessage = 'A pergunta não pode estar vazia'
+        this.errorMessage = 'The question cannot be empty'
         return
       }
       if (this.answerType === null) {
-        this.errorMessage = 'Por favor selecione um tipo de resposta'
+        this.errorMessage = 'Please select an answer type'
         return
       }
       const questionData: CreateQuestionCommand = {
@@ -421,11 +421,11 @@ export default Vue.extend({
       this.loadingPerspectives = true
       try {
         const perspectives = await this.$services.perspective.listAll()
-        // Filtrar perspectivas que não sejam do projeto atual
+        // Filter perspectives that are not from the current project
         this.existingPerspectives = perspectives.filter(p => p.project_id !== Number(this.projectId))
       } catch (error) {
-        console.error('Erro ao buscar perspectivas existentes:', error)
-        this.errorMessage = 'Erro ao carregar perspectivas existentes'
+        console.error('Error fetching existing perspectives:', error)
+                  this.errorMessage = 'Error loading existing perspectives'
       } finally {
         this.loadingPerspectives = false
       }
@@ -437,8 +437,8 @@ export default Vue.extend({
     
     onPerspectiveInput(value: string) {
       this.selectedPerspective = value
-      // Se o usuário digitou algo, garantir que seja tratado como nova perspectiva
-      // a menos que seja selecionado explicitamente da lista
+      // If the user typed something, ensure it's treated as a new perspective
+      // unless explicitly selected from the list
       if (value && !this.isExistingPerspectiveName(value)) {
         this.selectedExistingPerspectiveData = null
         this.questionsList = []
@@ -448,24 +448,24 @@ export default Vue.extend({
     
     async onPerspectiveChange() {
       if (!this.selectedPerspective) {
-        // Limpar tudo se não há seleção
+        // Clear everything if there's no selection
         this.selectedExistingPerspectiveData = null
         this.questionsList = []
         this.emitUpdatedQuestions()
         return
       }
       
-      // Encontrar se a perspectiva selecionada é uma perspectiva existente
+      // Find if the selected perspective is an existing perspective
       const selectedOption = this.perspectiveOptions.find(opt => opt.value === this.selectedPerspective)
       
       if (selectedOption && selectedOption.isExisting && selectedOption.perspectiveData) {
-        // É uma perspectiva existente, carregar as perguntas
+        // It's an existing perspective, load the questions
         this.selectedExistingPerspectiveData = selectedOption.perspectiveData
         await this.loadQuestionsFromPerspective(selectedOption.perspectiveData)
       } else {
-        // É uma nova perspectiva
+        // It's a new perspective
         this.selectedExistingPerspectiveData = null
-        // Só limpar perguntas se realmente mudou de uma perspectiva existente para nova
+        // Only clear questions if it really changed from an existing perspective to a new one
         if (this.isReusing) {
           this.questionsList = []
         }
@@ -475,14 +475,14 @@ export default Vue.extend({
     
     async loadQuestionsFromPerspective(perspectiveData: PerspectiveDTO) {
       try {
-        // Buscar detalhes da perspectiva selecionada incluindo as perguntas
+        // Fetch details of the selected perspective including the questions
         const perspectiveDetails = await this.$services.perspective.get(
           perspectiveData.project_id.toString(), 
           perspectiveData.id.toString()
         )
         
         if (perspectiveDetails && perspectiveDetails.questions && Array.isArray(perspectiveDetails.questions)) {
-          // Mapear as perguntas existentes para o formato esperado
+          // Map existing questions to the expected format
           this.questionsList = perspectiveDetails.questions.map(q => ({
             question: q.question,
             answer_type: q.answer_type || 'string',
@@ -495,8 +495,8 @@ export default Vue.extend({
           this.emitUpdatedQuestions()
         }
       } catch (error) {
-        console.error('Erro ao carregar perguntas da perspectiva:', error)
-        this.errorMessage = 'Erro ao carregar perguntas da perspectiva selecionada'
+        console.error('Error loading perspective questions:', error)
+                  this.errorMessage = 'Error loading questions from selected perspective'
       }
     },
     

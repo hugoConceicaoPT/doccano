@@ -261,7 +261,7 @@ class VotingCofiguration(models.Model):
     def clean(self):
         # Verificar se não existe outra configuração com a mesma versão no mesmo projeto
         if VotingCofiguration.objects.filter(project=self.project, version=self.version).exclude(id=self.id).exists():
-            raise ValidationError('Já existe uma configuração de votação com esta versão neste projeto.')
+            raise ValidationError('A voting configuration with this version already exists in this project.')
 
 
 class AnnotationRule(models.Model):

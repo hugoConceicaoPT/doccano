@@ -4,12 +4,12 @@
     <v-card-title class="d-flex align-center py-4">
       <span class="text-h5 font-weight-medium">
         <v-icon left class="mr-2 primary--text">{{ mdiVote }}</v-icon>
-        Votação nas Regras de Anotação
+        Annotation Rules Voting
       </span>
       <v-spacer />
       <v-btn color="secondary" outlined @click="$router.push(localePath(`/projects/${projectId}`))">
         <v-icon left>{{ mdiArrowLeft }}</v-icon>
-        Voltar ao projeto
+        Back to project
       </v-btn>
     </v-card-title>
     <v-divider></v-divider>
@@ -24,7 +24,7 @@
 
       <div v-if="loading" class="text-center my-8">
         <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-        <p class="mt-4 text-h6">Carregando regras para votação...</p>
+        <p class="mt-4 text-h6">Loading rules for voting...</p>
       </div>
 
       <!-- Informações sobre o período de votação -->
@@ -42,8 +42,8 @@
       <!-- Sem votação ativa -->
       <div v-if="!loading && !activeVotingConfig" class="text-center my-8">
         <v-icon size="64" color="grey lighten-1" class="mb-4">{{ mdiVoteOutline }}</v-icon>
-        <p class="text-h6 grey--text">Não há votações ativas no momento.</p>
-        <p class="text-body-2 grey--text">Aguarde o administrador configurar uma nova votação de regras.</p>
+        <p class="text-h6 grey--text">There are no active votes at the moment.</p>
+        <p class="text-body-2 grey--text">Wait for the administrator to set up a new rule vote.</p>
 
       </div>
 
@@ -56,7 +56,7 @@
               <v-card-text class="text-center">
                 <v-icon size="32" color="primary" class="mb-2">{{ mdiClipboardList }}</v-icon>
                 <div class="text-h6">{{ pendingRules.length }}</div>
-                <div class="text-caption">Regras para votar</div>
+                <div class="text-caption">Rules to vote</div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -65,7 +65,7 @@
               <v-card-text class="text-center">
                 <v-icon size="32" color="success" class="mb-2">{{ mdiCheckCircle }}</v-icon>
                 <div class="text-h6">{{ Object.keys(localVotes).length }}</div>
-                <div class="text-caption">Votos selecionados</div>
+                <div class="text-caption">Selected votes</div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -75,7 +75,7 @@
                 <v-icon size="32" color="info" class="mb-2">{{ mdiPercent }}</v-icon>
                 <div class="text-h6">{{ Math.round((Object.keys(localVotes).length / pendingRules.length) * 100) }}%
                 </div>
-                <div class="text-caption">Progresso</div>
+                <div class="text-caption">Progress</div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -92,12 +92,12 @@
                 <v-spacer />
                 <v-chip v-if="rule.id in localVotes" small color="primary" text-color="white">
                   <v-icon small left>{{ localVotes[rule.id] ? mdiThumbUp : mdiThumbDown }}</v-icon>
-                  {{ localVotes[rule.id] ? 'Aprovar' : 'Rejeitar' }}
+                  {{ localVotes[rule.id] ? 'Approve' : 'Reject' }}
                 </v-chip>
               </v-card-title>
 
               <v-card-text v-if="!(rule.id in localVotes)" class="pb-2">
-                <p class="text-body-2 grey--text mb-0">Selecione sua decisão para esta regra:</p>
+                <p class="text-body-2 grey--text mb-0">Select your decision for this rule:</p>
               </v-card-text>
 
               <v-card-actions class="justify-space-between pa-3">
@@ -105,17 +105,17 @@
                   <v-btn small color="success" :outlined="!(rule.id in localVotes && localVotes[rule.id])"
                     :depressed="rule.id in localVotes && localVotes[rule.id]" @click="vote(rule.id, true)">
                     <v-icon left small>{{ mdiThumbUp }}</v-icon>
-                    Aprovar
+                    Approve
                   </v-btn>
                   <v-btn small color="error" :outlined="!(rule.id in localVotes && !localVotes[rule.id])"
                     :depressed="rule.id in localVotes && !localVotes[rule.id]" @click="vote(rule.id, false)">
                     <v-icon left small>{{ mdiThumbDown }}</v-icon>
-                    Rejeitar
+                    Reject
                   </v-btn>
                 </div>
                 <v-btn v-if="rule.id in localVotes" small color="grey" outlined @click="removeVote(rule.id)">
                   <v-icon small>{{ mdiClose }}</v-icon>
-                  Remover
+                  Remove
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -127,17 +127,17 @@
           <v-col cols="12" class="text-center">
             <v-btn color="primary" :disabled="!canSubmit" class="px-8" large :loading="submitting" @click="submitVotes">
               <v-icon left>{{ mdiSend }}</v-icon>
-              Submeter Todos os Votos
+              Submit All Votes
             </v-btn>
             <div class="mt-3">
               <p class="text-body-2 grey--text mb-1">
-                {{ Object.keys(localVotes).length }} de {{ pendingRules.length }} regra(s) votada(s)
+                {{ Object.keys(localVotes).length }} of {{ pendingRules.length }} rule(s) voted
               </p>
               <p v-if="!canSubmit && pendingRules.length > 0" class="text-caption error--text mb-0">
-                Vote em todas as regras para submeter
+                Vote on all rules to submit
               </p>
               <p v-if="canSubmit" class="text-caption success--text mb-0">
-                Pronto para submeter!
+                Ready to submit!
               </p>
             </div>
           </v-col>
@@ -151,7 +151,7 @@
           <v-row>
             <v-col cols="12" class="text-center">
               <v-icon size="64" color="success" class="mb-4">{{ mdiCheckCircle }}</v-icon>
-              <p class="text-h6 grey--text">Você já votou em todas as regras disponíveis.</p>
+              <p class="text-h6 grey--text">You have already voted on all available rules.</p>
             </v-col>
           </v-row>
         </div>
@@ -173,8 +173,8 @@
       <!-- Aviso para não-anotadores -->
       <div v-if="!loading && !isAnnotator" class="text-center my-8">
         <v-icon size="64" color="warning" class="mb-4">{{ mdiInformation }}</v-icon>
-        <p class="text-h6 warning--text">Sem permissão para votar</p>
-        <p class="text-body-2 grey--text">Apenas anotadores podem participar da votação.</p>
+        <p class="text-h6 warning--text">No permission to vote</p>
+        <p class="text-body-2 grey--text">Only annotators can participate in voting.</p>
       </div>
     </v-card-text>
   </v-card>
@@ -257,6 +257,12 @@ export default Vue.extend({
     }
   },
 
+  head() {
+    return {
+      title: 'Voting'
+    }
+  },
+
   async fetch() {
     this.loading = true
     try {
@@ -313,8 +319,8 @@ export default Vue.extend({
         return {
           type: 'info',
           icon: this.mdiVoteOutline,
-          title: 'Sem votação ativa',
-          message: 'Não há votações disponíveis no momento.',
+          title: 'No active voting',
+          message: 'There are no votes available at the moment.',
           canVote: false
         }
       }
@@ -327,8 +333,8 @@ export default Vue.extend({
         return {
           type: 'warning',
           icon: this.mdiClockOutline,
-          title: 'Votação ainda não iniciou',
-          message: `A votação começará em ${this.formatDate(beginDate)}`,
+          title: 'Voting has not started yet',
+          message: `Voting will start on ${this.formatDate(beginDate)}`,
           canVote: false
         }
       }
@@ -337,8 +343,8 @@ export default Vue.extend({
         return {
           type: 'error',
           icon: this.mdiCalendarClock,
-          title: 'Votação expirada',
-          message: `A votação terminou em ${this.formatDate(endDate)}. As regras não votadas foram automaticamente finalizadas.`,
+          title: 'Voting expired',
+          message: `Voting ended on ${this.formatDate(endDate)}. Unvoted rules were automatically finalized.`,
           canVote: false
         }
       }
@@ -346,12 +352,13 @@ export default Vue.extend({
       return {
         type: 'success',
         icon: this.mdiVote,
-        title: 'Votação ativa',
-        message: `Você pode votar até ${this.formatDate(endDate)}`,
+        title: 'Active voting',
+        message: `You can vote until ${this.formatDate(endDate)}`,
         canVote: true
       }
     }
   },
+
   mounted() {
     this.timerId = window.setInterval(() => {
       this.currentTime = Date.now()
@@ -394,9 +401,9 @@ export default Vue.extend({
         this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
 
         if (unvotedData.totalUnvotedRules === 0) {
-          this.successMessage = 'Você votou em todas as regras disponíveis. As regras que receberam votos de todos os anotadores foram automaticamente finalizadas.'
+          this.successMessage = 'You voted on all available rules. Rules that received votes from all annotators have been automatically finalized.'
         } else {
-          this.successMessage = `Votos submetidos com sucesso! Você votou em ${votedCount} regra(s). Restam ${unvotedData.totalUnvotedRules} regra(s) para votar. As regras que receberam votos de todos os anotadores são automaticamente finalizadas.`
+          this.successMessage = `Votes submitted successfully! You voted on ${votedCount} rule(s). ${unvotedData.totalUnvotedRules} rule(s) remaining to vote. Rules that receive votes from all annotators are automatically finalized.`
         }
 
       } catch (error: any) {
@@ -407,8 +414,8 @@ export default Vue.extend({
     },
 
     handleVotingError(error: any) {
-      console.error('Erro ao submeter votos:', error)
-
+              console.error('Error submitting votes:', error)
+      
       // Verificar se é erro de conexão com a base de dados (usando interceptor)
       if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
         this.errorMessage = error.userMessage
@@ -423,30 +430,30 @@ export default Vue.extend({
 
       // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
       if (error.response.status === 503) {
-        this.errorMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
         return
       }
 
       // Verificar se é erro 500 (erro interno do servidor/base de dados)
       if (error.response.status >= 500) {
-        this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+        this.errorMessage = 'Error:Database is slow or unavailable. Please try again later.'
         return
       }
 
       // Tratamento específico de outros erros
       if (error.response?.status === 403) {
-        this.errorMessage = 'Você não tem permissão para votar. Apenas anotadores podem votar nas regras de anotação.'
+        this.errorMessage = 'You do not have permission to vote. Only annotators can vote on annotation rules.'
       } else if (error.response?.status === 400) {
         const detail = error.response.data?.detail
         if (detail?.includes('já votou')) {
-          this.errorMessage = 'Você já votou em uma ou mais dessas regras. Atualizando a página...'
+          this.errorMessage = 'You have already voted on one or more of these rules. Updating page...'
           setTimeout(() => {
             this.$fetch()
           }, 2000)
         } else if (detail?.includes('votação já foi fechada')) {
-          this.errorMessage = 'Esta votação já foi fechada. Não é mais possível votar.'
+          this.errorMessage = 'This vote has already been closed. It is no longer possible to vote.'
         } else if (detail?.includes('regra já foi finalizada')) {
-          this.errorMessage = 'Uma ou mais regras já foram finalizadas. Não é mais possível votar nelas.'
+          this.errorMessage = 'One or more rules have already been finalized. It is no longer possible to vote on them.'
         } else if (detail?.includes('ainda não começou')) {
           this.errorMessage = detail
           setTimeout(() => {
@@ -458,10 +465,10 @@ export default Vue.extend({
             this.$fetch()
           }, 2000)
         } else {
-          this.errorMessage = 'Erro ao submeter votos. Tente novamente.'
+          this.errorMessage = 'Error submitting votes. Please try again.'
         }
       } else {
-        this.errorMessage = 'Erro inesperado. Verifique sua conexão e tente novamente.'
+        this.errorMessage = 'Unexpected error. Check your connection and try again.'
       }
     },
 
@@ -488,19 +495,19 @@ export default Vue.extend({
 
       // Verificar se é erro 500 (erro interno do servidor/base de dados)
       if (error.response.status >= 500) {
-        this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+        this.errorMessage = ' Database is slow or unavailable. Please try again later.'
         return
       }
 
       // Tratamento específico de outros erros
       if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Erro ao carregar dados. Alguns dados podem estar inconsistentes.'
+        this.errorMessage = 'Error loading data. Some data may be inconsistent.'
       } else if (error.response && error.response.status === 403) {
-        this.errorMessage = 'Você não tem permissão para acessar estes dados.'
+        this.errorMessage = 'You do not have permission to access this data.'
       } else if (error.response && error.response.status === 404) {
-        this.errorMessage = 'Dados não encontrados. O projeto ou votação pode ter sido removido.'
+        this.errorMessage = 'Data not found. The project or vote may have been removed.'
       } else {
-        this.errorMessage = 'Erro inesperado ao carregar dados. Verifique sua conexão e tente novamente.'
+        this.errorMessage = 'Unexpected error loading data. Check your connection and try again.'
       }
     },
 

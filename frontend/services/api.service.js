@@ -28,7 +28,7 @@ class ApiService {
         } else if (error.response.status >= 500) {
           // Erro interno do servidor
           error.isServerError = true
-          error.userMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+          error.userMessage = 'Database is slow or unavailable. Please try again later.'
         } else if (error.code === 'ECONNABORTED') {
           // Timeout
           error.isTimeoutError = true

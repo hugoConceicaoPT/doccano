@@ -1557,9 +1557,9 @@ export default Vue.extend({
 
           // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
           if (error.response.status === 503) {
-            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.status >= 500) {
-            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.data) {
             if (error.response.data.detail) {
               // Se a mensagem já contém informação sobre base de dados, adicionar ícone
@@ -1682,9 +1682,9 @@ export default Vue.extend({
         } else if (error.response) {
           // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
           if (error.response.status === 503) {
-            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.status >= 500) {
-            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.data?.detail) {
             // Se a mensagem já contém informação sobre base de dados, adicionar ícone
             if (error.response.data.detail.toLowerCase().includes('base de dados')) {
@@ -1929,9 +1929,9 @@ export default Vue.extend({
         } else if (error.response) {
           // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
           if (error.response.status === 503) {
-            errorMessage = '🔌 Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Verifique se a base de dados está ligada e tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.status >= 500) {
-            errorMessage = '⚠️ Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
+            errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.data) {
             if (error.response.data.detail) {
               // Se a mensagem já contém informação sobre base de dados, adicionar ícone

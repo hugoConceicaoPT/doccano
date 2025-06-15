@@ -141,7 +141,7 @@ export default {
         },
         {
           icon: mdiVote,
-          text: 'Votação',
+          text: 'Voting',
           link: 'voting',
           isVisible: !this.isProjectAdmin
         },
