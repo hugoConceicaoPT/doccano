@@ -304,39 +304,35 @@ class VotingCofigurationSerializer(serializers.ModelSerializer):
         model = VotingCofiguration
         fields = ['id', 'project', 'voting_threshold', 'percentage_threshold', 'created_by', 'begin_date', 'end_date', 'is_closed', 'version']
 
-    def to_representation(self, instance):
-        # Converter datas de UTC para timezone local (Lisboa) na resposta
-        data = super().to_representation(instance)
-        lisbon_tz = pytz.timezone('Europe/Lisbon')
-        
-        if data.get('begin_date') and instance.begin_date:
-            # Converter diretamente do objeto datetime do modelo
-            local_begin = instance.begin_date.astimezone(lisbon_tz)
-            data['begin_date'] = local_begin.strftime('%Y-%m-%dT%H:%M:%S')
-        
-        if data.get('end_date') and instance.end_date:
-            # Converter diretamente do objeto datetime do modelo
-            local_end = instance.end_date.astimezone(lisbon_tz)
-            data['end_date'] = local_end.strftime('%Y-%m-%dT%H:%M:%S')
-        
-        return data
-
     def validate(self, attrs):
-        # Converter datas do timezone local (Lisboa) para UTC
-        lisbon_tz = pytz.timezone('Europe/Lisbon')
+        # Simplesmente subtrair 1 hora das datas antes de salvar na base de dados
+        from datetime import timedelta
         
         if 'begin_date' in attrs and attrs['begin_date']:
-            # Se a data não tem timezone, assumir que é Lisboa
-            if timezone.is_naive(attrs['begin_date']):
-                local_begin = lisbon_tz.localize(attrs['begin_date'])
-                attrs['begin_date'] = local_begin.astimezone(pytz.UTC)
+            if isinstance(attrs['begin_date'], str):
+                # Se for string, converter para datetime primeiro
+                try:
+                    attrs['begin_date'] = datetime.fromisoformat(attrs['begin_date'])
+                except ValueError:
+                    # Tentar outros formatos se necessário
+                    attrs['begin_date'] = datetime.strptime(attrs['begin_date'], '%Y-%m-%dT%H:%M')
+            
+            # Subtrair 1 hora
+            attrs['begin_date'] = attrs['begin_date'] - timedelta(hours=1)
         
         if 'end_date' in attrs and attrs['end_date']:
-            # Se a data não tem timezone, assumir que é Lisboa
-            if timezone.is_naive(attrs['end_date']):
-                local_end = lisbon_tz.localize(attrs['end_date'])
-                attrs['end_date'] = local_end.astimezone(pytz.UTC)
+            if isinstance(attrs['end_date'], str):
+                # Se for string, converter para datetime primeiro
+                try:
+                    attrs['end_date'] = datetime.fromisoformat(attrs['end_date'])
+                except ValueError:
+                    # Tentar outros formatos se necessário
+                    attrs['end_date'] = datetime.strptime(attrs['end_date'], '%Y-%m-%dT%H:%M')
+            
+            # Subtrair 1 hora
+            attrs['end_date'] = attrs['end_date'] - timedelta(hours=1)
         
+        # Validar as regras de negócio
         instance = VotingCofiguration(**attrs)
         instance.clean()
         return attrs

@@ -176,13 +176,28 @@ export default Vue.extend({
           console.log(`Atualizando para a próxima versão disponível: ${this.editedItem.version}`)
         }
 
+        // Processar datas para garantir formato correto
+        // O campo datetime-local envia datas sem timezone, assumimos que são locais (Lisboa)
+        let processedBeginDate = this.editedItem.begin_date
+        let processedEndDate = this.editedItem.end_date
+        
+        // Se as datas não têm timezone, adicionar informação de que são locais
+        if (processedBeginDate && !processedBeginDate.includes('T')) {
+          // Se não tem 'T', adicionar formato de hora
+          processedBeginDate += 'T00:00'
+        }
+        if (processedEndDate && !processedEndDate.includes('T')) {
+          // Se não tem 'T', adicionar formato de hora
+          processedEndDate += 'T23:59'
+        }
+
         const votingConfigPayload = {
           project: projectId,
           voting_threshold: this.editedItem.voting_threshold,
           percentage_threshold: this.editedItem.percentage_threshold,
           created_by: null,
-          begin_date: this.editedItem.begin_date,
-          end_date: this.editedItem.end_date,
+          begin_date: processedBeginDate,
+          end_date: processedEndDate,
           is_closed: false,
           version: this.editedItem.version
         }

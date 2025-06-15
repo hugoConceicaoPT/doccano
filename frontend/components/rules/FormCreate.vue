@@ -4,7 +4,7 @@
     <v-card-text>
       <v-form ref="form" v-model="valid">
         <v-text-field
-          label="Vote Threshold"
+          label="Maximum Number of Votes"
           type="number"
           :value="editedItem.voting_threshold"
           :rules="[rules.required, rules.min(0)]"
