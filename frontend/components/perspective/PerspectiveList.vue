@@ -58,7 +58,7 @@
                 multiple
               >
                 <template #label>
-                  User
+                  Annotator
                 </template>
               </v-select>
               <v-select

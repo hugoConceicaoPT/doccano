@@ -12,8 +12,6 @@ import { UserApplicationService } from '~/services/application/user/userApplicat
 import { PerspectiveApplicationService } from '~/services/application/perspective/perspectiveApplicationService'
 import {
   QuestionApplicationService,
-  OptionsGroupApplicationService,
-  OptionsQuestionApplicationService
 } from '~/services/application/perspective/question/questionApplicationService'
 import { AnswerApplicationService } from '~/services/application/perspective/answer/answerApplicationService'
 import {
@@ -36,8 +34,6 @@ export interface Services {
   segmentation: SegmentationApplicationService
   user: UserApplicationService
   perspective: PerspectiveApplicationService
-  optionsGroup: OptionsGroupApplicationService
-  optionsQuestion: OptionsQuestionApplicationService
   question: QuestionApplicationService
   answer: AnswerApplicationService
   votingConfiguration: VotingConfigurationApplicationService
@@ -70,8 +66,6 @@ const plugin: Plugin = (_, inject) => {
     segmentation: new SegmentationApplicationService(repositories.segmentation),
     user: new UserApplicationService(repositories.user),
     perspective: new PerspectiveApplicationService(repositories.perspective),
-    optionsGroup: new OptionsGroupApplicationService(repositories.optionsGroup),
-    optionsQuestion: new OptionsQuestionApplicationService(repositories.optionsQuestion),
     question: new QuestionApplicationService(repositories.question),
     answer: new AnswerApplicationService(repositories.answer),
     votingConfiguration: new VotingConfigurationApplicationService(

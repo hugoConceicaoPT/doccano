@@ -9,6 +9,7 @@
       :items="perspectiveTableItems"
       :items-per-page="5"
       class="elevation-1"
+      :no-data-text="$t('vuetify.noDataAvailable')"
     >
       <template #[`item.question`]="{ item }">
         <div class="font-weight-medium">{{ item.question }}</div>

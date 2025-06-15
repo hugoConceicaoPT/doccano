@@ -26,8 +26,6 @@ import { APIUserRepository } from '@/repositories/user/apiUserRepository'
 import { APISegmentationRepository } from '~/repositories/tasks/apiSegmentationRepository'
 import { APIPerspectiveRepository } from '~/repositories/perspective/apiPerspectiveRepository'
 import { APIQuestionRepository } from '~/repositories/perspective/question/apiQuestionRepository'
-import { APIOptionsGroupRepository } from '~/repositories/perspective/question/apiOptionsGroupRepository'
-import { APIOptionsQuestionRepository } from '~/repositories/perspective/question/apiOptionsQuestionReposity'
 
 import { APIAnswerRepository } from '~/repositories/perspective/answer/apiAnswerRepository'
 import {
@@ -50,8 +48,6 @@ export interface Repositories {
   tag: APITagRepository
   perspective: APIPerspectiveRepository
   question: APIQuestionRepository
-  optionsGroup: APIOptionsGroupRepository
-  optionsQuestion: APIOptionsQuestionRepository
   answer: APIAnswerRepository
   votingConfiguration: APIVotingConfigurationRepository
   annotationRule: APIAnnotationRuleRepository
@@ -111,8 +107,6 @@ const repositories: Repositories = {
   tag: new APITagRepository(),
   perspective: new APIPerspectiveRepository(),
   question: new APIQuestionRepository(),
-  optionsGroup: new APIOptionsGroupRepository(),
-  optionsQuestion: new APIOptionsQuestionRepository(),
   answer: new APIAnswerRepository(),
   votingConfiguration: new APIVotingConfigurationRepository(),
   annotationRule: new APIAnnotationRuleRepository(),

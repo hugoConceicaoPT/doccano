@@ -1,21 +1,26 @@
 <template>
   <div>
+    <!-- Mensagem de erro no topo -->
+    <v-alert 
+      v-if="errorMessage" 
+      type="error" 
+      dismissible
+      class="mb-4"
+      outlined
+      @input="errorMessage = ''"
+    >
+      <strong>Erro ao criar perspectiva:</strong> {{ errorMessage }}
+    </v-alert>
+
     <!-- Mensagem de sucesso -->
     <v-alert 
       v-if="sucessMessage" 
       type="success" 
       dismissible
       class="mb-4"
-      border="left"
-      colored-border
+      outlined
     >
-      <div class="d-flex align-center">
-        <v-icon color="success" class="mr-3">mdi-check-circle</v-icon>
-        <div>
-          <strong>Perspectiva criada com sucesso!</strong><br>
-          {{ sucessMessage }}
-        </div>
-      </div>
+      <strong>Perspectiva criada com sucesso!</strong> {{ sucessMessage }}
     </v-alert>
 
     <!-- Componente principal -->
@@ -29,12 +34,12 @@
       @update-options-group="updateOptionsGroup"
     >
       <!-- Botões de ação -->
-      <div class="d-flex justify-space-between align-center mt-4">
+      <div class="d-flex justify-space-between align-center mt-6">
         <v-btn 
-          color="grey darken-1" 
+          color="grey" 
+          outlined
+          class="px-6"
           @click="$router.back()"
-          text
-          class="text-capitalize"
         >
           <v-icon left>mdi-arrow-left</v-icon>
           Cancelar
@@ -44,8 +49,9 @@
           :disabled="!slotProps.valid" 
           :loading="saving"
           color="primary" 
+          class="px-6"
+          elevation="2"
           @click="save"
-          class="text-capitalize"
         >
           <v-icon left>mdi-content-save</v-icon>
           Criar Perspectiva
@@ -53,32 +59,17 @@
       </div>
     </form-create>
 
-    <!-- Mensagem de erro -->
-    <v-alert 
-      v-if="errorMessage" 
-      type="error" 
-      dismissible
-      @input="errorMessage = ''"
-      class="mt-4"
-      border="left"
-      colored-border
-    >
-      <div class="d-flex align-center">
-        <v-icon color="error" class="mr-3">mdi-alert-circle</v-icon>
-        <div>
-          <strong>Erro ao criar perspectiva</strong><br>
-          {{ errorMessage }}
-        </div>
-      </div>
-    </v-alert>
-
-    <!-- Loading overlay simples -->
+    <!-- Loading overlay -->
     <v-overlay :value="saving">
-      <v-progress-circular
-        indeterminate
-        size="64"
-        color="primary"
-      ></v-progress-circular>
+      <div class="text-center">
+        <v-progress-circular
+          indeterminate
+          size="64"
+          color="primary"
+          width="4"
+        ></v-progress-circular>
+        <p class="mt-4 white--text">A criar perspectiva...</p>
+      </div>
     </v-overlay>
   </div>
 </template>
@@ -168,7 +159,7 @@ export default Vue.extend({
 
         await this.service.create(this.projectId, this.editedItem)
         
-        this.sucessMessage = 'A perspectiva foi criada com sucesso e um email foi enviado para todos os anotadores do projeto.'
+        this.sucessMessage = 'A perspectiva foi criada com sucesso'
         
         // Aguardar um pouco para mostrar a mensagem de sucesso
         setTimeout(() => {
@@ -204,7 +195,7 @@ export default Vue.extend({
             this.errorMessage = 'Você não tem permissão para criar perspectivas neste projeto.'
             break
           case 500:
-            this.errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.'
+            this.errorMessage = 'Database is slow or unavailable. Please try again later.'
             break
           default:
             this.errorMessage = 'Ocorreu um erro inesperado. Tente novamente.'
@@ -220,51 +211,14 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.add-perspective-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px 0;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.action-btn {
-  font-weight: 600;
+.v-btn {
   text-transform: none;
-  letter-spacing: 0.5px;
-  min-width: 140px;
+  font-weight: 500;
+  border-radius: 8px;
 }
 
-.cancel-btn {
-  border: 2px solid #757575;
-}
-
-.cancel-btn:hover {
-  background-color: #f5f5f5;
-}
-
-.save-btn {
-  background: linear-gradient(45deg, #1976d2 30%, #42a5f5 90%);
-  color: white;
-  box-shadow: 0 3px 5px 2px rgba(25, 118, 210, 0.3);
-}
-
-.save-btn:hover {
-  box-shadow: 0 6px 10px 4px rgba(25, 118, 210, 0.3);
-  transform: translateY(-1px);
-}
-
-.save-btn:disabled {
-  background: #e0e0e0 !important;
-  color: #9e9e9e !important;
-  box-shadow: none !important;
-  transform: none !important;
+.v-alert {
+  border-radius: 8px;
 }
 
 /* Responsividade */

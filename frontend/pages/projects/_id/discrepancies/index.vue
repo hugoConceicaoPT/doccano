@@ -67,9 +67,8 @@ import {
   mdiPercent
 } from '@mdi/js'
 import DiscrepancyList from '~/components/discrepancy/DiscrepancyList.vue'
-import { Percentage } from '~/domain/models/metrics/metrics'
+import { Percentage , Distribution } from '~/domain/models/metrics/metrics'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
-import { Distribution } from '~/domain/models/metrics/metrics'
 import { MemberItem } from '~/domain/models/member/member'
 
 export default Vue.extend({

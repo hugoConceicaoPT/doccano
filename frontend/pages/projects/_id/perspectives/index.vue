@@ -53,25 +53,15 @@
         <v-card v-if="isAdmin" elevation="2" class="ma-4">
           <v-card-title class="primary white--text">
             <v-icon left color="white">mdi-cog</v-icon>
-            Gestão de Perspectivas
+            Perspective Management
             <v-spacer />
-            <v-btn
-              v-if="!hasPerspective"
-              color="white"
-              outlined
-              class="text-capitalize"
-              @click="$router.push('perspectives/add')"
-            >
-              <v-icon left>mdi-plus</v-icon>
-              Criar Perspectiva
-            </v-btn>
           </v-card-title>
           
           <v-card-text v-if="!hasPerspective" class="text-center pa-6">
             <v-icon size="80" color="grey lighten-1" class="mb-4">mdi-clipboard-text-outline</v-icon>
-            <h2 class="text-h6 mb-3 grey--text">Nenhuma perspectiva configurada</h2>
+            <h2 class="text-h6 mb-3 grey--text">No perspectives configured</h2>
             <p class="text-body-1 grey--text mb-4">
-              Para começar a recolher perspectivas dos anotadores, é necessário criar primeiro uma perspectiva para este projeto.
+              To start collecting perspectives from annotators, you first need to create a perspective for this project.
             </p>
             <v-btn
               color="primary"
@@ -79,7 +69,7 @@
               @click="$router.push('perspectives/add')"
             >
               <v-icon left>mdi-plus-circle</v-icon>
-              Criar Primeira Perspectiva
+              Create First Perspective
             </v-btn>
           </v-card-text>
           
@@ -149,7 +139,7 @@ export default Vue.extend({
 
   layout: 'project',
 
-  middleware: ['check-auth', 'auth', 'setCurrentProject', 'project-closed'],
+  middleware: ['check-auth', 'auth', 'project-closed'],
 
   data() {
     return {
@@ -195,8 +185,7 @@ export default Vue.extend({
         await this.fetchAnswers()
       }
     } catch (error) {
-      console.error('Erro ao buscar o papel ou perguntas:', error)
-      this.errorMessage = 'Erro ao carregar dados. Tente recarregar a página.'
+      this.handleError(error)
     }
   },
 
@@ -221,6 +210,13 @@ export default Vue.extend({
       }
     },
 
+    handleError(error: any) {
+      if (error.response && error.response.status === 400) {
+        this.errorMessage = 'Error retrieving data.'
+      } else {
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
+      }
+    },
     async fetchAnswers() {
       try {
         const response = await this.$services.answer.list()

@@ -7,11 +7,7 @@
         Votação nas Regras de Anotação
       </span>
       <v-spacer />
-      <v-btn
-        color="secondary"
-        outlined
-        @click="$router.push(localePath(`/projects/${projectId}`))"
-      >
+      <v-btn color="secondary" outlined @click="$router.push(localePath(`/projects/${projectId}`))">
         <v-icon left>{{ mdiArrowLeft }}</v-icon>
         Voltar ao projeto
       </v-btn>
@@ -27,21 +23,12 @@
       </v-alert>
 
       <div v-if="loading" class="text-center my-8">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="64"
-        ></v-progress-circular>
+        <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
         <p class="mt-4 text-h6">Carregando regras para votação...</p>
       </div>
 
       <!-- Informações sobre o período de votação -->
-      <v-alert 
-        v-if="!loading && activeVotingConfig"
-        :type="votingStatus.type" 
-        class="mb-4"
-        :icon="votingStatus.icon"
-      >
+      <v-alert v-if="!loading && activeVotingConfig" :type="votingStatus.type" class="mb-4" :icon="votingStatus.icon">
         <div class="d-flex align-center">
           <div>
             <strong>{{ votingStatus.title }}</strong>
@@ -86,7 +73,8 @@
             <v-card outlined>
               <v-card-text class="text-center">
                 <v-icon size="32" color="info" class="mb-2">{{ mdiPercent }}</v-icon>
-                <div class="text-h6">{{ Math.round((Object.keys(localVotes).length / pendingRules.length) * 100) }}%</div>
+                <div class="text-h6">{{ Math.round((Object.keys(localVotes).length / pendingRules.length) * 100) }}%
+                </div>
                 <div class="text-caption">Progresso</div>
               </v-card-text>
             </v-card>
@@ -96,11 +84,8 @@
         <!-- Lista de regras para votação -->
         <v-row class="mb-6">
           <v-col v-for="rule in pendingRules" :key="rule.id" cols="12" sm="6" md="4">
-            <v-card 
-              outlined 
-              class="rule-voting-card mb-4" 
-              :class="{ 'voted': rule.id in localVotes, 'elevation-4': rule.id in localVotes }"
-            >
+            <v-card outlined class="rule-voting-card mb-4"
+              :class="{ 'voted': rule.id in localVotes, 'elevation-4': rule.id in localVotes }">
               <v-card-title class="text-subtitle-1 font-weight-medium d-flex align-center">
                 <v-icon left color="primary">{{ mdiGavel }}</v-icon>
                 {{ rule.name }}
@@ -110,41 +95,25 @@
                   {{ localVotes[rule.id] ? 'Aprovar' : 'Rejeitar' }}
                 </v-chip>
               </v-card-title>
-              
+
               <v-card-text v-if="!(rule.id in localVotes)" class="pb-2">
                 <p class="text-body-2 grey--text mb-0">Selecione sua decisão para esta regra:</p>
               </v-card-text>
 
               <v-card-actions class="justify-space-between pa-3">
                 <div class="d-flex gap-2">
-                  <v-btn
-                    small
-                    color="success"
-                    :outlined="!(rule.id in localVotes && localVotes[rule.id])"
-                    :depressed="rule.id in localVotes && localVotes[rule.id]"
-                    @click="vote(rule.id, true)"
-                  >
+                  <v-btn small color="success" :outlined="!(rule.id in localVotes && localVotes[rule.id])"
+                    :depressed="rule.id in localVotes && localVotes[rule.id]" @click="vote(rule.id, true)">
                     <v-icon left small>{{ mdiThumbUp }}</v-icon>
                     Aprovar
                   </v-btn>
-                  <v-btn
-                    small
-                    color="error"
-                    :outlined="!(rule.id in localVotes && !localVotes[rule.id])"
-                    :depressed="rule.id in localVotes && !localVotes[rule.id]"
-                    @click="vote(rule.id, false)"
-                  >
+                  <v-btn small color="error" :outlined="!(rule.id in localVotes && !localVotes[rule.id])"
+                    :depressed="rule.id in localVotes && !localVotes[rule.id]" @click="vote(rule.id, false)">
                     <v-icon left small>{{ mdiThumbDown }}</v-icon>
                     Rejeitar
                   </v-btn>
                 </div>
-                <v-btn
-                  v-if="rule.id in localVotes"
-                  small
-                  color="grey"
-                  outlined
-                  @click="removeVote(rule.id)"
-                >
+                <v-btn v-if="rule.id in localVotes" small color="grey" outlined @click="removeVote(rule.id)">
                   <v-icon small>{{ mdiClose }}</v-icon>
                   Remover
                 </v-btn>
@@ -156,14 +125,7 @@
         <!-- Botão de submissão -->
         <v-row>
           <v-col cols="12" class="text-center">
-            <v-btn
-              color="primary"
-              :disabled="!canSubmit"
-              @click="submitVotes"
-              class="px-8"
-              large
-              :loading="submitting"
-            >
+            <v-btn color="primary" :disabled="!canSubmit" class="px-8" large :loading="submitting" @click="submitVotes">
               <v-icon left>{{ mdiSend }}</v-icon>
               Submeter Todos os Votos
             </v-btn>
@@ -181,7 +143,7 @@
           </v-col>
         </v-row>
       </div>
-      
+
       <!-- Casos especiais -->
       <div v-else-if="!loading && activeVotingConfig">
         <!-- Já votou em todas as regras -->
@@ -193,7 +155,7 @@
             </v-col>
           </v-row>
         </div>
-        
+
         <!-- Votação não pode ser realizada (expirada ou não iniciada) -->
         <div v-else-if="!votingStatus.canVote">
           <v-row>
@@ -260,6 +222,7 @@ interface VotingAnswer {
 }
 
 export default Vue.extend({
+
   layout: 'project',
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
 
@@ -267,13 +230,13 @@ export default Vue.extend({
     return {
       successMessage: '',
       errorMessage: '',
-      loading: true,
+      loading: false,
       submitting: false,
       pendingRules: [] as AnnotationRuleItem[],
       localVotes: {} as Record<number, boolean>,
-      activeVotingConfig: null as VotingAnswer | null,
-      currentTime: Date.now(),
-      timerId: 0 as number,
+      activeVotingConfig: {} as VotingAnswer | null,
+      currentTime: 0,
+      timerId: 0,
       isAnnotator: false,
       mdiVote,
       mdiVoteOutline,
@@ -294,14 +257,56 @@ export default Vue.extend({
     }
   },
 
+  async fetch() {
+    this.loading = true
+    try {
+      const projectId = this.projectId
+
+      // Verificar se o usuário é anotador
+      const member = await this.$repositories.member.fetchMyRole(projectId)
+      this.isAnnotator = member.isAnnotator
+
+      if (!this.isAnnotator) {
+        this.loading = false
+        return
+      }
+
+      // Buscar regras não votadas
+      const unvotedData = await this.$services.annotationRule.listUnvoted(projectId)
+      this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
+
+      // Buscar configurações de votação
+      const votingConfigs = await this.$services.votingConfiguration.list(projectId)
+      const projectConfigs = votingConfigs.filter(
+        (config) => config.project === Number(projectId)
+      )
+
+      // Identificar votação ativa
+      if (unvotedData.activeVotings.length > 0) {
+        const activeVoting = unvotedData.activeVotings.find(v => v.is_active) ||
+          unvotedData.activeVotings.find(v => !v.is_expired)
+        if (activeVoting) {
+          this.activeVotingConfig = projectConfigs.find(c => c.id === activeVoting.id) || null
+        }
+      }
+
+
+    } catch (error) {
+      this.handleError(error)
+    } finally {
+      this.loading = false
+    }
+  },
+
+
   computed: {
     ...mapGetters('projects', ['project']),
     projectId() {
       return this.$route.params.id
     },
     canSubmit() {
-      return this.pendingRules.length > 0 && 
-             this.pendingRules.every(rule => rule.id in this.localVotes)
+      return this.pendingRules.length > 0 &&
+        this.pendingRules.every(rule => rule.id in this.localVotes)
     },
     votingStatus() {
       if (!this.activeVotingConfig) {
@@ -333,7 +338,7 @@ export default Vue.extend({
           type: 'error',
           icon: this.mdiCalendarClock,
           title: 'Votação expirada',
-          message: `A votação terminou em ${this.formatDate(endDate)}`,
+          message: `A votação terminou em ${this.formatDate(endDate)}. As regras não votadas foram automaticamente finalizadas.`,
           canVote: false
         }
       }
@@ -347,49 +352,6 @@ export default Vue.extend({
       }
     }
   },
-
-  async fetch() {
-    this.loading = true
-    try {
-      const projectId = this.projectId
-      
-      // Verificar se o usuário é anotador
-      const member = await this.$repositories.member.fetchMyRole(projectId)
-      this.isAnnotator = member.isAnnotator
-      
-      if (!this.isAnnotator) {
-        this.loading = false
-        return
-      }
-
-      // Buscar regras não votadas
-      const unvotedData = await this.$services.annotationRule.listUnvoted(projectId)
-      this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
-      
-      // Buscar configurações de votação
-      const votingConfigs = await this.$services.votingConfiguration.list(projectId)
-      const projectConfigs = votingConfigs.filter(
-        (config) => config.project === Number(projectId)
-      )
-      
-      // Identificar votação ativa
-      if (unvotedData.activeVotings.length > 0) {
-        const activeVoting = unvotedData.activeVotings.find(v => v.is_active) || 
-                           unvotedData.activeVotings.find(v => !v.is_expired)
-        if (activeVoting) {
-          this.activeVotingConfig = projectConfigs.find(c => c.id === activeVoting.id) || null
-        }
-      }
-      
-      console.log(`Regras disponíveis para votação: ${unvotedData.totalUnvotedRules}`)
-      
-    } catch (error) {
-      this.handleError(error)
-    } finally {
-      this.loading = false
-    }
-  },
-
   mounted() {
     this.timerId = window.setInterval(() => {
       this.currentTime = Date.now()
@@ -404,18 +366,17 @@ export default Vue.extend({
     vote(ruleId: number, answer: boolean) {
       this.$set(this.localVotes, ruleId, answer)
     },
-    
     removeVote(ruleId: number) {
       this.$delete(this.localVotes, ruleId)
     },
 
     async submitVotes() {
       if (!this.canSubmit) return
-      
+
       this.submitting = true
       try {
         const member = await this.$repositories.member.fetchMyRole(this.projectId)
-        
+
         for (const [ruleIdStr, answer] of Object.entries(this.localVotes)) {
           const ruleId = Number(ruleIdStr)
           await this.$services.annotationRuleAnswerService.create(this.projectId, {
@@ -424,20 +385,20 @@ export default Vue.extend({
             answer
           })
         }
-        
+
         const votedCount = Object.keys(this.localVotes).length
         this.localVotes = {}
-        
+
         // Recarregar regras não votadas
         const unvotedData = await this.$services.annotationRule.listUnvoted(this.projectId)
         this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
-        
+
         if (unvotedData.totalUnvotedRules === 0) {
-          this.successMessage = 'Você votou em todas as regras disponíveis.'
+          this.successMessage = 'Você votou em todas as regras disponíveis. As regras que receberam votos de todos os anotadores foram automaticamente finalizadas.'
         } else {
-          this.successMessage = `Votos submetidos com sucesso! Você votou em ${votedCount} regra(s). Restam ${unvotedData.totalUnvotedRules} regra(s) para votar.`
+          this.successMessage = `Votos submetidos com sucesso! Você votou em ${votedCount} regra(s). Restam ${unvotedData.totalUnvotedRules} regra(s) para votar. As regras que receberam votos de todos os anotadores são automaticamente finalizadas.`
         }
-        
+
       } catch (error: any) {
         this.handleVotingError(error)
       } finally {
@@ -447,31 +408,31 @@ export default Vue.extend({
 
     handleVotingError(error: any) {
       console.error('Erro ao submeter votos:', error)
-      
+
       // Verificar se é erro de conexão com a base de dados (usando interceptor)
       if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
         this.errorMessage = error.userMessage
         return
       }
-      
+
       // Verificar se é erro de conexão sem interceptor (fallback)
       if (!error.response) {
         this.errorMessage = 'Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
         return
       }
-      
+
       // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
       if (error.response.status === 503) {
         this.errorMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
         return
       }
-      
+
       // Verificar se é erro 500 (erro interno do servidor/base de dados)
       if (error.response.status >= 500) {
         this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
         return
       }
-      
+
       // Tratamento específico de outros erros
       if (error.response?.status === 403) {
         this.errorMessage = 'Você não tem permissão para votar. Apenas anotadores podem votar nas regras de anotação.'
@@ -506,31 +467,31 @@ export default Vue.extend({
 
     handleError(error: any) {
       console.error('Erro na aplicação:', error)
-      
+
       // Verificar se é erro de conexão com a base de dados (usando interceptor)
       if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
         this.errorMessage = error.userMessage
         return
       }
-      
+
       // Verificar se é erro de conexão sem interceptor (fallback)
       if (!error.response) {
         this.errorMessage = 'Erro de conexão: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
         return
       }
-      
+
       // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
       if (error.response.status === 503) {
         this.errorMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
         return
       }
-      
+
       // Verificar se é erro 500 (erro interno do servidor/base de dados)
       if (error.response.status >= 500) {
         this.errorMessage = 'Erro do servidor: A base de dados está temporariamente indisponível. Tente novamente em alguns instantes.'
         return
       }
-      
+
       // Tratamento específico de outros erros
       if (error.response && error.response.status === 400) {
         this.errorMessage = 'Erro ao carregar dados. Alguns dados podem estar inconsistentes.'
@@ -576,7 +537,7 @@ export default Vue.extend({
   transform: translateY(-2px);
 }
 
-.gap-2 > * + * {
+.gap-2>*+* {
   margin-left: 8px;
 }
-</style> 
+</style>
