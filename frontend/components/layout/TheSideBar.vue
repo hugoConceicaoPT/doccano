@@ -6,6 +6,16 @@
       </v-icon>
       {{ $t('home.startAnnotation') }}
     </v-btn>
+    
+    <!-- Componente de verificação de perspectiva -->
+    <perspective-checker
+      ref="perspectiveChecker"
+      :project-id="$route.params.id"
+      :is-project-admin="isProjectAdmin"
+      @cancelled="onPerspectiveCheckCancelled"
+      @redirected-to-perspective="onRedirectedToPerspective"
+    />
+    
     <v-list-item-group v-model="selected" mandatory>
       <v-list-item
         v-for="(item, i) in filteredItems"
@@ -47,8 +57,13 @@ import {
   mdiVote
 } from '@mdi/js'
 import { getLinkToAnnotationPage } from '~/presenter/linkToAnnotationPage'
+import PerspectiveChecker from '~/components/perspective/PerspectiveChecker.vue'
 
 export default {
+  components: {
+    PerspectiveChecker
+  },
+
   props: {
     isProjectAdmin: {
       type: Boolean,
@@ -176,14 +191,46 @@ export default {
       return items.filter((item) => item.isVisible)
     }
   },
+
   methods: {
-    toLabeling() {
+    /**
+     * Method called when user clicks "Start Annotation" button
+     */
+    async toLabeling() {
+      const canProceed = await this.$refs.perspectiveChecker.checkPerspectiveAndProceed()
+      
+      if (canProceed) {
+        this.proceedToAnnotation()
+      }
+      // If can't proceed, PerspectiveChecker already showed the dialog
+    },
+
+    /**
+     * Proceed to annotation page
+     */
+    proceedToAnnotation() {
       const query = this.$services.option.findOption(this.$route.params.id)
       const link = getLinkToAnnotationPage(this.$route.params.id, this.project.projectType)
       this.$router.push({
         path: this.localePath(link),
         query
       })
+    },
+
+    /**
+     * Callback when user cancels perspective check
+     */
+    onPerspectiveCheckCancelled() {
+      // Can add additional logic here if needed
+      console.log('User cancelled perspective check')
+    },
+
+    /**
+     * Callback when user is redirected to perspectives page
+     */
+    onRedirectedToPerspective() {
+      // Can add additional logic here if needed
+      console.log('User redirected to define perspective')
     }
   }
 }

@@ -35,6 +35,22 @@
               chips
             />
           </v-col>
+          <v-col cols="12" md="6">
+            <v-select
+              v-model="selectedResult"
+              :items="resultOptions"
+              label="Select the result"
+              clearable
+              outlined
+              dense
+              hide-details
+              class="mb-4"
+              :prepend-inner-icon="mdiCheckCircle"
+              color="primary"
+              multiple
+              chips
+            />
+          </v-col>
         </v-row>
       </v-card-text>
     </v-card>
@@ -142,7 +158,8 @@ import {
   mdiPencil,
   mdiTagMultiple,
   mdiFileDocument,
-  mdiViewList
+  mdiViewList,
+  mdiCheckCircle
 } from '@mdi/js'
 import { Discussion } from '~/pages/projects/_id/rules/index.vue'
 
@@ -167,9 +184,11 @@ export default Vue.extend({
       mdiTagMultiple,
       mdiFileDocument,
       mdiViewList,
+      mdiCheckCircle,
       selectedVersion: [] as string[],
       exampleNameMap: {} as Record<string, string>,
       selectedRule: [] as string[],
+      selectedResult: [] as string[],
       isReady: false
     }
   },
@@ -187,6 +206,9 @@ export default Vue.extend({
     projectId(): string {
       return this.$route.params.id
     },
+    resultOptions() {
+      return ['Approved', 'Rejected']
+    },
     filteredItems(): Discussion[] {
       let result = this.items.filter(
         (item) =>
@@ -199,6 +221,9 @@ export default Vue.extend({
       }
       if (this.selectedRule.length > 0) {
         result = result.filter((item) => this.selectedRule.includes(item.ruleDiscussion))
+      }
+      if (this.selectedResult.length > 0) {
+        result = result.filter((item) => this.selectedResult.includes(item.result))
       }
 
       return result
