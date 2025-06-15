@@ -6,7 +6,7 @@ class ApiService {
   constructor() {
     this.instance = axios.create({
       baseURL: process.env.baseUrl,
-      timeout: 10000 // Aumentar timeout para 10 segundos
+      timeout: 6000 // Aumentar timeout para 10 segundos
     })
     
     // Interceptor de resposta para tratar erros de conexão

@@ -4,8 +4,8 @@
       {{ $t('projectHome.welcome') }}
     </v-card-title>
     <v-alert v-if="isProjectClosed" type="warning" class="mb-4">
-      Este projeto está fechado. Algumas funcionalidades estão bloqueadas.
-      <v-btn color="primary" class="ml-4" @click="reopenProject">Reabrir Projeto</v-btn>
+      This project is closed. Some functionalities are blocked.
+      <v-btn color="primary" class="ml-4" @click="reopenProject">Reopen Project</v-btn>
     </v-alert>
     <v-stepper v-model="e6" vertical non-linear>
       <div v-for="(item, index) in items" :key="index">
