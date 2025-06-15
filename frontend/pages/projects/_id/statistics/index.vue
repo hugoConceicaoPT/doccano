@@ -103,8 +103,8 @@
               <v-btn
                 color="error"
                 class="mr-2"
-                @click="resetFilters"
                 :disabled="!hasActiveFilters"
+                @click="resetFilters"
               >
                 Clear All Filters
               </v-btn>
@@ -198,6 +198,28 @@ export default Vue.extend({
       isLabelChartReady: false,
       selectedDiscrepancy: 'all' as string,
       filtersApplied: false
+    }
+  },
+
+  async fetch() {
+    try {
+      this.categoryTypes = await this.$services.categoryType.list(this.projectId)
+      this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+      this.perspectiveDistribution = await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(this.projectId)
+      this.datasetReviews = await this.$services.datasetReviewService.list(this.projectId)
+      this.members = await this.$repositories.member.list(this.projectId)
+      this.examples = await this.$services.example.list(this.projectId, {})
+      this.annotators = this.members
+        .filter((m: MemberItem) => m.isAnnotator)
+        .map((item) => item.name)
+      
+      // Check if project is already closed in localStorage
+      const isProjectClosed = localStorage.getItem(`project_closed_${this.projectId}`) === 'true'
+      
+      // Only show warning dialog if project is not closed
+      this.showWarningDialog = !isProjectClosed
+    } catch (error) {
+      this.handleError(error)
     }
   },
 
@@ -312,28 +334,6 @@ export default Vue.extend({
 
     exportOptions() {
       return ['None', 'PDF', 'CSV', 'PDF & CSV']
-    }
-  },
-
-  async fetch() {
-    try {
-      this.categoryTypes = await this.$services.categoryType.list(this.projectId)
-      this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
-      this.perspectiveDistribution = await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(this.projectId)
-      this.datasetReviews = await this.$services.datasetReviewService.list(this.projectId)
-      this.members = await this.$repositories.member.list(this.projectId)
-      this.examples = await this.$services.example.list(this.projectId, {})
-      this.annotators = this.members
-        .filter((m: MemberItem) => m.isAnnotator)
-        .map((item) => item.name)
-      
-      // Check if project is already closed in localStorage
-      const isProjectClosed = localStorage.getItem(`project_closed_${this.projectId}`) === 'true'
-      
-      // Only show warning dialog if project is not closed
-      this.showWarningDialog = !isProjectClosed
-    } catch (error) {
-      this.handleError(error)
     }
   },
 

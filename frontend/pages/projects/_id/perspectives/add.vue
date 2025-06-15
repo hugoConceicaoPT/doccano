@@ -5,9 +5,9 @@
       v-if="errorMessage" 
       type="error" 
       dismissible
-      @input="errorMessage = ''"
       class="mb-4"
       outlined
+      @input="errorMessage = ''"
     >
       <strong>Erro ao criar perspectiva:</strong> {{ errorMessage }}
     </v-alert>
@@ -37,9 +37,9 @@
       <div class="d-flex justify-space-between align-center mt-6">
         <v-btn 
           color="grey" 
-          @click="$router.back()"
           outlined
           class="px-6"
+          @click="$router.back()"
         >
           <v-icon left>mdi-arrow-left</v-icon>
           Cancelar
@@ -49,9 +49,9 @@
           :disabled="!slotProps.valid" 
           :loading="saving"
           color="primary" 
-          @click="save"
           class="px-6"
           elevation="2"
+          @click="save"
         >
           <v-icon left>mdi-content-save</v-icon>
           Criar Perspectiva

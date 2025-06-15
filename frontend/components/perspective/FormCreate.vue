@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Mensagem de erro movida para o topo -->
-    <v-alert v-if="errorMessage" type="error" dismissible @input="errorMessage = ''" class="mb-4" outlined>
+    <v-alert v-if="errorMessage" type="error" dismissible class="mb-4" outlined @input="errorMessage = ''">
       {{ errorMessage }}
     </v-alert>
     
@@ -33,14 +33,14 @@
                   :rules="[rules.required]"
                   :loading="loadingPerspectives"
                   :search-input.sync="searchInput"
-                  @change="onPerspectiveChange"
-                  @input="onPerspectiveInput"
                   clearable
                   no-filter
                   prepend-inner-icon="mdi-lightbulb-on"
                   :menu-props="{ maxHeight: 300 }"
                   placeholder="Ex: Perspectiva de Qualidade, Usabilidade..."
                   class="mt-2"
+                  @change="onPerspectiveChange"
+                  @input="onPerspectiveInput"
               >
                 <template v-slot:item="{ item }">
                   <v-list-item-avatar>
@@ -103,11 +103,11 @@
                     v-model="newQuestion"
                     label="Digite sua pergunta"
                     outlined
-                    @keyup.enter="addQuestion"
                     prepend-inner-icon="mdi-comment-question"
                     hint="Pressione Enter para adicionar rapidamente"
                     persistent-hint
                     dense
+                    @keyup.enter="addQuestion"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -125,10 +125,10 @@
               <div class="text-center mt-4">
                 <v-btn 
                   color="primary" 
-                  @click="addQuestion"
                   :disabled="!newQuestion.trim() || !answerType"
                   class="px-6"
                   elevation="1"
+                  @click="addQuestion"
                 >
                   <v-icon left>mdi-plus</v-icon>
                   Adicionar Pergunta
@@ -177,12 +177,12 @@
                       <v-list-item-subtitle>
                         <v-chip 
                           small 
-                          :color="getAnswerTypeColor(question.answer_type)"
+                          :color="getAnswerTypeColor(question.answer_type ?? '')"
                           text-color="white"
                           class="font-weight-medium"
                         >
-                          <v-icon small left>{{ getAnswerTypeIcon(question.answer_type) }}</v-icon>
-                          {{ getAnswerTypeLabel(question.answer_type) }}
+                          <v-icon small left>{{ getAnswerTypeIcon(question.answer_type ?? '') }}</v-icon>
+                          {{ getAnswerTypeLabel(question.answer_type ?? '') }}
                         </v-chip>
                       </v-list-item-subtitle>
                     </v-list-item-content>
@@ -193,10 +193,10 @@
                         v-if="!isReusing"
                         text
                         color="primary" 
-                        @click="removeQuestion(index)"
                         small
                         class="delete-btn-modern"
                         title="Remover pergunta"
+                        @click="removeQuestion(index)"
                       >
                         <v-icon small class="mr-1">mdi-minus-circle-outline</v-icon>
                         Remover
@@ -297,7 +297,7 @@ export default Vue.extend({
 
     isFormValid(): boolean {
       const hasQuestions = this.questionsList.length > 0
-      const hasName = this.selectedPerspective && this.selectedPerspective.trim() !== ''
+      const hasName = typeof this.selectedPerspective === 'string' && this.selectedPerspective.trim() !== ''
       return hasQuestions && hasName
     },
     
@@ -346,6 +346,9 @@ export default Vue.extend({
       
       return options
     }
+  },
+  mounted() {
+    this.fetchExistingPerspectives()
   },
   methods: {
     getAnswerTypeLabel(answerType: string): string {
@@ -501,10 +504,6 @@ export default Vue.extend({
       this.questionsList = []
       this.emitUpdatedQuestions()
     }
-  },
-  
-  mounted() {
-    this.fetchExistingPerspectives()
   }
 })
 </script>

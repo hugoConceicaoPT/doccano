@@ -116,16 +116,7 @@ export default Vue.extend({
       activeVotingConfig: null as any
     }
   },
-  computed: {
-    ...mapGetters('projects', ['project']),
-    projectId() {
-      return this.$route.params.id
-    },
-    hasActiveVoting() {
-      return this.activeVotingConfig !== null
-    }
-  },
-  async fetch() {
+   async fetch() {
     this.loading = true
     try {
       const projectId = this.projectId
@@ -178,6 +169,15 @@ export default Vue.extend({
       this.handleError(error)
     } finally {
       this.loading = false
+    }
+  },
+  computed: {
+    ...mapGetters('projects', ['project']),
+    projectId() {
+      return this.$route.params.id
+    },
+    hasActiveVoting() {
+      return this.activeVotingConfig !== null
     }
   },
   methods: {
