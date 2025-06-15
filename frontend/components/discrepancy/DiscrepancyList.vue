@@ -34,6 +34,10 @@
               outlined multiple hide-details placeholder="Select answer(s)"
               :prepend-inner-icon="mdiCheckboxMultipleMarkedOutline" />
           </v-col>
+          <v-col cols="12" md="4">
+            <v-select v-model="selectedDiscrepancy" :items="discrepancyOptions" label="Discrepancy Status" dense
+              outlined hide-details placeholder="Select status" :prepend-inner-icon="mdiAlert" />
+          </v-col>
         </v-row>
         <v-row>
           <v-col cols="12" class="d-flex justify-start">
@@ -158,6 +162,7 @@ export default Vue.extend({
       isReady: false,
       selectedPerspectiveQuestion: '',
       selectedPerspectiveAnswer: [] as string[],
+      selectedDiscrepancy: 'all',
       perspectiveDistribution: {} as Distribution,
       example: {} as ExampleDTO,
       showWarningDialog: false
@@ -165,6 +170,13 @@ export default Vue.extend({
   },
 
   computed: {
+    discrepancyOptions() {
+      return [
+        { text: 'All', value: 'all' },
+        { text: 'With Discrepancy', value: 'yes' },
+        { text: 'Without Discrepancy', value: 'no' }
+      ]
+    },
     perspectiveQuestions(): Array<{ text: string; value: string }> {
       return Object.entries(this.perspectiveDistribution).map(([id, q]) => ({
         text: q.question,
@@ -203,13 +215,22 @@ export default Vue.extend({
 
           if (labelsValue) {
             const hasDiscrepancy = Object.values(labels).every(
-            (percentage) => percentage < this.discrepancyThreshold
+              (percentage) => percentage < this.discrepancyThreshold
             );
+
+            const discrepancyStatus = hasDiscrepancy ? 'Yes' : 'No'
+            
+            // Apply discrepancy filter
+            if (this.selectedDiscrepancy !== 'all' && 
+                ((this.selectedDiscrepancy === 'yes' && !hasDiscrepancy) || 
+                 (this.selectedDiscrepancy === 'no' && hasDiscrepancy))) {
+              continue
+            }
 
             rows.push({
               exampleName,
               labelsValue,
-              discrepancyBool: hasDiscrepancy ? 'Yes' : 'No'
+              discrepancyBool: discrepancyStatus
             })
           }
           continue
@@ -252,10 +273,19 @@ export default Vue.extend({
             (percentage) => percentage < this.discrepancyThreshold
           );
 
+          const discrepancyStatus = hasDiscrepancy ? 'Yes' : 'No'
+          
+          // Apply discrepancy filter
+          if (this.selectedDiscrepancy !== 'all' && 
+              ((this.selectedDiscrepancy === 'yes' && !hasDiscrepancy) || 
+               (this.selectedDiscrepancy === 'no' && hasDiscrepancy))) {
+            continue
+          }
+
           rows.push({
             exampleName,
             labelsValue,
-            discrepancyBool: hasDiscrepancy ? 'Yes' : 'No'
+            discrepancyBool: discrepancyStatus
           })
         }
       }
@@ -291,6 +321,7 @@ export default Vue.extend({
         this.selectedExample.length > 0 ||
         this.selectedPerspectiveQuestion !== '' ||
         this.selectedPerspectiveAnswer.length > 0 ||
+        this.selectedDiscrepancy !== 'all' ||
         this.search !== ''
       )
     }
@@ -400,6 +431,7 @@ export default Vue.extend({
       this.selectedExample = [] as string[]
       this.selectedPerspectiveQuestion = ''
       this.selectedPerspectiveAnswer = [] as string[]
+      this.selectedDiscrepancy = 'all'
       this.search = ''
     }
   }

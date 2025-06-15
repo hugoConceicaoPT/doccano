@@ -69,6 +69,14 @@ export default Vue.extend({
       type: Object as PropType<{ [key: string]: DistributionEntry }>,
       required: true
     },
+    selectedPerspectiveQuestion: {
+      type: Array as PropType<string[]>,
+      default: () => []
+    },
+    selectedPerspectiveAnswer: {
+      type: Array as PropType<string[]>,
+      default: () => []
+    },
     selectedAnnotators: {
       type: Array as PropType<string[]>,
       default: () => []
@@ -99,16 +107,32 @@ export default Vue.extend({
       const items = []
       for (const key in this.perspectiveDistribution) {
         const entry = this.perspectiveDistribution[key]
+        
+        // Filter by selected perspective question
+        if (this.selectedPerspectiveQuestion.length > 0 && 
+            !this.selectedPerspectiveQuestion.includes(entry.question)) {
+          continue
+        }
+
         const answers = Object.entries(entry.answers)
           .map(([answer, data]) => ({
             answer,
             percentage: this.selectedAnnotators.length === 1 ? 100 : data.percentage,
             annotator: data.annotator
           }))
-          .filter(answer => 
-            this.selectedAnnotators.length === 0 || 
-            this.selectedAnnotators.includes(answer.annotator)
-          )
+          .filter(answer => {
+            // Filter by selected annotators
+            const matchesAnnotator = 
+              this.selectedAnnotators.length === 0 || 
+              this.selectedAnnotators.includes(answer.annotator)
+
+            // Filter by selected perspective answer
+            const matchesAnswer = 
+              this.selectedPerspectiveAnswer.length === 0 ||
+              this.selectedPerspectiveAnswer.includes(answer.answer)
+
+            return matchesAnnotator && matchesAnswer
+          })
 
         if (answers.length > 0) {
           items.push({

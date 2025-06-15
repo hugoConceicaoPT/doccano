@@ -1,5 +1,23 @@
 <template>
   <v-row>
+    <v-dialog v-model="showWarningDialog" persistent max-width="500">
+      <v-card>
+        <v-card-title class="headline">
+          <v-icon left color="warning" class="mr-2">{{ mdiAlert }}</v-icon>
+          Attention
+        </v-card-title>
+        <v-card-text>
+          If you proceed, the project will be closed and you will no longer be able to annotate,
+          import datasets, etc. Do you wish to continue?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="onProceed">Proceed</v-btn>
+          <v-btn color="secondary" text @click="onCancel">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-col cols="12">
       <v-alert
         v-if="errorMessage"
@@ -11,140 +29,118 @@
         {{ errorMessage }}
       </v-alert>
     </v-col>
+
+    <!-- Filters -->
     <v-col cols="12">
-      <!-- Filtros -->
-      <v-card class="pa-4 mb-4 elevation-1">
-        <v-form>
-          <v-row dense>
-            <!-- Pergunta -->
-            <v-col cols="12" md="4">
+      <v-card class="mb-4">
+        <v-card-title>Filters</v-card-title>
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="selectedPerspectiveQuestion"
                 :items="perspectiveQuestions"
-                label="Perspective Question"
+                label="Perspective Questions"
                 multiple
-                dense
-                outlined
-                hide-details
-                placeholder="Select"
-              />
+                chips
+                deletable-chips
+              ></v-select>
             </v-col>
-
-            <!-- Resposta -->
-            <v-col v-if="selectedPerspectiveQuestion" cols="12" md="4">
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="selectedPerspectiveAnswer"
-                :items="possibleAnswers"
-                label="Perspective Answer"
-                dense
-                outlined
+                :items="perspectiveAnswers"
+                label="Perspective Answers"
                 multiple
-                hide-details
-                placeholder="Select"
-              />
+                chips
+                deletable-chips
+              ></v-select>
             </v-col>
-
-            <!-- Anotação -->
-            <v-col cols="12" md="4">
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="selectedAnnotations"
-                :items="formattedAnnotations"
-                item-text="text"
-                item-value="value"
-                label="Annotation"
-                dense
-                outlined
+                :items="annotationOptions"
+                label="Annotations"
                 multiple
-                hide-details
-                placeholder="Select"
-              />
+                chips
+                deletable-chips
+              ></v-select>
             </v-col>
-
-            <!-- Anotador -->
-            <v-col cols="12" md="4">
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="selectedAnnotators"
-                :items="annotators"
-                label="Annotator"
-                dense
-                outlined
-                hide-details
+                :items="annotatorOptions"
+                label="Annotators"
                 multiple
-                placeholder="Select"
-              />
+                chips
+                deletable-chips
+              ></v-select>
             </v-col>
-
-            <!-- Exportação -->
-            <v-col cols="12" md="4">
-              <v-select
-                v-model="exportOption"
-                :items="['None', 'PDF', 'CSV', 'PDF & CSV']"
-                label="Export"
-                dense
-                outlined
-                hide-details
-                placeholder="Format"
-              />
-            </v-col>
-            <v-col cols="12" md="4">
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 v-model="selectedDiscrepancy"
-                :items="[
-                  { text: 'All', value: 'all' },
-                  { text: 'Discrepancy', value: 'yes' },
-                  { text: 'Non Discrepancy', value: 'no' }
-                ]"
-                label="Discrepancy"
-                dense
-                outlined
-                hide-details
-              />
+                :items="discrepancyOptions"
+                label="Discrepancy Status"
+              ></v-select>
             </v-col>
-
-            <!-- Botões -->
-            <v-col cols="12" md="4" class="d-flex align-center">
-              <v-btn color="primary" small class="mr-2" @click="applyFilters">
-                <v-icon left small>{{ mdiFilterCheck }}</v-icon>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="exportOption"
+                :items="exportOptions"
+                label="Export Format"
+              ></v-select>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12" class="d-flex justify-end">
+              <v-btn
+                color="primary"
+                class="mr-2"
+                @click="applyFilters"
+              >
                 Apply Filters
               </v-btn>
-              <v-btn color="grey" small :disabled="!hasActiveFilters" @click="resetFilters">
-                <v-icon left small>{{ mdiClose }}</v-icon>
-                Clear All
+              <v-btn
+                color="error"
+                class="mr-2"
+                @click="resetFilters"
+                :disabled="!hasActiveFilters"
+              >
+                Clear All Filters
               </v-btn>
               <v-btn
                 color="secondary"
-                class="ms-2"
-                small
-                @click="$router.push(localePath(`/projects/${projectId}`))"
+                to="/"
               >
-                <v-icon left small>{{ mdiHome }}</v-icon>
-                Home
+                Back to Home
               </v-btn>
             </v-col>
           </v-row>
-        </v-form>
+        </v-card-text>
       </v-card>
     </v-col>
 
-    <!-- Resultados filtrados -->
-    <v-col v-if="!!projectId && filtersApplied" cols="12">
+    <!-- Filtered Results -->
+    <v-col v-if="filtersApplied" cols="12">
       <perspective-distribution-table
         :perspective-distribution="perspectiveDistribution"
         :selected-perspective-question="selectedPerspectiveQuestion"
         :selected-perspective-answer="selectedPerspectiveAnswer"
+        :selected-annotations="selectedAnnotations"
         :selected-annotators="selectedAnnotators"
+        :example-map="exampleMap"
       />
     </v-col>
 
-    <v-col v-if="!!projectId && filtersApplied" cols="12">
+    <v-col v-if="filtersApplied" cols="12">
       <label-percentage-distribution
         title="Label Discrepancy Percentage"
         :distribution="filteredCategoryPercentage"
-        class="label-distribution"
         :examples="examples"
         :label-types="categoryTypes"
-        :datasetReviews="datasetReviews"
-        @chart-label-rendered="onLabelChartReady"
+        :dataset-reviews="datasetReviews"
+        :example-map="exampleMap"
+        :selected-discrepancy="selectedDiscrepancy"
       />
     </v-col>
   </v-row>
@@ -152,7 +148,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { mdiClose, mdiFilterCheck, mdiHome } from '@mdi/js'
+import { mdiClose, mdiFilterCheck, mdiHome, mdiAlert } from '@mdi/js'
 import Papa from 'papaparse'
 import { jsPDF as JsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -187,6 +183,8 @@ export default Vue.extend({
       mdiClose,
       mdiFilterCheck,
       mdiHome,
+      mdiAlert,
+      showWarningDialog: false,
       annotations: [],
       categoryTypes: [] as any[],
       categoryPercentage: {} as Record<string, any>,
@@ -210,6 +208,17 @@ export default Vue.extend({
       return this.$route.params.id
     },
 
+    exampleMap(): Record<string, string> {
+      return this.examples?.items
+        ? Object.fromEntries(
+            this.examples.items.map((example: any) => [
+              example.id,
+              example.filename.replace(/\.[^/.]+$/, '')
+            ])
+          )
+        : {}
+    },
+
     filteredCategoryPercentage() {
       if (!this.filtersApplied) return this.categoryPercentage
 
@@ -221,7 +230,23 @@ export default Vue.extend({
           this.selectedAnnotations.length === 0 || 
           this.selectedAnnotations.includes(Number(key))
 
-        if (matchesAnnotation) {
+        // Check if the discrepancy matches
+        const datasetReview = this.datasetReviews.find(review => review.example === Number(key))
+        let isDiscrepant = false
+
+        if (datasetReview) {
+          isDiscrepant = !datasetReview.is_approved
+        } else {
+          const minPercentage = this.$store.getters['projects/project']?.minPercentage || 70
+          isDiscrepant = Object.values(value).every(percentage => Number(percentage) < minPercentage)
+        }
+
+        const matchesDiscrepancy = 
+          this.selectedDiscrepancy === 'all' ||
+          (this.selectedDiscrepancy === 'yes' && isDiscrepant) ||
+          (this.selectedDiscrepancy === 'no' && !isDiscrepant)
+
+        if (matchesAnnotation && matchesDiscrepancy) {
           filtered[key] = value
         }
       }
@@ -235,46 +260,75 @@ export default Vue.extend({
         this.selectedPerspectiveAnswer.length > 0 ||
         this.selectedAnnotations.length > 0 ||
         this.selectedAnnotators.length > 0 ||
-        this.exportOption !== 'None'
+        this.exportOption !== 'None' ||
+        this.selectedDiscrepancy !== 'all'
       )
     },
 
     perspectiveQuestions() {
       return Object.values(this.perspectiveDistribution).map((q) => q.question)
     },
-    possibleAnswers() {
-      // Permitir que selectedPerspectiveQuestion seja array
-      const questions = Array.isArray(this.selectedPerspectiveQuestion)
-        ? this.selectedPerspectiveQuestion
-        : []
-      // Coletar todas as respostas possíveis para as perguntas selecionadas
-      const answersSet = new Set<string>()
-      Object.values(this.perspectiveDistribution).forEach((entry: any) => {
-        if (questions.includes(entry.question)) {
-          Object.keys(entry.answers).forEach((answer) => answersSet.add(answer))
+
+    perspectiveAnswers() {
+      if (!this.selectedPerspectiveQuestion.length) {
+        // If no questions are selected, return all possible answers
+        const allAnswers = new Set<string>()
+        Object.values(this.perspectiveDistribution).forEach((entry: any) => {
+          Object.keys(entry.answers).forEach(answer => allAnswers.add(answer))
+        })
+        return Array.from(allAnswers)
+      }
+      
+      const answers = new Set<string>()
+      for (const question of this.selectedPerspectiveQuestion) {
+        const entry = Object.values(this.perspectiveDistribution).find(
+          (q) => q.question === question
+        )
+        if (entry) {
+          Object.keys(entry.answers).forEach(answer => answers.add(answer))
         }
-      })
-      return Array.from(answersSet)
+      }
+      return Array.from(answers)
     },
-    formattedAnnotations(): { text: string; value: number }[] {
-      if (!this.examples || !this.examples.items) return []
-      return this.examples.items.map((item: any) => ({
+
+    annotationOptions() {
+      return this.examples?.items?.map((item: any) => ({
         text: item.filename.replace(/\.[^/.]+$/, ''),
         value: item.id
-      }))
+      })) || []
+    },
+
+    annotatorOptions() {
+      return this.annotators
+    },
+
+    discrepancyOptions() {
+      return [
+        { text: 'All', value: 'all' },
+        { text: 'Discrepancy', value: 'yes' },
+        { text: 'Non Discrepancy', value: 'no' }
+      ]
+    },
+
+    exportOptions() {
+      return ['None', 'PDF', 'CSV', 'PDF & CSV']
     }
   },
 
-  async created() {
+  async fetch() {
     try {
-      this.examples = await this.$services.example.list(this.projectId, this.$route.query)
-      this.members = await this.$repositories.member.list(this.projectId)
+      this.categoryTypes = await this.$services.categoryType.list(this.projectId)
+      this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(this.projectId)
+      this.perspectiveDistribution = await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(this.projectId)
       this.datasetReviews = await this.$services.datasetReviewService.list(this.projectId)
+      this.members = await this.$repositories.member.list(this.projectId)
+      this.examples = await this.$services.example.list(this.projectId, {})
       this.annotators = this.members
         .filter((m: MemberItem) => m.isAnnotator)
         .map((item) => item.name)
-      this.perspectiveDistribution =
-        await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(this.projectId)
+      
+      // Show warning dialog when page loads
+      this.showWarningDialog = true
     } catch (error) {
       this.handleError(error)
     }
@@ -282,12 +336,18 @@ export default Vue.extend({
 
   methods: {
     async applyFilters() {
+      this.filtersApplied = true
       try {
-        this.categoryTypes = await this.$services.categoryType.list(this.projectId)
+        // Fetch perspective distribution with filters
+        this.perspectiveDistribution = await this.$repositories.statistics.fetchPerspectiveAnswerDistribution(
+          this.projectId
+        )
+
+        // Fetch category percentage with filters
         this.categoryPercentage = await this.$repositories.metrics.fetchCategoryPercentage(
           this.projectId
         )
-        this.filtersApplied = true
+
         if (this.exportOption !== 'None') {
           this.export()
         }
@@ -296,224 +356,323 @@ export default Vue.extend({
       }
     },
 
-    handleError(error: any) {
-      if (error.response && error.response.status === 400) {
-        this.errorMessage = 'Error retrieving data.'
-      } else {
-        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
-      }
-    },
     resetFilters() {
       this.selectedPerspectiveQuestion = []
       this.selectedPerspectiveAnswer = []
       this.selectedAnnotations = []
       this.selectedAnnotators = []
       this.exportOption = 'None'
+      this.selectedDiscrepancy = 'all'
       this.filtersApplied = false
+      this.$fetch()
     },
-    onPerspectiveChartReady() {
-      this.isPerspectiveChartReady = true
-      if (this.exportOption !== 'None') {
-        this.export()
+
+    handleError(error: any) {
+      console.error(error)
+      if (error.response && error.response.status === 400) {
+        this.errorMessage = 'Error retrieving data.'
+      } else {
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }
     },
-    onLabelChartReady() {
-      this.isLabelChartReady = true
-      if (this.exportOption !== 'None') {
-        this.export()
-      }
-    },
+
     export() {
       try {
-        if (this.exportOption === 'PDF') {
-          this.exportToPDF()
-        } else if (this.exportOption === 'CSV') {
-          this.exportToCSV()
-        } else if (this.exportOption === 'PDF & CSV') {
-          this.exportToPDF()
-          this.exportToCSV()
-        }
-      } catch (error) {
-        this.errorMessage = 'Failed to export report'
-        console.error('Export error:', error)
-      } finally {
-        this.exportOption = 'None'
-      }
-    },
-    exportToPDF() {
-      try {
-        const doc = new JsPDF()
-        const pageWidth = doc.internal.pageSize.getWidth()
-        const margin = 20
-        let yPos = 20
+        if (this.exportOption === 'None') return
 
-        // Add title
-        doc.setFontSize(16)
-        doc.text('Statistics Report', pageWidth / 2, yPos, { align: 'center' })
-        yPos += 20
+        if (this.exportOption === 'PDF' || this.exportOption === 'PDF & CSV') {
+          const doc = new JsPDF()
+          let y = 20
 
-        // Add filters section
-        doc.setFontSize(12)
-        doc.text('Filters Applied:', margin, yPos)
-        yPos += 10
+          // Add project name and title
+          doc.setFontSize(20)
+          doc.text(this.$store.getters['projects/project']?.name || 'Project', 14, y)
+          y += 10
+          doc.setFontSize(16)
+          doc.text('Statistics Report', 14, y)
+          y += 15
 
-        const filters = [
-          ['Perspective Questions:', this.selectedPerspectiveQuestion.join(', ') || 'None'],
-          ['Perspective Answers:', this.selectedPerspectiveAnswer.join(', ') || 'None'],
-          ['Annotations:', this.selectedAnnotations.join(', ') || 'None'],
-          ['Annotators:', this.selectedAnnotators.join(', ') || 'None'],
-          ['Discrepancy Status:', this.selectedDiscrepancy]
-        ]
+          // Add applied filters
+          if (this.hasActiveFilters) {
+            doc.setFontSize(14)
+            doc.text('Applied Filters:', 14, y)
+            y += 10
+            doc.setFontSize(12)
 
-        filters.forEach(([label, value]) => {
-          doc.setFontSize(10)
-          doc.text(`${label} ${value}`, margin, yPos)
-          yPos += 7
-        })
+            if (this.selectedPerspectiveQuestion.length) {
+              doc.text(`Perspective Questions: ${this.selectedPerspectiveQuestion.join(', ')}`, 20, y)
+              y += 7
+            }
+            if (this.selectedPerspectiveAnswer.length) {
+              doc.text(`Perspective Answers: ${this.selectedPerspectiveAnswer.join(', ')}`, 20, y)
+              y += 7
+            }
+            if (this.selectedAnnotations.length) {
+              const annotationNames = this.selectedAnnotations.map(id => this.exampleMap[id] || id)
+              doc.text(`Annotations: ${annotationNames.join(', ')}`, 20, y)
+              y += 7
+            }
+            if (this.selectedAnnotators.length) {
+              doc.text(`Annotators: ${this.selectedAnnotators.join(', ')}`, 20, y)
+              y += 7
+            }
+            if (this.selectedDiscrepancy !== 'all') {
+              doc.text(`Discrepancy: ${this.selectedDiscrepancy === 'yes' ? 'Discrepancy' : 'Non Discrepancy'}`, 20, y)
+              y += 7
+            }
+            y += 5
+          }
 
-        yPos += 10
+          // Add perspective distribution table
+          doc.setFontSize(14)
+          doc.text('Perspective Distribution', 14, y)
+          y += 10
 
-        // Add Perspective Distribution section
-        doc.setFontSize(12)
-        doc.text('Perspective Distribution', margin, yPos)
-        yPos += 10
+          const perspectiveData = []
+          for (const key in this.perspectiveDistribution) {
+            const entry = this.perspectiveDistribution[key]
+            
+            // Filter by selected perspective question
+            if (this.selectedPerspectiveQuestion.length > 0 && 
+                !this.selectedPerspectiveQuestion.includes(entry.question)) {
+              continue
+            }
 
-        const perspectiveData = []
-        for (const data of Object.values(this.perspectiveDistribution)) {
-          if (this.selectedPerspectiveQuestion.length === 0 || 
-              this.selectedPerspectiveQuestion.includes(data.question)) {
-            const answers = Object.entries(data.answers)
-              .filter(([answer, _data]) => 
-                this.selectedPerspectiveAnswer.length === 0 || 
-                this.selectedPerspectiveAnswer.includes(answer)
-              )
-              .filter(([_answer, answerData]) =>
-                this.selectedAnnotators.length === 0 ||
-                this.selectedAnnotators.includes(answerData.annotator)
-              )
-              .map(([answer, answerData]) => ({
+            const answers = Object.entries(entry.answers)
+              .map(([answer, data]) => ({
                 answer,
-                percentage: answerData.percentage,
-                annotator: answerData.annotator
+                percentage: this.selectedAnnotators.length === 1 ? 100 : data.percentage,
+                annotator: data.annotator
               }))
+              .filter(answer => {
+                // Filter by selected annotators
+                const matchesAnnotator = 
+                  this.selectedAnnotators.length === 0 || 
+                  this.selectedAnnotators.includes(answer.annotator)
+
+                // Filter by selected perspective answer
+                const matchesAnswer = 
+                  this.selectedPerspectiveAnswer.length === 0 ||
+                  this.selectedPerspectiveAnswer.includes(answer.answer)
+
+                return matchesAnnotator && matchesAnswer
+              })
 
             if (answers.length > 0) {
               perspectiveData.push({
-                question: data.question,
-                answers
+                question: entry.question,
+                answers: answers.map(a => `${a.answer} (${a.percentage}%)`).join(', '),
+                annotator: answers.map(a => a.annotator).join(', ')
               })
             }
           }
+
+          autoTable(doc, {
+            startY: y,
+            head: [['Question', 'Answers', 'Annotator']],
+            body: perspectiveData.map(item => [item.question, item.answers, item.annotator]),
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { fontSize: 10, cellPadding: 5 },
+            columnStyles: {
+              0: { cellWidth: 60 },
+              1: { cellWidth: 70 },
+              2: { cellWidth: 60 }
+            }
+          })
+
+          y = (doc as any).lastAutoTable.finalY + 15
+
+          // Add label distribution table
+          doc.setFontSize(14)
+          doc.text('Label Distribution', 14, y)
+          y += 10
+
+          const labelData = []
+          for (const [datasetId, labels] of Object.entries(this.filteredCategoryPercentage)) {
+            const datasetName = this.exampleMap[datasetId] || datasetId
+            const datasetReview = this.datasetReviews.find(review => review.example === Number(datasetId))
+            let isDiscrepant = false
+
+            if (datasetReview) {
+              isDiscrepant = !datasetReview.is_approved
+            } else {
+              const minPercentage = this.$store.getters['projects/project']?.minPercentage || 70
+              isDiscrepant = Object.values(labels).every(percentage => Number(percentage) < minPercentage)
+            }
+
+            const labelInfo = Object.entries(labels)
+              .map(([label, percentage]) => `${label}: ${Math.round(Number(percentage))}%`)
+              .join(', ')
+
+            labelData.push({
+              dataset: datasetName,
+              labels: labelInfo,
+              isDiscrepant: isDiscrepant ? 'Yes' : 'No'
+            })
+          }
+
+          autoTable(doc, {
+            startY: y,
+            head: [['Dataset', 'Labels', 'Discrepancy']],
+            body: labelData.map(item => [item.dataset, item.labels, item.isDiscrepant]),
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { fontSize: 10, cellPadding: 5 },
+            columnStyles: {
+              0: { cellWidth: 50 },
+              1: { cellWidth: 100 },
+              2: { cellWidth: 40 }
+            }
+          })
+
+          doc.save(`${this.$store.getters['projects/project']?.name || 'statistics'}_report.pdf`)
         }
 
-        if (perspectiveData.length > 0) {
-          const tableData = perspectiveData.flatMap(qData => 
-            qData.answers.map(answer => [
-              qData.question,
-              answer.answer,
-              `${answer.percentage}%`,
-              answer.annotator
+        if (this.exportOption === 'CSV' || this.exportOption === 'PDF & CSV') {
+          // Create metadata section with applied filters
+          const metadata = []
+          if (this.hasActiveFilters) {
+            metadata.push(['Applied Filters'])
+            metadata.push([''])
+            
+            if (this.selectedPerspectiveQuestion.length) {
+              metadata.push(['Perspective Questions', this.selectedPerspectiveQuestion.join(', ')])
+            }
+            if (this.selectedPerspectiveAnswer.length) {
+              metadata.push(['Perspective Answers', this.selectedPerspectiveAnswer.join(', ')])
+            }
+            if (this.selectedAnnotations.length) {
+              metadata.push(['Annotations', this.selectedAnnotations.map(id => this.exampleMap[id] || id).join(', ')])
+            }
+            if (this.selectedAnnotators.length) {
+              metadata.push(['Annotators', this.selectedAnnotators.join(', ')])
+            }
+            if (this.selectedDiscrepancy !== 'all') {
+              metadata.push(['Discrepancy', this.selectedDiscrepancy === 'yes' ? 'Discrepancy' : 'Non Discrepancy'])
+            }
+            metadata.push([''])
+          }
+
+          // Prepare perspective distribution data
+          const perspectiveData = []
+          for (const key in this.perspectiveDistribution) {
+            const entry = this.perspectiveDistribution[key]
+            
+            // Filter by selected perspective question
+            if (this.selectedPerspectiveQuestion.length > 0 && 
+                !this.selectedPerspectiveQuestion.includes(entry.question)) {
+              continue
+            }
+
+            const answers = Object.entries(entry.answers)
+              .map(([answer, data]) => ({
+                answer,
+                percentage: this.selectedAnnotators.length === 1 ? 100 : data.percentage,
+                annotator: data.annotator
+              }))
+              .filter(answer => {
+                // Filter by selected annotators
+                const matchesAnnotator = 
+                  this.selectedAnnotators.length === 0 || 
+                  this.selectedAnnotators.includes(answer.annotator)
+
+                // Filter by selected perspective answer
+                const matchesAnswer = 
+                  this.selectedPerspectiveAnswer.length === 0 ||
+                  this.selectedPerspectiveAnswer.includes(answer.answer)
+
+                return matchesAnnotator && matchesAnswer
+              })
+
+            if (answers.length > 0) {
+              perspectiveData.push({
+                Question: entry.question,
+                Answers: answers.map(a => `${a.answer} (${a.percentage}%)`).join(', '),
+                Annotator: answers.map(a => a.annotator).join(', ')
+              })
+            }
+          }
+
+          // Prepare label distribution data
+          const labelData = []
+          for (const [datasetId, labels] of Object.entries(this.filteredCategoryPercentage)) {
+            const datasetName = this.exampleMap[datasetId] || datasetId
+            const datasetReview = this.datasetReviews.find(review => review.example === Number(datasetId))
+            let isDiscrepant = false
+
+            if (datasetReview) {
+              isDiscrepant = !datasetReview.is_approved
+            } else {
+              const minPercentage = this.$store.getters['projects/project']?.minPercentage || 70
+              isDiscrepant = Object.values(labels).every(percentage => Number(percentage) < minPercentage)
+            }
+
+            const labelInfo = Object.entries(labels)
+              .map(([label, percentage]) => `${label}: ${Math.round(Number(percentage))}%`)
+              .join(', ')
+
+            labelData.push({
+              Dataset: datasetName,
+              Labels: labelInfo,
+              Discrepancy: isDiscrepant ? 'Yes' : 'No'
+            })
+          }
+
+          // Combine all data
+          const combinedData = [
+            ...metadata,
+            [''],
+            ['Perspective Distribution'],
+            [''],
+            ['Question', 'Answers', 'Annotator']
+          ]
+
+          // Add perspective data
+          perspectiveData.forEach(item => {
+            combinedData.push([
+              item.Question,
+              item.Answers,
+              item.Annotator
             ])
-          )
-
-          // @ts-ignore
-          autoTable(doc, {
-            startY: yPos,
-            head: [['Question', 'Answer', 'Percentage', 'Annotator']],
-            body: tableData,
-            margin: { left: margin }
           })
-          // @ts-ignore
-          yPos = doc.lastAutoTable.finalY + 10
-        }
 
-        // Add Label Discrepancy Percentage section
-        doc.setFontSize(12)
-        doc.text('Label Discrepancy Percentage', margin, yPos)
-        yPos += 10
+          // Add separator and label distribution header
+          combinedData.push([''])
+          combinedData.push(['Label Distribution'])
+          combinedData.push([''])
+          combinedData.push(['Dataset', 'Labels', 'Discrepancy'])
 
-        const labelData = Object.entries(this.filteredCategoryPercentage)
-          .map(([label, percentage]) => [label, `${percentage}%`])
-
-        if (labelData.length > 0) {
-          // @ts-ignore
-          autoTable(doc, {
-            startY: yPos,
-            head: [['Label', 'Percentage']],
-            body: labelData,
-            margin: { left: margin }
+          // Add label data
+          labelData.forEach(item => {
+            combinedData.push([
+              item.Dataset,
+              item.Labels,
+              item.Discrepancy
+            ])
           })
-        }
 
-        // Save the PDF
-        doc.save('statistics_report.pdf')
+          // Create and download CSV file
+          const csv = Papa.unparse(combinedData)
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+          const link = document.createElement('a')
+          link.href = URL.createObjectURL(blob)
+          link.download = `${this.$store.getters['projects/project']?.name || 'statistics'}_report.csv`
+          link.click()
+        }
       } catch (error) {
-        console.error('Error generating PDF:', error)
-        this.errorMessage = 'Failed to generate PDF report'
+        this.handleError(error)
       }
     },
 
-    exportToCSV() {
-      const data = []
+    onProceed() {
+      localStorage.setItem(`project_closed_${this.projectId}`, 'true')
+      this.showWarningDialog = false
+    },
 
-      // Add filters information
-      data.push(['Filters Applied'])
-      data.push(['Perspective Questions:', this.selectedPerspectiveQuestion.join(', ') || 'None'])
-      data.push(['Perspective Answers:', this.selectedPerspectiveAnswer.join(', ') || 'None'])
-      data.push(['Annotations:', this.selectedAnnotations.join(', ') || 'None'])
-      data.push(['Annotators:', this.selectedAnnotators.join(', ') || 'None'])
-      data.push(['Discrepancy Status:', this.selectedDiscrepancy])
-      data.push([])
-
-      // Add Perspective Distribution data
-      data.push(['Perspective Distribution'])
-      data.push(['Question', 'Answer', 'Percentage', 'Annotator'])
-
-      for (const qData of Object.values(this.perspectiveDistribution)) {
-        if (this.selectedPerspectiveQuestion.length === 0 || 
-            this.selectedPerspectiveQuestion.includes(qData.question)) {
-          const answers = Object.entries(qData.answers)
-            .filter(([answer, _data]) => 
-              this.selectedPerspectiveAnswer.length === 0 || 
-              this.selectedPerspectiveAnswer.includes(answer)
-            )
-            .filter(([_answer, answerData]) =>
-              this.selectedAnnotators.length === 0 ||
-              this.selectedAnnotators.includes(answerData.annotator)
-            )
-
-          answers.forEach(([answer, answerData]) => {
-            data.push([
-              qData.question,
-              answer,
-              `${answerData.percentage}%`,
-              answerData.annotator
-            ])
-          })
-        }
-      }
-
-      data.push([])
-
-      // Add Label Discrepancy Percentage data
-      data.push(['Label Discrepancy Percentage'])
-      data.push(['Label', 'Percentage'])
-
-      Object.entries(this.filteredCategoryPercentage).forEach(([label, percentage]) => {
-        data.push([label, `${percentage}%`])
-      })
-
-      // Convert to CSV and download
-      const csv = Papa.unparse(data)
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'statistics_report.csv'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+    onCancel() {
+      this.showWarningDialog = false
+      this.$router.push(this.localePath(`/projects/${this.projectId}`))
     }
   }
 })
