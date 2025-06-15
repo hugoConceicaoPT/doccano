@@ -110,7 +110,7 @@
               </v-btn>
               <v-btn
                 color="secondary"
-                to="/"
+                :to="localePath(`/projects/${projectId}`)"
               >
                 Back to Home
               </v-btn>
@@ -327,8 +327,11 @@ export default Vue.extend({
         .filter((m: MemberItem) => m.isAnnotator)
         .map((item) => item.name)
       
-      // Show warning dialog when page loads
-      this.showWarningDialog = true
+      // Check if project is already closed in localStorage
+      const isProjectClosed = localStorage.getItem(`project_closed_${this.projectId}`) === 'true'
+      
+      // Only show warning dialog if project is not closed
+      this.showWarningDialog = !isProjectClosed
     } catch (error) {
       this.handleError(error)
     }
@@ -380,13 +383,15 @@ export default Vue.extend({
       try {
         if (this.exportOption === 'None') return
 
+        const projectName = this.project.name
+
         if (this.exportOption === 'PDF' || this.exportOption === 'PDF & CSV') {
           const doc = new JsPDF()
           let y = 20
 
           // Add project name and title
           doc.setFontSize(20)
-          doc.text(this.$store.getters['projects/project']?.name || 'Project', 14, y)
+          doc.text(`Project: ${projectName}`, 14, y)
           y += 10
           doc.setFontSize(16)
           doc.text('Statistics Report', 14, y)
@@ -467,19 +472,24 @@ export default Vue.extend({
             }
           }
 
-          autoTable(doc, {
-            startY: y,
-            head: [['Question', 'Answers', 'Annotator']],
-            body: perspectiveData.map(item => [item.question, item.answers, item.annotator]),
-            theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-            styles: { fontSize: 10, cellPadding: 5 },
-            columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 70 },
-              2: { cellWidth: 60 }
-            }
-          })
+          if (perspectiveData.length > 0) {
+            autoTable(doc, {
+              startY: y,
+              head: [['Question', 'Answers', 'Annotator']],
+              body: perspectiveData.map(item => [item.question, item.answers, item.annotator]),
+              theme: 'grid',
+              headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+              styles: { fontSize: 10, cellPadding: 5 },
+              columnStyles: {
+                0: { cellWidth: 60 },
+                1: { cellWidth: 70 },
+                2: { cellWidth: 60 }
+              }
+            })
+          } else {
+            doc.setFontSize(12)
+            doc.text('No data available', 14, y)
+          }
 
           y = (doc as any).lastAutoTable.finalY + 15
 
@@ -512,26 +522,35 @@ export default Vue.extend({
             })
           }
 
-          autoTable(doc, {
-            startY: y,
-            head: [['Dataset', 'Labels', 'Discrepancy']],
-            body: labelData.map(item => [item.dataset, item.labels, item.isDiscrepant]),
-            theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-            styles: { fontSize: 10, cellPadding: 5 },
-            columnStyles: {
-              0: { cellWidth: 50 },
-              1: { cellWidth: 100 },
-              2: { cellWidth: 40 }
-            }
-          })
+          if (labelData.length > 0) {
+            autoTable(doc, {
+              startY: y,
+              head: [['Dataset', 'Labels', 'Discrepancy']],
+              body: labelData.map(item => [item.dataset, item.labels, item.isDiscrepant]),
+              theme: 'grid',
+              headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+              styles: { fontSize: 10, cellPadding: 5 },
+              columnStyles: {
+                0: { cellWidth: 50 },
+                1: { cellWidth: 100 },
+                2: { cellWidth: 40 }
+              }
+            })
+          } else {
+            doc.setFontSize(12)
+            doc.text('No data available', 14, y)
+          }
 
-          doc.save(`${this.$store.getters['projects/project']?.name || 'statistics'}_report.pdf`)
+          doc.save(`${projectName}_statistics_report.pdf`)
         }
 
         if (this.exportOption === 'CSV' || this.exportOption === 'PDF & CSV') {
-          // Create metadata section with applied filters
-          const metadata = []
+          // Create metadata section with project name and applied filters
+          const metadata = [
+            ['Project', projectName],
+            ['']
+          ]
+          
           if (this.hasActiveFilters) {
             metadata.push(['Applied Filters'])
             metadata.push([''])
@@ -624,40 +643,48 @@ export default Vue.extend({
             ...metadata,
             [''],
             ['Perspective Distribution'],
-            [''],
-            ['Question', 'Answers', 'Annotator']
+            ['']
           ]
 
-          // Add perspective data
-          perspectiveData.forEach(item => {
-            combinedData.push([
-              item.Question,
-              item.Answers,
-              item.Annotator
-            ])
-          })
+          if (perspectiveData.length > 0) {
+            combinedData.push(['Question', 'Answers', 'Annotator'])
+            // Add perspective data
+            perspectiveData.forEach(item => {
+              combinedData.push([
+                item.Question,
+                item.Answers,
+                item.Annotator
+              ])
+            })
+          } else {
+            combinedData.push(['No data available'])
+          }
 
           // Add separator and label distribution header
           combinedData.push([''])
           combinedData.push(['Label Distribution'])
           combinedData.push([''])
-          combinedData.push(['Dataset', 'Labels', 'Discrepancy'])
 
-          // Add label data
-          labelData.forEach(item => {
-            combinedData.push([
-              item.Dataset,
-              item.Labels,
-              item.Discrepancy
-            ])
-          })
+          if (labelData.length > 0) {
+            combinedData.push(['Dataset', 'Labels', 'Discrepancy'])
+            // Add label data
+            labelData.forEach(item => {
+              combinedData.push([
+                item.Dataset,
+                item.Labels,
+                item.Discrepancy
+              ])
+            })
+          } else {
+            combinedData.push(['No data available'])
+          }
 
           // Create and download CSV file
           const csv = Papa.unparse(combinedData)
           const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
           const link = document.createElement('a')
           link.href = URL.createObjectURL(blob)
-          link.download = `${this.$store.getters['projects/project']?.name || 'statistics'}_report.csv`
+          link.download = `${projectName}_statistics_report.csv`
           link.click()
         }
       } catch (error) {

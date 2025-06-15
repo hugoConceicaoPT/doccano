@@ -22,7 +22,7 @@
       <v-card-text>
         <v-row>
           <v-col cols="12" md="4">
-            <v-select v-model="selectedExample" :items="exampleOptions" label="Selecione a anotação" dense outlined
+            <v-select v-model="selectedExample" :items="exampleOptions" label="Select an annotation(s)" dense outlined
               multiple hide-details placeholder="Select" :prepend-inner-icon="mdiFileDocumentOutline" />
           </v-col>
           <v-col cols="12" md="4">
