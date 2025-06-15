@@ -34,10 +34,12 @@
       <v-alert v-if="hasActiveVoting" type="info" class="mb-4">
         There is an active voting (Version {{ activeVotingConfig?.version }}).
         It is not possible to create a new voting until all rules of the current voting are finalized.
+        Rules are automatically finalized when all annotators vote or when the voting period expires.
       </v-alert>
 
       <v-alert v-if="!hasActiveVoting" type="success" class="mb-4">
         There is no active voting. You can configure a new voting.
+        Previous votings were automatically finalized.
       </v-alert>
 
       <div v-if="loading" class="text-center my-8">

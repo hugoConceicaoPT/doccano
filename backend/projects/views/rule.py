@@ -28,6 +28,69 @@ from projects.serializers import (
 
 logger = logging.getLogger(__name__)
 
+def check_and_finalize_expired_votings(project_id):
+    """
+    Verifica configurações de votação expiradas e finaliza automaticamente
+    as regras não finalizadas dessas configurações.
+    """
+    try:
+        current_time = timezone.now()
+        
+        # Buscar configurações ativas que já expiraram
+        expired_configs = VotingCofiguration.objects.filter(
+            project_id=project_id,
+            is_closed=False,
+            end_date__lt=current_time
+        )
+        
+        for config in expired_configs:
+            logger.info(f"Configuração de votação {config.id} expirou em {config.end_date}")
+            
+            # Buscar regras não finalizadas desta configuração
+            unfinalized_rules = AnnotationRule.objects.filter(
+                voting_configuration=config,
+                is_finalized=False
+            )
+            
+            for rule in unfinalized_rules:
+                # Calcular resultado baseado nos votos recebidos
+                votes_for = AnnotationRuleAnswers.objects.filter(
+                    annotation_rule=rule,
+                    answer=True
+                ).count()
+                
+                votes_against = AnnotationRuleAnswers.objects.filter(
+                    annotation_rule=rule,
+                    answer=False
+                ).count()
+                
+                total_votes = votes_for + votes_against
+                
+                if total_votes == 0:
+                    final_result = "Sem votos"
+                elif votes_for > votes_against:
+                    final_result = "Aprovada"
+                elif votes_against > votes_for:
+                    final_result = "Rejeitada"
+                else:
+                    final_result = "Empate"
+                
+                # Finalizar a regra
+                rule.is_finalized = True
+                rule.final_result = final_result
+                rule.save()
+                
+                logger.info(f"Regra {rule.id} finalizada automaticamente por expiração: {final_result} ({votes_for} a favor, {votes_against} contra, {total_votes} total)")
+            
+            # Fechar a configuração de votação
+            config.is_closed = True
+            config.save()
+            
+            logger.info(f"Configuração de votação {config.id} fechada automaticamente por expiração")
+            
+    except Exception as e:
+        logger.error(f"Erro ao verificar/finalizar votações expiradas no projeto {project_id}: {str(e)}")
+
 class AnnotationRules(generics.ListAPIView):
     queryset = AnnotationRule.objects.all()
     serializer_class = AnnotationRuleSerializer
@@ -38,6 +101,7 @@ class AnnotationRules(generics.ListAPIView):
 
     def get_queryset(self):
         project_id = self.kwargs['project_id']
+        check_and_finalize_expired_votings(project_id)
         self.check_and_close_completed_configs(project_id)
         return AnnotationRule.objects.filter(project_id=project_id)
     
@@ -73,6 +137,9 @@ class UnvotedAnnotationRules(generics.ListAPIView):
     def get_queryset(self):
         project_id = self.kwargs['project_id']
         user = self.request.user
+        
+        # Verificar e finalizar configurações expiradas
+        check_and_finalize_expired_votings(project_id)
         
         # Obter o membro atual
         try:
@@ -165,6 +232,7 @@ class VotingConfigurations(generics.ListAPIView):
 
     def get_queryset(self):
         project_id = self.kwargs['project_id']
+        check_and_finalize_expired_votings(project_id)
         self.check_and_close_completed_configs(project_id)
         return VotingCofiguration.objects.filter(project_id=project_id)
     
@@ -193,6 +261,9 @@ class VotingConfigurationCreation(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         project_id = self.kwargs['project_id']
+        
+        # Verificar e finalizar configurações expiradas antes de criar nova
+        check_and_finalize_expired_votings(project_id)
         
         active_configs = VotingCofiguration.objects.filter(project_id=project_id, is_closed=False)
         
@@ -340,7 +411,80 @@ class AnnotationRuleAnswersCreation(generics.CreateAPIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        serializer.save()
+        # Guardar o voto
+        rule_answer = serializer.save()
+        
+        # Verificar se todos os anotadores do projeto já votaram nesta regra
+        project_id = self.kwargs['project_id']
+        annotation_rule = rule_answer.annotation_rule
+        
+        try:
+            # Obter todos os anotadores do projeto
+            project_annotators = Member.objects.filter(
+                project_id=project_id,
+                role__name=settings.ROLE_ANNOTATOR
+            )
+            total_annotators = project_annotators.count()
+            
+            logger.info(f"Total de anotadores no projeto {project_id}: {total_annotators}")
+            
+            # Verificar quantos anotadores já votaram nesta regra
+            votes_count = AnnotationRuleAnswers.objects.filter(
+                annotation_rule=annotation_rule
+            ).count()
+            
+            logger.info(f"Votos recebidos para a regra {annotation_rule.id}: {votes_count}")
+            
+            if total_annotators > 0 and votes_count >= total_annotators:
+                logger.info(f"Todos os anotadores ({total_annotators}) votaram na regra {annotation_rule.id}")
+                
+                # Calcular resultado da votação
+                votes_for = AnnotationRuleAnswers.objects.filter(
+                    annotation_rule=annotation_rule,
+                    answer=True
+                ).count()
+                
+                votes_against = AnnotationRuleAnswers.objects.filter(
+                    annotation_rule=annotation_rule,
+                    answer=False
+                ).count()
+                
+                # Determinar resultado baseado na maioria
+                if votes_for > votes_against:
+                    final_result = "Aprovada"
+                elif votes_against > votes_for:
+                    final_result = "Rejeitada"
+                else:
+                    final_result = "Empate"
+                
+                logger.info(f"Resultado da votação da regra {annotation_rule.id}: {final_result} ({votes_for} a favor, {votes_against} contra)")
+                
+                # Finalizar a regra
+                annotation_rule.is_finalized = True
+                annotation_rule.final_result = final_result
+                annotation_rule.save()
+                
+                logger.info(f"Regra {annotation_rule.id} finalizada automaticamente")
+                
+                # Verificar se todas as regras da configuração de votação estão finalizadas
+                voting_config = annotation_rule.voting_configuration
+                all_rules = AnnotationRule.objects.filter(voting_configuration=voting_config)
+                
+                all_finalized = True
+                for rule in all_rules:
+                    if not rule.is_finalized:
+                        all_finalized = False
+                        break
+                
+                if all_finalized:
+                    voting_config.is_closed = True
+                    voting_config.save()
+                    logger.info(f"Configuração de votação {voting_config.id} fechada automaticamente - todas as regras finalizadas")
+                
+        except Exception as e:
+            logger.error(f"Erro ao verificar/finalizar votação automática: {str(e)}")
+        
+        return rule_answer
 
 class AnnotationRuleDetail(RetrieveUpdateAPIView):
     queryset = AnnotationRule.objects.all()

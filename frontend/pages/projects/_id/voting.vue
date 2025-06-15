@@ -333,7 +333,7 @@ export default Vue.extend({
           type: 'error',
           icon: this.mdiCalendarClock,
           title: 'Votação expirada',
-          message: `A votação terminou em ${this.formatDate(endDate)}`,
+          message: `A votação terminou em ${this.formatDate(endDate)}. As regras não votadas foram automaticamente finalizadas.`,
           canVote: false
         }
       }
@@ -433,9 +433,9 @@ export default Vue.extend({
         this.pendingRules = unvotedData.rules as AnnotationRuleItem[]
         
         if (unvotedData.totalUnvotedRules === 0) {
-          this.successMessage = 'Você votou em todas as regras disponíveis.'
+          this.successMessage = 'Você votou em todas as regras disponíveis. As regras que receberam votos de todos os anotadores foram automaticamente finalizadas.'
         } else {
-          this.successMessage = `Votos submetidos com sucesso! Você votou em ${votedCount} regra(s). Restam ${unvotedData.totalUnvotedRules} regra(s) para votar.`
+          this.successMessage = `Votos submetidos com sucesso! Você votou em ${votedCount} regra(s). Restam ${unvotedData.totalUnvotedRules} regra(s) para votar. As regras que receberam votos de todos os anotadores são automaticamente finalizadas.`
         }
         
       } catch (error: any) {
