@@ -186,14 +186,11 @@
             <v-divider class="my-4"></v-divider>
 
             <!-- Aviso se não há anotadores suficientes -->
-            <v-alert v-if="!hasMinimumAnnotators" type="warning" outlined class="mb-4">
-              <div class="d-flex align-center">
-                <v-icon class="mr-2">{{ require('@mdi/js').mdiAlertCircle }}</v-icon>
-                <div>
-                  <strong>Análise de concordância não disponível</strong>
-                  <br />
-                  {{ minimumAnnotatorsMessage }}
-                </div>
+            <v-alert v-if="!hasAllAnnotatorsCompleted()" type="warning" outlined class="mb-4">
+              <div>
+                <strong>Análise de concordância não disponível</strong>
+                <br />
+                {{ minimumAnnotatorsMessage }}
               </div>
             </v-alert>
 
@@ -206,12 +203,12 @@
                       Com base nas concordâncias das labels acima, como avalia este dataset?
                     </p>
                   </div>
-                  <v-btn-toggle v-model="datasetApproval" :disabled="!hasMinimumAnnotators" dense>
-                    <v-btn :value="true" color="success" outlined :disabled="!hasMinimumAnnotators">
+                  <v-btn-toggle v-model="datasetApproval" :disabled="!hasAllAnnotatorsCompleted()" dense>
+                    <v-btn :value="true" color="success" outlined :disabled="!hasAllAnnotatorsCompleted()">
                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiCheck }}</v-icon>
                       Dataset Concordante
                     </v-btn>
-                    <v-btn :value="false" color="error" outlined :disabled="!hasMinimumAnnotators">
+                    <v-btn :value="false" color="error" outlined :disabled="!hasAllAnnotatorsCompleted()">
                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiAlert }}</v-icon>
                       Dataset Discrepante
                     </v-btn>
@@ -227,7 +224,7 @@
                   dense
                   rows="3"
                   class="mt-3"
-                  :disabled="!hasMinimumAnnotators"
+                  :disabled="!hasAllAnnotatorsCompleted()"
                 ></v-textarea>
               </v-card-text>
             </v-card>
@@ -236,7 +233,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="grey" text @click="closeReportDialog">Cancelar</v-btn>
-          <v-tooltip bottom :disabled="hasMinimumAnnotators">
+          <v-tooltip bottom :disabled="hasAllAnnotatorsCompleted()">
             <template #activator="{ on, attrs }">
               <v-btn
                 color="primary"
@@ -247,7 +244,7 @@
                 @click="submitReview"
               >
                 <v-icon left small>{{ require('@mdi/js').mdiContentSave }}</v-icon>
-                {{ hasMinimumAnnotators ? 'Submeter Análise' : 'Análise Indisponível' }}
+                {{ hasAllAnnotatorsCompleted() ? 'Submeter Análise' : 'Análise Indisponível' }}
               </v-btn>
             </template>
             <span>{{ minimumAnnotatorsMessage }}</span>
@@ -467,27 +464,48 @@ export default Vue.extend({
       // Verifica se a concordância do dataset foi avaliada
       const hasEvaluation = this.datasetApproval !== undefined
 
-      // Verifica se pelo menos 2 anotadores participaram
-      const hasMinimumAnnotators =
-        this.datasetLabels.length > 0 && this.datasetLabels.some((label) => label.total >= 2)
+      // Verifica se todos os anotadores associados ao dataset já anotaram
+      const allAnnotatorsCompleted = this.hasAllAnnotatorsCompleted()
 
-      return hasEvaluation && hasMinimumAnnotators
+      return hasEvaluation && allAnnotatorsCompleted
     },
 
     hasMinimumAnnotators() {
-      // Verifica se há pelo menos 2 anotadores no dataset
-      return this.datasetLabels.length > 0 && this.datasetLabels.some((label) => label.total >= 2)
+      // Verifica se há pelo menos 1 anotador no dataset
+      return this.datasetLabels.length > 0 && this.datasetLabels.some((label) => label.total >= 1)
     },
+
+
 
     minimumAnnotatorsMessage() {
       if (this.datasetLabels.length === 0) {
         return 'Nenhuma anotação encontrada no dataset'
       }
 
-      const maxAnnotators = Math.max(...this.datasetLabels.map((label) => label.total))
+      const projectAnnotators = this.members.filter(member => member.isAnnotator)
+      
+      if (projectAnnotators.length === 0) {
+        return 'Nenhum anotador associado ao projeto.'
+      }
 
-      if (maxAnnotators < 2) {
-        return `Apenas ${maxAnnotators} anotador(es) participaram. Necessários pelo menos 2 anotadores para análise de concordância.`
+      // Obter todos os anotadores únicos que anotaram este dataset
+      const annotatorsWhoAnnotated = new Set()
+      this.datasetLabels.forEach(label => {
+        if (label.annotators && Array.isArray(label.annotators)) {
+          label.annotators.forEach(annotatorName => {
+            annotatorsWhoAnnotated.add(annotatorName)
+          })
+        }
+      })
+      
+      // Verificar quais anotadores do projeto ainda não anotaram
+      const allProjectAnnotatorNames = projectAnnotators.map(member => member.username)
+      const missingAnnotators = allProjectAnnotatorNames.filter(annotatorName => 
+        !annotatorsWhoAnnotated.has(annotatorName)
+      )
+      
+      if (missingAnnotators.length > 0) {
+        return `Nem todos os anotadores completaram as anotações deste dataset. Todos os anotadores devem anotar antes da aprovação.`
       }
 
       return ''
@@ -536,6 +554,39 @@ export default Vue.extend({
   },
 
   methods: {
+    hasAllAnnotatorsCompleted() {
+      // Verifica se todos os anotadores associados ao projeto já anotaram este dataset específico
+      if (this.datasetLabels.length === 0) {
+        return false
+      }
+
+      // Obter todos os anotadores do projeto
+      const projectAnnotators = this.members.filter(member => member.isAnnotator)
+      
+      // Se não há anotadores, não pode aprovar
+      if (projectAnnotators.length === 0) {
+        return false
+      }
+      
+      // Obter todos os anotadores únicos que anotaram este dataset
+      const annotatorsWhoAnnotated = new Set()
+      this.datasetLabels.forEach(label => {
+        if (label.annotators && Array.isArray(label.annotators)) {
+          label.annotators.forEach(annotatorName => {
+            annotatorsWhoAnnotated.add(annotatorName)
+          })
+        }
+      })
+      
+      // Verificar se todos os anotadores do projeto estão na lista dos que anotaram
+      const allProjectAnnotatorNames = projectAnnotators.map(member => member.username)
+      const allAnnotated = allProjectAnnotatorNames.every(annotatorName => 
+        annotatorsWhoAnnotated.has(annotatorName)
+      )
+      
+      return allAnnotated
+    },
+
     loadReviewState() {
       // Carregar estado dos reviews do localStorage para este projeto
       try {
@@ -819,7 +870,7 @@ export default Vue.extend({
 
     async realBackendCall(reviewData: any) {
       // Fazer chamada real ao backend para submeter a revisão
-      const response = await this.$axios.post('/v1/dataset-reviews/', reviewData)
+      const response = await this.$axios.post(`/v1/projects/${this.projectId}/dataset-reviews`, reviewData)
       return response
     },
 
@@ -932,7 +983,7 @@ export default Vue.extend({
         // Detectar tipo de erro para mostrar mensagem apropriada
         if (this.isDatabaseConnectionError(error)) {
           this.connectionErrorMessage =
-            'Base de dados indisponível. Verifique a conectividade e tente novamente.'
+            'Database is slow or unavailable. Please try again later.'
           this.snackbarMessage = '❌ ' + this.connectionErrorMessage
         } else if (this.isNetworkError(error)) {
           this.connectionErrorMessage = 'Erro de rede. Verifique a sua ligação à internet.'
@@ -1007,7 +1058,7 @@ export default Vue.extend({
         // Detectar tipo de erro para mostrar mensagem apropriada
         if (this.isDatabaseConnectionError(error)) {
           this.snackbarMessage =
-            '❌ Base de dados indisponível! A revisão não foi guardada. Tente novamente quando a conectividade for restaurada.'
+            '❌ Database is slow or unavailable. Please try again later.'
           this.snackbarTimeout = 10000 // Mais tempo para erros críticos
         } else if (this.isNetworkError(error)) {
           this.snackbarMessage =

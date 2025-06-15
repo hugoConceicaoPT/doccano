@@ -143,7 +143,7 @@
         class="label-distribution"
         :examples="examples"
         :label-types="categoryTypes"
-        :datasetReviews="datasetReviews"
+        :dataset-reviews="datasetReviews"
         @chart-label-rendered="onLabelChartReady"
       />
     </v-col>

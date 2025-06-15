@@ -159,10 +159,10 @@
             <v-btn
               color="primary"
               :disabled="!canSubmit"
-              @click="submitVotes"
               class="px-8"
               large
               :loading="submitting"
+              @click="submitVotes"
             >
               <v-icon left>{{ mdiSend }}</v-icon>
               Submeter Todos os Votos

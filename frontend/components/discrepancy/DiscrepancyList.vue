@@ -37,7 +37,7 @@
         </v-row>
         <v-row>
           <v-col cols="12" class="d-flex justify-start">
-            <v-btn color="primary" outlined small @click="clearFilters" :disabled="!hasActiveFilters">
+            <v-btn color="primary" outlined small :disabled="!hasActiveFilters" @click="clearFilters">
               <v-icon left small>{{ mdiFilterRemove }}</v-icon>
               Clear Filters
             </v-btn>
@@ -56,8 +56,8 @@
           showFirstLastPage: true,
           'items-per-page-text': $t('vuetify.itemsPerPageText'),
           'page-text': $t('dataset.pageText')
-        }" :item-key="items.exampleName + '-' + items.labelName" show-select @input="$emit('input', $event)"
-        class="elevation-0">
+        }" :item-key="items.exampleName + '-' + items.labelName" show-select class="elevation-0"
+        @input="$emit('input', $event)">
         <template #top>
           <v-text-field v-model="search" :prepend-inner-icon="mdiMagnify" :label="$t('generic.search')" single-line
             hide-details filled class="mx-4 mt-4 mb-2" style="max-width: 300px" />

@@ -153,7 +153,7 @@ class AnnotatorReportView(APIView):
         except (DatabaseError, OperationalError) as e:
             logger.error(f"Erro de base de dados ao gerar relatório de anotadores: {str(e)}")
             return Response(
-                {"detail": "Erro de conexão com a base de dados. A base de dados está temporariamente indisponível. Verifique se a base de dados está ligada e tente novamente em alguns instantes."},
+                {"detail": "Database is slow or unavailable. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except Exception as e:
@@ -418,7 +418,7 @@ class AnnotatorReportExportView(APIView):
         except (DatabaseError, OperationalError) as e:
             logger.error(f"Erro de base de dados ao exportar relatório de anotadores: {str(e)}")
             return Response(
-                {"detail": "Erro de conexão com a base de dados. A base de dados está temporariamente indisponível. Verifique se a base de dados está ligada e tente novamente em alguns instantes."},
+                {"detail": "Database is slow or unavailable. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except Exception as e:
@@ -1249,7 +1249,7 @@ class AnnotationReportView(APIView):
         except (DatabaseError, OperationalError) as e:
             logger.error(f"Erro de base de dados ao gerar relatório de anotações: {str(e)}")
             return Response(
-                {"detail": "Erro de conexão com a base de dados. A base de dados está temporariamente indisponível. Verifique se a base de dados está ligada e tente novamente em alguns instantes."},
+                {"detail": "Database is slow or unavailable. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except Exception as e:
@@ -1528,7 +1528,7 @@ class AnnotationReportExportView(APIView):
         except (DatabaseError, OperationalError) as e:
             logger.error(f"Erro de base de dados ao exportar relatório de anotações: {str(e)}")
             return Response(
-                {"detail": "Erro de conexão com a base de dados. A base de dados está temporariamente indisponível. Verifique se a base de dados está ligada e tente novamente em alguns instantes."},
+                {"detail": "Database is slow or unavailable. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
         except Exception as e:

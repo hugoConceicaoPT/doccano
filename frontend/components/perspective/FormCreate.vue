@@ -1,13 +1,14 @@
 <template>
   <div>
-    <v-alert v-if="errorMessage" type="error" dismissible @input="errorMessage = ''">
+    <!-- Mensagem de erro movida para o topo -->
+    <v-alert v-if="errorMessage" type="error" dismissible @input="errorMessage = ''" class="mb-4" outlined>
       {{ errorMessage }}
     </v-alert>
     
-    <v-card elevation="2">
-      <v-card-title class="primary white--text">
+    <v-card elevation="1" class="rounded-lg">
+      <v-card-title class="primary white--text py-4">
         <v-icon left color="white">mdi-lightbulb-on</v-icon>
-        Criar Perspectiva
+        <span class="text-h6">Criar Perspectiva</span>
       </v-card-title>
       
       <v-card-text class="pa-6">
@@ -15,29 +16,31 @@
           <!-- Seção de seleção de perspectiva -->
           <v-row>
             <v-col cols="12">
-              <h3 class="mb-4 text--primary">
-                <v-icon color="primary" class="mr-2">mdi-format-title</v-icon>
-                Nome da Perspectiva
-              </h3>
-              
-              <v-autocomplete
-                v-model="selectedPerspective"
-                :items="perspectiveOptions"
-                item-text="display"
-                item-value="value"
-                label="Digite o nome da nova perspectiva ou selecione uma existente"
-                outlined
-                required
-                :rules="[rules.required]"
-                :loading="loadingPerspectives"
-                :search-input.sync="searchInput"
-                @change="onPerspectiveChange"
-                @input="onPerspectiveInput"
-                clearable
-                no-filter
-                prepend-inner-icon="mdi-lightbulb-on"
-                :menu-props="{ maxHeight: 300 }"
-                placeholder="Ex: Perspectiva de Qualidade, Usabilidade..."
+              <div class="mb-6">
+                <h3 class="text-h6 mb-3 primary--text font-weight-medium">
+                  <v-icon color="primary" class="mr-2">mdi-format-title</v-icon>
+                  Nome da Perspectiva
+                </h3>
+                
+                <v-autocomplete
+                  v-model="selectedPerspective"
+                  :items="perspectiveOptions"
+                  item-text="display"
+                  item-value="value"
+                  label="Digite o nome da nova perspectiva ou selecione uma existente"
+                  outlined
+                  required
+                  :rules="[rules.required]"
+                  :loading="loadingPerspectives"
+                  :search-input.sync="searchInput"
+                  @change="onPerspectiveChange"
+                  @input="onPerspectiveInput"
+                  clearable
+                  no-filter
+                  prepend-inner-icon="mdi-lightbulb-on"
+                  :menu-props="{ maxHeight: 300 }"
+                  placeholder="Ex: Perspectiva de Qualidade, Usabilidade..."
+                  class="mt-2"
               >
                 <template v-slot:item="{ item }">
                   <v-list-item-avatar>
@@ -63,119 +66,120 @@
               
 
 
-              <!-- Alerta informativo para reutilização -->
-              <v-alert 
-                v-if="isReusing && questionsList.length > 0" 
-                type="info" 
-                class="mt-3"
-                border="left"
-                colored-border
-              >
-                <div class="d-flex align-center">
-                  <v-icon color="info" class="mr-3">mdi-information</v-icon>
-                  <div>
-                    <strong>Perspectiva reutilizada!</strong><br>
-                    {{ questionsList.length }} pergunta(s) da perspectiva "{{ selectedExistingPerspectiveName }}" 
-                    foram carregadas e serão copiadas para este projeto.
+                <!-- Alerta informativo para reutilização -->
+                <v-alert 
+                  v-if="isReusing && questionsList.length > 0" 
+                  type="info" 
+                  class="mt-4"
+                  outlined
+                  dense
+                >
+                  <div class="d-flex align-center">
+                    <v-icon color="info" class="mr-2" small>mdi-information</v-icon>
+                    <div>
+                      <strong>Perspectiva reutilizada!</strong>
+                      {{ questionsList.length }} pergunta(s) da perspectiva "{{ selectedExistingPerspectiveName }}" 
+                      foram carregadas.
+                    </div>
                   </div>
-                </div>
-              </v-alert>
+                </v-alert>
+              </div>
             </v-col>
           </v-row>
 
           <!-- Seção de criação de perguntas (apenas para novas perspectivas) -->
           <div v-if="!isReusing">
-            <v-row class="mt-4">
-              <v-col cols="12">
-                <h3 class="mb-4 text--primary">
-                  <v-icon color="primary" class="mr-2">mdi-help-circle</v-icon>
-                  Adicionar Perguntas
-                </h3>
-              </v-col>
-            </v-row>
+            <v-divider class="my-6"></v-divider>
+            
+            <div class="mb-6">
+              <h3 class="text-h6 mb-4 primary--text font-weight-medium">
+                <v-icon color="primary" class="mr-2">mdi-help-circle</v-icon>
+                Adicionar Perguntas
+              </h3>
 
-            <v-row>
-              <v-col cols="12" md="8">
-                <v-text-field
-                  v-model="newQuestion"
-                  label="Digite sua pergunta"
-                  outlined
-                  @keyup.enter="addQuestion"
-                  prepend-inner-icon="mdi-comment-question"
-                  hint="Pressione Enter para adicionar rapidamente"
-                  persistent-hint
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="answerType"
-                  :items="answerTypeOptions"
-                  label="Tipo de resposta"
-                  outlined
-                  prepend-inner-icon="mdi-format-list-bulleted-type"
-                />
-              </v-col>
-            </v-row>
+              <v-row>
+                <v-col cols="12" md="8">
+                  <v-text-field
+                    v-model="newQuestion"
+                    label="Digite sua pergunta"
+                    outlined
+                    @keyup.enter="addQuestion"
+                    prepend-inner-icon="mdi-comment-question"
+                    hint="Pressione Enter para adicionar rapidamente"
+                    persistent-hint
+                    dense
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="answerType"
+                    :items="answerTypeOptions"
+                    label="Tipo de resposta"
+                    outlined
+                    prepend-inner-icon="mdi-format-list-bulleted-type"
+                    dense
+                  />
+                </v-col>
+              </v-row>
 
-            <v-row>
-              <v-col cols="12" class="text-center">
+              <div class="text-center mt-4">
                 <v-btn 
                   color="primary" 
                   @click="addQuestion"
                   :disabled="!newQuestion.trim() || !answerType"
                   class="px-6"
+                  elevation="1"
                 >
                   <v-icon left>mdi-plus</v-icon>
                   Adicionar Pergunta
                 </v-btn>
-              </v-col>
-            </v-row>
+              </div>
+            </div>
           </div>
 
           <!-- Seção de lista de perguntas -->
           <div v-if="questionsList.length" class="mt-6">
-            <v-row>
-              <v-col cols="12">
-                <div class="d-flex justify-space-between align-center mb-4">
-                  <h3 class="text--primary">
-                    <v-icon color="primary" class="mr-2">mdi-format-list-numbered</v-icon>
-                    Perguntas 
-                    <v-chip small color="primary" class="ml-2">{{ questionsList.length }}</v-chip>
-                  </h3>
-                  
-                  <v-btn
-                    v-if="!isReusing"
-                    color="error"
-                    outlined
-                    small
-                    @click="clearAllQuestions"
-                  >
-                    <v-icon left small>mdi-delete-sweep</v-icon>
-                    Apagar Todas
-                  </v-btn>
-                </div>
-              </v-col>
-            </v-row>
+            <v-divider class="mb-6"></v-divider>
+            
+            <div class="d-flex justify-space-between align-center mb-4">
+              <h3 class="text-h6 primary--text font-weight-medium">
+                <v-icon color="primary" class="mr-2">mdi-format-list-numbered</v-icon>
+                Perguntas Adicionadas
+                <v-chip small color="primary" text-color="white" class="ml-2">{{ questionsList.length }}</v-chip>
+              </h3>
+              
+              <v-btn
+                v-if="!isReusing"
+                color="error"
+                outlined
+                small
+                @click="clearAllQuestions"
+              >
+                <v-icon left small>mdi-delete-sweep</v-icon>
+                Limpar Todas
+              </v-btn>
+            </div>
 
-            <v-card outlined class="mb-4">
+            <v-card outlined elevation="0" class="mb-4">
               <v-list>
                 <template v-for="(question, index) in questionsList">
-                  <v-list-item :key="index" class="py-3">
+                  <v-list-item :key="index" class="py-4">
                     <v-list-item-avatar>
-                      <v-avatar color="primary" size="32">
+                      <v-avatar color="primary" size="36">
                         <span class="white--text font-weight-bold">{{ index + 1 }}</span>
                       </v-avatar>
                     </v-list-item-avatar>
                     
                     <v-list-item-content>
-                      <v-list-item-title class="font-weight-medium">
+                      <v-list-item-title class="font-weight-medium mb-2">
                         {{ question.question }}
                       </v-list-item-title>
-                      <v-list-item-subtitle class="mt-1">
+                      <v-list-item-subtitle>
                         <v-chip 
                           small 
                           :color="getAnswerTypeColor(question.answer_type)"
                           text-color="white"
+                          class="font-weight-medium"
                         >
                           <v-icon small left>{{ getAnswerTypeIcon(question.answer_type) }}</v-icon>
                           {{ getAnswerTypeLabel(question.answer_type) }}
@@ -183,26 +187,26 @@
                       </v-list-item-subtitle>
                     </v-list-item-content>
 
-                    <v-list-item-action>
-                      <template v-if="!isReusing">
-                        <v-btn 
-                          icon 
-                          color="error" 
-                          @click="removeQuestion(index)"
-                          small
-                        >
-                          <v-icon small>mdi-delete</v-icon>
-                        </v-btn>
-                      </template>
-                      <template v-else>
-                        <v-btn 
-                          icon 
-                          disabled
-                          small
-                        >
-                          <v-icon small>mdi-lock</v-icon>
-                        </v-btn>
-                      </template>
+                    <v-list-item-action class="d-flex flex-row align-center question-actions">
+                      <!-- Botão de remoção elegante -->
+                      <v-btn 
+                        v-if="!isReusing"
+                        text
+                        color="primary" 
+                        @click="removeQuestion(index)"
+                        small
+                        class="delete-btn-modern"
+                        title="Remover pergunta"
+                      >
+                        <v-icon small class="mr-1">mdi-minus-circle-outline</v-icon>
+                        Remover
+                      </v-btn>
+                      
+                      <!-- Chip de status quando reutilizando -->
+                      <v-chip v-if="isReusing" small outlined color="orange" text-color="orange darken-2">
+                        <v-icon small left>mdi-lock-outline</v-icon>
+                        Reutilizada
+                      </v-chip>
                     </v-list-item-action>
                   </v-list-item>
                   
@@ -221,6 +225,34 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <!-- Diálogo de Confirmação de Remoção -->
+    <v-dialog v-model="confirmDialog" persistent max-width="500px">
+      <v-card>
+        <v-card-title class="primary white--text">
+          <v-icon left color="white">mdi-help-circle</v-icon>
+          Confirmar Remoção
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <div class="text-center">
+            <v-icon size="64" color="primary" class="mb-4">mdi-help-circle-outline</v-icon>
+            <p class="text-h6 mb-2">Tem certeza que deseja remover esta pergunta?</p>
+            <p class="primary--text mb-2 font-weight-medium">"{{ questionToRemove?.question }}"</p>
+            <p class="grey--text">Esta ação não pode ser desfeita.</p>
+          </div>
+        </v-card-text>
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn color="grey" text @click="handleConfirmCancel">
+            Cancelar
+          </v-btn>
+          <v-btn color="primary" @click="handleConfirmOk">
+            <v-icon left>mdi-check</v-icon>
+            Confirmar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -246,6 +278,10 @@ export default Vue.extend({
       existingPerspectives: [] as PerspectiveDTO[],
       loadingPerspectives: false,
       selectedExistingPerspectiveData: null as PerspectiveDTO | null,
+      // Controle do diálogo de confirmação
+      confirmDialog: false,
+      questionToRemove: null as CreateQuestionCommand | null,
+      questionIndexToRemove: -1,
       answerTypeOptions: [
         { text: 'Verdadeiro/Falso', value: 'boolean', icon: 'mdi-check-circle', color: 'green' },
         { text: 'Número Inteiro', value: 'int', icon: 'mdi-numeric', color: 'blue' },
@@ -349,8 +385,23 @@ export default Vue.extend({
     },
     
     removeQuestion(index: number) {
-      this.questionsList.splice(index, 1)
-      this.emitUpdatedQuestions()
+      this.questionToRemove = this.questionsList[index]
+      this.questionIndexToRemove = index
+      this.confirmDialog = true
+    },
+
+    handleConfirmOk() {
+      if (this.questionIndexToRemove >= 0) {
+        this.questionsList.splice(this.questionIndexToRemove, 1)
+        this.emitUpdatedQuestions()
+      }
+      this.handleConfirmCancel()
+    },
+
+    handleConfirmCancel() {
+      this.confirmDialog = false
+      this.questionToRemove = null
+      this.questionIndexToRemove = -1
     },
     
     emitUpdatedQuestions() {
@@ -459,17 +510,24 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+.v-card {
+  border-radius: 12px !important;
+}
+
 .v-card-title {
   font-size: 1.25rem;
   font-weight: 500;
+  border-radius: 12px 12px 0 0 !important;
 }
 
 .v-list-item {
   transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin: 2px 8px;
 }
 
 .v-list-item:hover {
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
 }
 
 .v-chip {
@@ -479,5 +537,77 @@ export default Vue.extend({
 h3 {
   display: flex;
   align-items: center;
+}
+
+.v-text-field.v-text-field--outlined,
+.v-select.v-select--outlined {
+  border-radius: 8px;
+}
+
+.v-btn {
+  text-transform: none;
+  font-weight: 500;
+}
+
+.v-alert {
+  border-radius: 8px;
+}
+
+.v-divider {
+  margin: 0 16px;
+}
+
+.v-list-item-action .v-btn {
+  transition: all 0.2s ease;
+}
+
+.v-list-item-action .v-btn:hover {
+  transform: scale(1.1);
+}
+
+.v-list-item:hover .v-list-item-action .v-btn {
+  opacity: 1;
+}
+
+.v-list-item-action .v-btn {
+  opacity: 1 !important;
+}
+
+.question-actions {
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.v-list-item:hover .question-actions {
+  opacity: 1;
+}
+
+.delete-btn-modern {
+  border-radius: 16px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  background-color: rgba(25, 118, 210, 0.05) !important;
+  border: 1px solid rgba(25, 118, 210, 0.2) !important;
+}
+
+.delete-btn-modern:hover {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+  border-color: #1976d2 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2) !important;
+}
+
+.delete-btn-modern .v-icon {
+  transition: transform 0.2s ease;
+}
+
+.delete-btn-modern:hover .v-icon {
+  transform: scale(1.1);
+}
+
+.v-list-item-action {
+  min-width: auto !important;
+  flex: none !important;
 }
 </style>

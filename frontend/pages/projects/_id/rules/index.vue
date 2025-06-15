@@ -173,9 +173,9 @@
                 <v-btn
                   color="primary"
                   :disabled="!canSubmit"
-                  @click="submitVotes"
                   class="px-6"
                   large
+                  @click="submitVotes"
                 >
                   <v-icon left>{{ mdiSend }}</v-icon>
                   Submeter Todos os Votos
