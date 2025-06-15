@@ -91,6 +91,20 @@ class AnnotatorReportView(APIView):
                 description="Lista de nomes dos datasets (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
+            ),
+            openapi.Parameter(
+                'perspective_question_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das perguntas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_answer_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das respostas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
             )
         ]
     )
@@ -197,6 +211,24 @@ class AnnotatorReportView(APIView):
         if 'date_to' in query_params and query_params['date_to']:
             processed['date_to'] = query_params['date_to']
         
+        # Processar perspective_question_ids (opcional)
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                processed['perspective_question_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_question_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_question_ids'] = []
+        
+        # Processar perspective_answer_ids (opcional)
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                processed['perspective_answer_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_answer_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_answer_ids'] = []
+        
         return processed
 
     def _check_project_permissions(self, user, project_ids):
@@ -297,6 +329,20 @@ class AnnotatorReportExportView(APIView):
                 'dataset_names',
                 openapi.IN_QUERY,
                 description="Lista de nomes dos datasets (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_question_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das perguntas da perspectiva (separados por vírgula, opcional)",
+                type=openapi.TYPE_STRING,
+                required=False
+            ),
+            openapi.Parameter(
+                'perspective_answer_ids',
+                openapi.IN_QUERY,
+                description="Lista de IDs das respostas da perspectiva (separados por vírgula, opcional)",
                 type=openapi.TYPE_STRING,
                 required=False
             )
@@ -424,6 +470,24 @@ class AnnotatorReportExportView(APIView):
         
         if 'date_to' in query_params and query_params['date_to']:
             processed['date_to'] = query_params['date_to']
+        
+        # Processar perspective_question_ids (opcional)
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                processed['perspective_question_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_question_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_question_ids'] = []
+        
+        # Processar perspective_answer_ids (opcional)
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                processed['perspective_answer_ids'] = [
+                    int(x.strip()) for x in query_params['perspective_answer_ids'].split(',') if x.strip()
+                ]
+            except ValueError:
+                processed['perspective_answer_ids'] = []
         
         return processed
 
@@ -1216,20 +1280,11 @@ class AnnotationReportExportView(APIView):
             max_results = min(1000000, int(query_params_source.get('max_results', 1000)))
             
             # Gerar relatório (forçar page=1 e max_results como page_size)
-            print(f"[EXPORT DEBUG] Chamando AnnotationReportService.get_report com max_results={max_results}")
             report_data = AnnotationReportService.get_report(
                 **validated_data,
                 page=1,
                 page_size=max_results
             )
-            print(f"[EXPORT DEBUG] Relatório gerado: {len(report_data.get('data', []))} itens")
-            
-            # Verificar se há dados para exportar
-            if not report_data.get('data'):
-                return Response(
-                    {"detail": "Nenhum dado encontrado para exportar com os filtros especificados"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
             
             # Exportar no formato solicitado
             if export_format == 'csv':
@@ -1356,8 +1411,6 @@ class AnnotationReportExportView(APIView):
 
     def _export_csv(self, report_data):
         """Exportar relatório em formato CSV"""
-        print(f"[CSV DEBUG] Iniciando exportação CSV com {len(report_data.get('data', []))} itens")
-        
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.csv"'
         
@@ -1382,9 +1435,9 @@ class AnnotationReportExportView(APIView):
         writer.writerow(['Filtros aplicados:'])
         
         # Recuperar os filtros da query string original
-        request = getattr(self, 'request', None)
-        if request:
-            query_params = getattr(request, 'query_params', getattr(request, 'GET', {}))
+        query_params = getattr(self, 'request', None)
+        if query_params:
+            query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
         else:
             query_params = {}
         
@@ -1411,9 +1464,9 @@ class AnnotationReportExportView(APIView):
                 relation_labels = RelationType.objects.filter(id__in=label_ids)
                 
                 label_names = []
-                label_names.extend([f"category: {label.text}" for label in category_labels])
-                label_names.extend([f"span: {label.text}" for label in span_labels])
-                label_names.extend([f"relation: {label.text}" for label in relation_labels])
+                label_names.extend([label.text for label in category_labels])
+                label_names.extend([label.text for label in span_labels])
+                label_names.extend([label.text for label in relation_labels])
                 
                 writer.writerow(['Labels:', ', '.join(label_names)])
             except Exception:
@@ -1442,53 +1495,6 @@ class AnnotationReportExportView(APIView):
             except Exception:
                 writer.writerow(['Exemplos:', query_params['example_ids']])
         
-        # Filtro de discrepâncias
-        if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
-            discrepancy_map = {
-                'all': 'Todas as anotações',
-                'with_discrepancy': 'Apenas com discrepâncias',
-                'without_discrepancy': 'Apenas sem discrepâncias'
-            }
-            writer.writerow(['Filtro de Discrepâncias:', discrepancy_map.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])])
-        
-        # Tipos de anotação
-        if 'annotation_types' in query_params and query_params['annotation_types']:
-            annotation_types = [t.strip() for t in query_params['annotation_types'].split(',') if t.strip()]
-            writer.writerow(['Tipos de Anotação:', ', '.join(annotation_types)])
-        
-        # Perguntas da perspectiva
-        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
-            try:
-                from projects.models import Question
-                question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
-                questions = Question.objects.filter(id__in=question_ids)
-                question_texts = [q.question for q in questions]
-                writer.writerow(['Perguntas da Perspectiva:', ', '.join(question_texts)])
-            except Exception:
-                writer.writerow(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
-        
-        # Respostas da perspectiva
-        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
-            try:
-                from projects.models import Answer
-                answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
-                answers = Answer.objects.filter(id__in=answer_ids)
-                answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
-                writer.writerow(['Respostas da Perspectiva:', ', '.join(answer_texts)])
-            except Exception:
-                writer.writerow(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
-        
-        # Filtros de data
-        if 'date_from' in query_params and query_params['date_from']:
-            writer.writerow(['Data de Início:', query_params['date_from']])
-        
-        if 'date_to' in query_params and query_params['date_to']:
-            writer.writerow(['Data de Fim:', query_params['date_to']])
-        
-        # Número máximo de resultados
-        if 'max_results' in query_params and query_params['max_results']:
-            writer.writerow(['Máximo de Resultados:', query_params['max_results']])
-        
         writer.writerow([])  # Linha em branco
         
         # Cabeçalho da tabela
@@ -1502,54 +1508,33 @@ class AnnotationReportExportView(APIView):
         
         # Dados
         data_items = report_data.get('data', [])
-        print(f"[CSV DEBUG] Processando {len(data_items)} itens de dados")
         
-        for i, item in enumerate(data_items):
-            try:
-                # Formatar detalhes como string JSON simplificada
-                detail_str = ""
-                if item.get('detail'):
-                    detail_str = "; ".join([f"{k}: {v}" for k, v in item['detail'].items()])
-                
-                # Formatar data (agora é uma string ISO)
-                date_str = '-'
-                if item.get('created_at'):
-                    # Se já for string, usar diretamente ou formatar
-                    try:
-                        from datetime import datetime
-                        # Tentar converter para datetime e formatar
-                        dt = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
-                        date_str = dt.strftime('%Y-%m-%d %H:%M')
-                    except (ValueError, AttributeError, TypeError):
-                        # Se falhar, usar a string original
-                        date_str = str(item['created_at'])
-                
-                # Garantir que todos os campos são strings
-                example_name = str(item.get('example_name', '-'))
-                username = str(item.get('username', '-'))
-                label_text = str(item.get('label_text', '-'))
-                
-                writer.writerow([
-                    example_name,
-                    username,
-                    label_text,
-                    date_str,
-                    detail_str
-                ])
-                
-                if i < 3:  # Debug apenas os primeiros 3 itens
-                    print(f"[CSV DEBUG] Item {i}: {example_name}, {username}, {label_text}")
-                    
-            except Exception as e:
-                print(f"[CSV DEBUG] Erro ao processar item {i}: {e}")
-                # Escrever linha de erro
-                writer.writerow([
-                    'Erro ao processar',
-                    'Erro',
-                    'Erro',
-                    'Erro',
-                    f'Erro: {str(e)}'
-                ])
+        for item in data_items:
+            # Formatar detalhes como string JSON simplificada
+            detail_str = ""
+            if item['detail']:
+                detail_str = "; ".join([f"{k}: {v}" for k, v in item['detail'].items()])
+            
+            # Formatar data (agora é uma string ISO)
+            date_str = '-'
+            if item['created_at']:
+                # Se já for string, usar diretamente ou formatar
+                try:
+                    from datetime import datetime
+                    # Tentar converter para datetime e formatar
+                    dt = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                    date_str = dt.strftime('%Y-%m-%d %H:%M')
+                except (ValueError, AttributeError, TypeError):
+                    # Se falhar, usar a string original
+                    date_str = item['created_at']
+            
+            writer.writerow([
+                item['example_name'],
+                item['username'],
+                item['label_text'] or '-',
+                date_str,
+                detail_str
+            ])
         
         return response
 
@@ -1579,9 +1564,9 @@ class AnnotationReportExportView(APIView):
         writer.writerow(['Filtros aplicados:'])
         
         # Recuperar os filtros da query string original
-        request = getattr(self, 'request', None)
-        if request:
-            query_params = getattr(request, 'query_params', getattr(request, 'GET', {}))
+        query_params = getattr(self, 'request', None)
+        if query_params:
+            query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
         else:
             query_params = {}
         
@@ -1800,9 +1785,9 @@ class AnnotationReportExportView(APIView):
             elements.append(Paragraph("Filtros aplicados:", styles['SubtitleStyle']))
             
             # Recuperar os filtros da query string original
-            request = getattr(self, 'request', None)
-            if request:
-                query_params = getattr(request, 'query_params', getattr(request, 'GET', {}))
+            query_params = getattr(self, 'request', None)
+            if query_params:
+                query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
             else:
                 query_params = {}
             
@@ -1916,16 +1901,14 @@ class AnnotationReportExportView(APIView):
                         except (ValueError, AttributeError, TypeError):
                             date_str = item['created_at']
                     
-                    # Preparar textos (sem truncar - deixar o ReportLab gerir a quebra de linha)
-                    example_name = item['example_name'] or '-'
+                    # Truncar textos se muito longos
+                    example_name = item['example_name']
+                    if len(example_name) > 35:
+                        example_name = example_name[:32] + "..."
+                    
                     label_text = item['label_text'] or '-'
-                    
-                    # Apenas truncar se extremamente longo (mais de 100 caracteres)
-                    if len(example_name) > 100:
-                        example_name = example_name[:97] + "..."
-                    
-                    if len(label_text) > 80:
-                        label_text = label_text[:77] + "..."
+                    if len(label_text) > 30:
+                        label_text = label_text[:27] + "..."
                     
                     table_data.append([
                         example_name,
@@ -1944,9 +1927,8 @@ class AnnotationReportExportView(APIView):
             
             print(f"[PDF DEBUG] Tabela criada com {len(table_data)} linhas")
             
-            # Criar tabela com larguras mais flexíveis para landscape A4
-            # Landscape A4 tem aproximadamente 11.7 inches de largura útil
-            col_widths = [3.5*inch, 2*inch, 3.5*inch, 2*inch]  # Larguras mais equilibradas
+            # Criar tabela com larguras específicas
+            col_widths = [3*inch, 1.8*inch, 2.2*inch, 1.5*inch]  # Ajustar larguras das colunas
             table = Table(table_data, repeatRows=1, colWidths=col_widths)
             
             # Estilo da tabela
@@ -1964,15 +1946,18 @@ class AnnotationReportExportView(APIView):
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),  # Aumentar ligeiramente o tamanho da fonte
+                ('FONTSIZE', (0, 1), (-1, -1), 7),
                 ('WORDWRAP', (0, 1), (-1, -1), True),
-                ('LEFTPADDING', (0, 1), (-1, -1), 4),
-                ('RIGHTPADDING', (0, 1), (-1, -1), 4),
-                ('TOPPADDING', (0, 1), (-1, -1), 4),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-                # Permitir que as células se expandam verticalmente conforme necessário
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                ('LEFTPADDING', (0, 1), (-1, -1), 3),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 3),
+                ('TOPPADDING', (0, 1), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
             ])
+            
+            # Adicionar linhas alternadas
+            for i in range(1, len(table_data)):
+                if i % 2 == 0:
+                    table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
             
             table.setStyle(table_style)
             

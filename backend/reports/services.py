@@ -5,7 +5,7 @@ from django.utils import timezone
 from collections import defaultdict
 
 from labels.models import Category, Span, TextLabel, Relation
-from projects.models import Project, Member
+from projects.models import Project, Member, Question, Answer
 from label_types.models import CategoryType, SpanType, RelationType
 from examples.models import Example
 
@@ -21,7 +21,9 @@ class AnnotatorReportService:
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
         perspective_ids: Optional[List[int]] = None,
-        dataset_names: Optional[List[str]] = None
+        dataset_names: Optional[List[str]] = None,
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
         Gera relatório sobre anotadores com filtros especificados
@@ -33,6 +35,9 @@ class AnnotatorReportService:
             date_to: Data de fim (opcional)
             label_ids: Lista de IDs dos rótulos (opcional)
             perspective_ids: Lista de IDs das perspectivas (opcional)
+            dataset_names: Lista de nomes dos datasets (opcional)
+            perspective_question_ids: Lista de IDs das perguntas da perspectiva (opcional)
+            perspective_answer_ids: Lista de IDs das respostas da perspectiva (opcional)
             
         Returns:
             Dicionário com summary e data do relatório
@@ -40,17 +45,21 @@ class AnnotatorReportService:
         
         # Obter dados agregados por utilizador
         annotator_data = AnnotatorReportService._get_annotator_data(
-            project_ids, user_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
+            project_ids, user_ids, date_from, date_to, label_ids, perspective_ids, dataset_names, perspective_question_ids, perspective_answer_ids
         )
         
         # Calcular breakdown de rótulos para cada anotador
         for annotator in annotator_data:
             annotator['label_breakdown'] = AnnotatorReportService._get_label_breakdown(
-                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
+                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names, perspective_question_ids, perspective_answer_ids
             )
             # Adicionar informação detalhada sobre labels por dataset
             annotator['dataset_label_breakdown'] = AnnotatorReportService._get_dataset_label_breakdown(
-                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names
+                annotator['annotator_id'], project_ids, date_from, date_to, label_ids, perspective_ids, dataset_names, perspective_question_ids, perspective_answer_ids
+            )
+            # Adicionar informações sobre perguntas e respostas das perspectivas
+            annotator['perspective_questions_answers'] = AnnotatorReportService._get_perspective_questions_answers(
+                annotator['annotator_id'], project_ids, perspective_question_ids, perspective_answer_ids
             )
         
         # Calcular resumo geral
@@ -73,7 +82,9 @@ class AnnotatorReportService:
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
         perspective_ids: Optional[List[int]] = None,
-        dataset_names: Optional[List[str]] = None
+        dataset_names: Optional[List[str]] = None,
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None
     ) -> List[Dict[str, Any]]:
         """Obter dados agregados por anotador"""
         
@@ -89,6 +100,16 @@ class AnnotatorReportService:
         # Aplicar filtro de utilizadores
         if user_ids:
             base_filter &= Q(user_id__in=user_ids)
+        
+        # Filtrar apenas anotadores (excluir admins)
+        from django.conf import settings
+        annotator_user_ids = Member.objects.filter(
+            project_id__in=project_ids,
+            role__name=settings.ROLE_ANNOTATOR
+        ).values_list('user_id', flat=True).distinct()
+        
+        if annotator_user_ids:
+            base_filter &= Q(user_id__in=annotator_user_ids)
         
         # Aplicar filtro de datasets
         if dataset_names:
@@ -107,7 +128,63 @@ class AnnotatorReportService:
             else:
                 # Se não há utilizadores nas perspectivas especificadas, retornar vazio
                 return []
-
+        
+        # Aplicar filtro de perguntas da perspectiva
+        if perspective_question_ids:
+            print(f"[DEBUG] Aplicando filtro de perguntas: {perspective_question_ids}")
+            print(f"[DEBUG] Project IDs: {project_ids}")
+            
+            # Debug: verificar se existem respostas para essas perguntas
+            from projects.models import Answer
+            answers_for_questions = Answer.objects.filter(question_id__in=perspective_question_ids)
+            print(f"[DEBUG] Total de respostas para essas perguntas: {answers_for_questions.count()}")
+            
+            if answers_for_questions.exists():
+                for answer in answers_for_questions[:3]:  # Mostrar apenas as primeiras 3
+                    print(f"[DEBUG] Resposta: ID={answer.id}, Member={answer.member_id}, Question={answer.question_id}, Text='{answer.answer_text}'")
+            
+            # Obter IDs dos utilizadores que responderam às perguntas especificadas
+            question_user_ids = Member.objects.filter(
+                project_id__in=project_ids,
+                answer__question_id__in=perspective_question_ids
+            ).values_list('user_id', flat=True).distinct()
+            
+            print(f"[DEBUG] Utilizadores que responderam às perguntas: {list(question_user_ids)}")
+            
+            # Debug: verificar a query SQL
+            query = Member.objects.filter(
+                project_id__in=project_ids,
+                answer__question_id__in=perspective_question_ids
+            )
+            print(f"[DEBUG] SQL Query: {query.query}")
+            
+            if question_user_ids:
+                base_filter &= Q(user_id__in=question_user_ids)
+                print(f"[DEBUG] Filtro aplicado com {len(question_user_ids)} utilizadores")
+            else:
+                # Se não há utilizadores que responderam às perguntas especificadas, retornar vazio
+                print(f"[DEBUG] Nenhum utilizador encontrado para as perguntas especificadas")
+                return []
+        
+        # Aplicar filtro de respostas da perspectiva
+        if perspective_answer_ids:
+            print(f"[DEBUG] Aplicando filtro de respostas: {perspective_answer_ids}")
+            # Obter IDs dos utilizadores que deram as respostas especificadas
+            answer_user_ids = Member.objects.filter(
+                project_id__in=project_ids,
+                answer__id__in=perspective_answer_ids
+            ).values_list('user_id', flat=True).distinct()
+            
+            print(f"[DEBUG] Utilizadores que deram as respostas: {list(answer_user_ids)}")
+            
+            if answer_user_ids:
+                base_filter &= Q(user_id__in=answer_user_ids)
+                print(f"[DEBUG] Filtro aplicado com {len(answer_user_ids)} utilizadores")
+            else:
+                # Se não há utilizadores que deram as respostas especificadas, retornar vazio
+                print(f"[DEBUG] Nenhum utilizador encontrado para as respostas especificadas")
+                return []
+        
         # Obter dados de Categories
         categories_filter = base_filter
         if label_ids:
@@ -211,7 +288,9 @@ class AnnotatorReportService:
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
         perspective_ids: Optional[List[int]] = None,
-        dataset_names: Optional[List[str]] = None
+        dataset_names: Optional[List[str]] = None,
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None
     ) -> Dict[str, int]:
         """Obter breakdown de rótulos para um utilizador específico"""
         
@@ -238,6 +317,30 @@ class AnnotatorReportService:
                 
                 if not user_in_perspectives:
                     # Se o utilizador não pertence às perspectivas especificadas, retornar vazio
+                    return {}
+            
+            # Aplicar filtro de perguntas da perspectiva
+            if perspective_question_ids:
+                # Obter os utilizadores que responderam às perguntas especificadas
+                question_members = Member.objects.filter(
+                    user_id=user_id,
+                    project_id__in=project_ids,
+                    answer__question_id__in=perspective_question_ids
+                ).values_list('user_id', flat=True).distinct()
+                
+                if user_id not in question_members:
+                    return {}
+            
+            # Aplicar filtro de respostas da perspectiva
+            if perspective_answer_ids:
+                # Obter os utilizadores que deram as respostas especificadas
+                answer_members = Member.objects.filter(
+                    user_id=user_id,
+                    project_id__in=project_ids,
+                    answer__id__in=perspective_answer_ids
+                ).values_list('user_id', flat=True).distinct()
+                
+                if user_id not in answer_members:
                     return {}
             
             breakdown = {}
@@ -339,7 +442,9 @@ class AnnotatorReportService:
         date_to: Optional[timezone.datetime] = None,
         label_ids: Optional[List[int]] = None,
         perspective_ids: Optional[List[int]] = None,
-        dataset_names: Optional[List[str]] = None
+        dataset_names: Optional[List[str]] = None,
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None
     ) -> Dict[str, Dict[str, int]]:
         """Obter breakdown detalhado de labels por dataset para o utilizador"""
         
@@ -364,6 +469,30 @@ class AnnotatorReportService:
                 ).exists()
                 
                 if not user_in_perspectives:
+                    return {}
+            
+            # Aplicar filtro de perguntas da perspectiva
+            if perspective_question_ids:
+                # Obter os utilizadores que responderam às perguntas especificadas
+                question_members = Member.objects.filter(
+                    user_id=user_id,
+                    project_id__in=project_ids,
+                    answer__question_id__in=perspective_question_ids
+                ).values_list('user_id', flat=True).distinct()
+                
+                if user_id not in question_members:
+                    return {}
+            
+            # Aplicar filtro de respostas da perspectiva
+            if perspective_answer_ids:
+                # Obter os utilizadores que deram as respostas especificadas
+                answer_members = Member.objects.filter(
+                    user_id=user_id,
+                    project_id__in=project_ids,
+                    answer__id__in=perspective_answer_ids
+                ).values_list('user_id', flat=True).distinct()
+                
+                if user_id not in answer_members:
                     return {}
             
             result = defaultdict(lambda: defaultdict(int))
@@ -507,6 +636,78 @@ class AnnotatorReportService:
             return date1
         return max(date1, date2)
 
+    @staticmethod
+    def _get_perspective_questions_answers(
+        user_id: int,
+        project_ids: List[int],
+        perspective_question_ids: Optional[List[int]] = None,
+        perspective_answer_ids: Optional[List[int]] = None
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Obter perguntas e respostas das perspectivas para um utilizador"""
+        
+        try:
+            result = {}
+            
+            # Construir filtro base
+            filter_kwargs = {
+                'member__user_id': user_id,
+                'member__project_id__in': project_ids
+            }
+            
+            # Aplicar filtro de perguntas se especificado
+            if perspective_question_ids:
+                filter_kwargs['question_id__in'] = perspective_question_ids
+            
+            # Aplicar filtro de respostas se especificado
+            if perspective_answer_ids:
+                filter_kwargs['id__in'] = perspective_answer_ids
+            
+            # Obter perguntas e respostas do utilizador com filtros aplicados
+            user_answers = Answer.objects.filter(**filter_kwargs).select_related('question')
+            
+            print(f"[DEBUG] Filtros aplicados para utilizador {user_id}: {filter_kwargs}")
+            print(f"[DEBUG] Respostas encontradas: {user_answers.count()}")
+            
+            if user_answers.exists():
+                # Organizar perguntas únicas
+                questions = {}
+                answers_list = []
+                
+                for answer in user_answers:
+                    # Adicionar pergunta
+                    if answer.question_id not in questions:
+                        questions[answer.question_id] = {
+                            'question_id': answer.question_id,
+                            'question_text': answer.question.question
+                        }
+                    
+                    # Adicionar resposta
+                    answer_text = answer.answer_text or (answer.answer_option.option if answer.answer_option else 'Sem resposta')
+                    answers_list.append({
+                        'answer_id': answer.id,
+                        'answer_text': answer_text,
+                        'question_id': answer.question_id,
+                        'question_text': answer.question.question
+                    })
+                
+                result['questions'] = list(questions.values())
+                result['answers'] = answers_list
+                
+                print(f"[DEBUG] Perguntas retornadas: {len(result['questions'])}")
+                print(f"[DEBUG] Respostas retornadas: {len(result['answers'])}")
+            else:
+                result['questions'] = []
+                result['answers'] = []
+                print(f"[DEBUG] Nenhuma resposta encontrada para utilizador {user_id}")
+            
+            return result
+            
+        except Exception as e:
+            print(f"[DEBUG] Erro ao obter perguntas e respostas das perspectivas: {e}")
+            import traceback
+            traceback.print_exc()
+            return {'questions': [], 'answers': []}
+
 
 class AnnotationReportService:
     """Service para geração de relatórios sobre anotações"""
@@ -567,6 +768,16 @@ class AnnotationReportService:
         # Aplicar filtros comuns
         if user_ids:
             base_filter &= Q(user_id__in=user_ids)
+        
+        # Filtrar apenas anotadores (excluir admins)
+        from django.conf import settings
+        annotator_user_ids = Member.objects.filter(
+            project_id__in=project_ids,
+            role__name=settings.ROLE_ANNOTATOR
+        ).values_list('user_id', flat=True).distinct()
+        
+        if annotator_user_ids:
+            base_filter &= Q(user_id__in=annotator_user_ids)
         if example_ids:
             base_filter &= Q(example_id__in=example_ids)
         if date_from:
@@ -663,92 +874,6 @@ class AnnotationReportService:
                     'current_page': page,
                     'page_size': page_size
                 }
-        
-        # Pré-filtrar exemplos por discrepâncias se especificado
-        discrepancy_example_ids = None
-        if discrepancy_filter and discrepancy_filter != 'all':
-            print(f"[DEBUG] Pré-calculando exemplos com discrepâncias para filtro: {discrepancy_filter}")
-            
-            # Obter TODAS as anotações dos projetos especificados (sem outros filtros) para calcular discrepâncias
-            all_project_annotations = []
-            for anno_type in valid_types:
-                model_class = AnnotationReportService.ANNOTATION_TYPES[anno_type]
-                project_filter = Q(example__project_id__in=project_ids)
-                
-                # Aplicar apenas filtros de data para o cálculo de discrepâncias
-                if date_from:
-                    project_filter &= Q(created_at__gte=date_from)
-                if date_to:
-                    project_filter &= Q(created_at__lte=date_to)
-                
-                annotations = model_class.objects.filter(project_filter).select_related('example', 'user')
-                
-                for anno in annotations:
-                    try:
-                        # Obter apenas informações essenciais para calcular discrepâncias
-                        if anno_type == 'category':
-                            label_id = anno.label_id if hasattr(anno, 'label_id') else None
-                        elif anno_type == 'span':
-                            label_id = anno.label_id if hasattr(anno, 'label_id') else None
-                        elif anno_type == 'relation':
-                            label_id = anno.type_id if hasattr(anno, 'type_id') else None
-                        else:
-                            label_id = None
-                        
-                        annotation_item = {
-                            'id': anno.id,
-                            'type': anno_type,
-                            'example_id': anno.example_id,
-                            'user_id': anno.user_id,
-                            'label_id': label_id,
-                            'detail': {}
-                        }
-                        
-                        # Para spans, incluir posições para detecção de discrepâncias
-                        if anno_type == 'span':
-                            annotation_item['detail'] = {
-                                'start_offset': getattr(anno, 'start_offset', None),
-                                'end_offset': getattr(anno, 'end_offset', None)
-                            }
-                        
-                        all_project_annotations.append(annotation_item)
-                    except Exception as e:
-                        print(f"Erro ao processar anotação {anno.id} para cálculo de discrepâncias: {str(e)}")
-            
-            # Calcular exemplos com discrepâncias
-            examples_with_discrepancy = AnnotationReportService._get_examples_with_discrepancy(all_project_annotations)
-            print(f"[DEBUG] Exemplos com discrepâncias encontrados: {len(examples_with_discrepancy)}")
-            
-            # Determinar quais exemplos incluir baseado no filtro
-            if discrepancy_filter == 'with_discrepancy':
-                discrepancy_example_ids = examples_with_discrepancy
-            elif discrepancy_filter == 'without_discrepancy':
-                # Obter todos os exemplos dos projetos e subtrair os que têm discrepâncias
-                all_example_ids = set(anno['example_id'] for anno in all_project_annotations)
-                discrepancy_example_ids = all_example_ids - examples_with_discrepancy
-            
-            print(f"[DEBUG] Exemplos a incluir após filtro de discrepâncias: {len(discrepancy_example_ids) if discrepancy_example_ids else 0}")
-            
-            # Se não há exemplos que atendem ao critério de discrepâncias, retornar vazio
-            if discrepancy_example_ids is not None and not discrepancy_example_ids:
-                return {
-                    'summary': {
-                        'total_annotations': 0,
-                        'total_examples': 0,
-                        'total_annotators': 0,
-                        'date_range_from': date_from.isoformat() if date_from else None,
-                        'date_range_to': date_to.isoformat() if date_to else None,
-                        'annotation_type_counts': {}
-                    },
-                    'data': [],
-                    'total_pages': 0,
-                    'current_page': page,
-                    'page_size': page_size
-                }
-            
-            # Adicionar filtro de exemplos ao filtro base
-            if discrepancy_example_ids is not None:
-                base_filter &= Q(example_id__in=list(discrepancy_example_ids))
         
         all_annotations = []
         type_counts = defaultdict(int)
@@ -879,8 +1004,27 @@ class AnnotationReportService:
                         # Log erro sem interromper o processamento
                         print(f"Erro ao processar anotação {anno.id} do tipo {anno_type}: {str(e)}")
         
-        # O filtro de discrepâncias já foi aplicado no início através do base_filter
-        print(f"[DEBUG] Total de anotações após todos os filtros: {len(all_annotations)}")
+        # Aplicar filtro de discrepâncias se especificado
+        if discrepancy_filter and discrepancy_filter != 'all':
+            print(f"[DEBUG] Aplicando filtro de discrepâncias: {discrepancy_filter}")
+            print(f"[DEBUG] Total de anotações antes do filtro: {len(all_annotations)}")
+            
+            # Verificar se há anotações para processar
+            if not all_annotations:
+                print(f"[DEBUG] Nenhuma anotação encontrada para aplicar filtro de discrepâncias")
+            else:
+                # Usar lógica simples baseada na contagem de utilizadores únicos por exemplo
+                examples_with_discrepancy = AnnotationReportService._get_examples_with_discrepancy(all_annotations)
+                print(f"[DEBUG] Exemplos com discrepância encontrados: {examples_with_discrepancy}")
+                
+                if discrepancy_filter == 'with_discrepancy':
+                    # Filtrar apenas anotações de exemplos com discrepâncias
+                    all_annotations = [anno for anno in all_annotations if anno.get('example_id') in examples_with_discrepancy]
+                    print(f"[DEBUG] Anotações com discrepância encontradas: {len(all_annotations)}")
+                elif discrepancy_filter == 'without_discrepancy':
+                    # Filtrar apenas anotações de exemplos sem discrepâncias
+                    all_annotations = [anno for anno in all_annotations if anno.get('example_id') not in examples_with_discrepancy]
+                    print(f"[DEBUG] Anotações sem discrepância encontradas: {len(all_annotations)}")
         
         # Agrupar anotações por utilizador e exemplo para consolidar labels
         consolidated_annotations = AnnotationReportService._consolidate_annotations_by_user_example(all_annotations)
@@ -1100,8 +1244,7 @@ class AnnotationReportService:
                 label_parts = []
                 for label_type, texts in labels_by_type.items():
                     unique_texts = list(set(texts))  # Remover duplicatas
-                    # Manter o nome do tipo como está (sem title() que pode causar problemas)
-                    label_parts.append(f"{label_type}: {', '.join(unique_texts)}")
+                    label_parts.append(f"{label_type.title()}: {', '.join(unique_texts)}")
                 
                 consolidated_item['label_text'] = ' | '.join(label_parts)
             else:

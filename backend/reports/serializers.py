@@ -45,6 +45,18 @@ class AnnotatorReportFilterSerializer(serializers.Serializer):
         allow_empty=True,
         help_text="Lista de nomes dos datasets (vazio = todos)"
     )
+    perspective_question_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="Lista de IDs das perguntas da perspectiva (vazio = todas)"
+    )
+    perspective_answer_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text="Lista de IDs das respostas da perspectiva (vazio = todas)"
+    )
 
     def validate_project_ids(self, value):
         """Validar se os projetos existem"""
@@ -84,6 +96,10 @@ class AnnotatorReportResultSerializer(serializers.Serializer):
     label_breakdown = serializers.DictField(child=serializers.IntegerField())
     dataset_label_breakdown = serializers.DictField(
         child=serializers.DictField(child=serializers.IntegerField()),
+        required=False
+    )
+    perspective_questions_answers = serializers.DictField(
+        child=serializers.ListField(child=serializers.DictField()),
         required=False
     )
 

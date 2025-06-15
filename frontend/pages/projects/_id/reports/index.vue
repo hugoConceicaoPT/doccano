@@ -124,49 +124,7 @@
                     </v-autocomplete>
                   </v-col>
 
-                  <!-- Filtro de Perspectivas -->
-                  <v-col cols="12" md="6">
-                    <v-autocomplete
-                      v-model="filters.perspectives"
-                      :items="availablePerspectives"
-                      item-text="name"
-                      item-value="id"
-                      label="Perspectivas"
-                      multiple
-                      chips
-                      deletable-chips
-                      clearable
-                      outlined
-                      dense
-                      :prepend-inner-icon="mdiEye"
-                      hint="Selecione perspectivas específicas ou deixe vazio para todas"
-                      persistent-hint
-                    >
-                      <template #selection="{ item, index }">
-                        <v-chip
-                          v-if="index < 2"
-                          small
-                          close
-                          color="purple"
-                          text-color="white"
-                          @click:close="removePerspective(item)"
-                        >
-                          {{ getSelectedPerspectiveText(item) }}
-                        </v-chip>
-                        <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.perspectives.length - 2 }} outras)
-                        </span>
-                      </template>
-                      <template #item="{ item }">
-                        <v-list-item-avatar>
-                          <v-icon color="purple">{{ mdiEye }}</v-icon>
-                        </v-list-item-avatar>
-                        <v-list-item-content>
-                          <v-list-item-title>{{ item.name }}</v-list-item-title>
-                        </v-list-item-content>
-                      </template>
-                    </v-autocomplete>
-                  </v-col>
+
 
                   <!-- Filtro de Datasets -->
                   <v-col cols="12" md="6">
@@ -208,6 +166,96 @@
                         </v-list-item-avatar>
                         <v-list-item-content>
                           <v-list-item-title>{{ item.name }}</v-list-item-title>
+                        </v-list-item-content>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+
+                  <!-- Filtro de Perguntas da Perspectiva -->
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="filters.perspective_questions"
+                      :items="availablePerspectiveQuestions"
+                      item-text="text"
+                      item-value="id"
+                      label="Perguntas da Perspectiva"
+                      multiple
+                      chips
+                      deletable-chips
+                      clearable
+                      outlined
+                      dense
+                      :prepend-inner-icon="mdiHelpCircle"
+                      hint="Selecione perguntas específicas ou deixe vazio para todas"
+                      persistent-hint
+                    >
+                      <template #selection="{ item, index }">
+                        <v-chip
+                          v-if="index < 2"
+                          small
+                          close
+                          color="indigo"
+                          text-color="white"
+                          @click:close="removePerspectiveQuestion(item)"
+                        >
+                          <v-icon small left>{{ mdiHelpCircle }}</v-icon>
+                          {{ getSelectedPerspectiveQuestionText(item) }}
+                        </v-chip>
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.perspective_questions.length - 2 }} outras)
+                        </span>
+                      </template>
+                      <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon color="indigo">{{ mdiHelpCircle }}</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                          <v-list-item-title>{{ item.text }}</v-list-item-title>
+                        </v-list-item-content>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+
+                  <!-- Filtro de Respostas da Perspectiva (só aparece quando há perguntas selecionadas) -->
+                  <v-col v-if="filters.perspective_questions.length > 0" cols="12" md="6">
+                    <v-autocomplete
+                      v-model="filters.perspective_answers"
+                      :items="filteredAnswersForSelectedQuestions"
+                      item-text="text"
+                      item-value="id"
+                      label="Respostas da Perspectiva"
+                      multiple
+                      chips
+                      deletable-chips
+                      clearable
+                      outlined
+                      dense
+                      :prepend-inner-icon="mdiCommentCheck"
+                      hint="Selecione respostas específicas ou deixe vazio para todas"
+                      persistent-hint
+                    >
+                      <template #selection="{ item, index }">
+                        <v-chip
+                          v-if="index < 2"
+                          small
+                          close
+                          color="amber"
+                          text-color="black"
+                          @click:close="removePerspectiveAnswer(item)"
+                        >
+                          <v-icon small left>{{ mdiCommentCheck }}</v-icon>
+                          {{ getSelectedPerspectiveAnswerText(item) }}
+                        </v-chip>
+                        <span v-if="index === 2" class="grey--text text-caption">
+                          (+{{ filters.perspective_answers.length - 2 }} outras)
+                        </span>
+                      </template>
+                      <template #item="{ item }">
+                        <v-list-item-avatar>
+                          <v-icon color="amber">{{ mdiCommentCheck }}</v-icon>
+                        </v-list-item-avatar>
+                        <v-list-item-content>
+                          <v-list-item-title>{{ item.text }}</v-list-item-title>
                         </v-list-item-content>
                       </template>
                     </v-autocomplete>
@@ -281,86 +329,176 @@
 
             <!-- Tabela de Resultados -->
             <div class="ma-4">
-              <v-data-table
-                v-if="reportData && reportData.length > 0"
-                :headers="tableHeaders"
-                :items="reportData"
-                :loading="isGenerating"
-                class="elevation-2"
-                :items-per-page="15"
-                :footer-props="{
-                  'items-per-page-options': [10, 15, 25, 50, -1],
-                  'items-per-page-text': 'Itens por página:'
-                }"
-                loading-text="Carregando dados..."
-                no-data-text="Nenhum dado disponível"
-              >
-                <template #top>
-                  <v-toolbar flat color="grey lighten-4">
-                    <v-toolbar-title class="text-h6">
-                      <v-icon left>{{ mdiTable }}</v-icon>
-                      Resultados do Relatório
-                    </v-toolbar-title>
-                    <v-spacer />
-                    <v-chip color="primary" outlined> {{ reportData.length }} anotador(es) </v-chip>
-                  </v-toolbar>
-                </template>
+              <!-- Resumo do Relatório de Anotadores -->
+              <v-card v-if="reportData && reportData.length > 0" flat class="ma-4">
+                <v-card-title class="subtitle-1">
+                  <v-icon left color="info">{{ mdiInformationOutline }}</v-icon>
+                  Resumo do Relatório
+                </v-card-title>
+                <v-card-text>
+                  <v-row>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-card outlined class="text-center pa-3">
+                        <div class="text-h5 primary--text">{{ reportData.length }}</div>
+                        <div class="caption">Total de Anotadores</div>
+                      </v-card>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-card outlined class="text-center pa-3">
+                        <div class="text-h5 primary--text">{{ getTotalAnnotations() }}</div>
+                        <div class="caption">Total de Anotações</div>
+                      </v-card>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="4">
+                      <v-card outlined class="text-center pa-3">
+                        <div class="text-h5 primary--text">{{ getUniqueLabelsCount() }}</div>
+                        <div class="caption">Labels Diferentes</div>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
 
-                <template #[`item.label_breakdown`]="{ item }">
-                  <div class="label-breakdown-container">
-                    <v-chip
-                      v-for="(count, label) in item.label_breakdown"
-                      :key="label"
-                      small
-                      class="total-label-chip"
-                      color="secondary"
-                    >
-                      {{ label }}: {{ count }}
-                    </v-chip>
-                    <div
-                      v-if="Object.keys(item.label_breakdown).length === 0"
-                      class="no-labels-message"
-                    >
-                      <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                      <span class="grey--text text-caption ml-1">Nenhuma label</span>
-                    </div>
-                  </div>
-                </template>
-
-                <template #[`item.dataset_label_breakdown`]="{ item }">
-                  <div class="dataset-breakdown">
-                    <div
-                      v-for="(labels, dataset) in item.dataset_label_breakdown"
-                      :key="dataset"
-                      class="dataset-section"
-                    >
-                      <div class="dataset-header">
-                        <v-icon small color="teal" class="mr-1">{{ mdiDatabase }}</v-icon>
-                        <span class="dataset-name">{{ dataset }}</span>
+              <!-- Tabela de Anotadores -->
+              <v-card v-if="reportData && reportData.length > 0" flat class="ma-4">
+                <v-card-title>
+                  <v-icon left color="primary">{{ mdiTable }}</v-icon>
+                  Detalhes dos Anotadores
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="primary"
+                    outlined
+                    small
+                    @click="generateAndExportReport"
+                    :loading="isGenerating"
+                    class="mr-2"
+                  >
+                    <v-icon left small>{{ mdiRefresh }}</v-icon>
+                    Atualizar
+                  </v-btn>
+                </v-card-title>
+                <v-data-table
+                  :headers="tableHeaders"
+                  :items="reportData"
+                  :loading="isGenerating"
+                  class="elevation-1"
+                  :items-per-page="15"
+                  :footer-props="{
+                    'items-per-page-options': [10, 15, 25, 50, -1],
+                    'items-per-page-text': 'Itens por página:',
+                    showFirstLastPage: true
+                  }"
+                  loading-text="Carregando dados..."
+                  no-data-text="Nenhum dado disponível"
+                >
+                  <!-- Template para nome de utilizador -->
+                  <template #[`item.annotator_username`]="{ item }">
+                    <div class="d-flex align-center">
+                      <v-avatar size="32" color="primary" class="mr-3">
+                        <span class="white--text text-subtitle-2">{{ item.annotator_username.charAt(0).toUpperCase() }}</span>
+                      </v-avatar>
+                      <div>
+                        <div class="font-weight-medium">{{ item.annotator_username }}</div>
+                        <div class="text-caption grey--text">{{ item.annotator_name }}</div>
                       </div>
-                      <div class="labels-in-dataset">
+                    </div>
+                  </template>
+
+                  <!-- Template para Labels -->
+                  <template #[`item.label_breakdown`]="{ item }">
+                    <div class="labels-container">
+                      <div v-if="Object.keys(item.label_breakdown).length > 0">
                         <v-chip
-                          v-for="(count, label) in labels"
-                          :key="`${dataset}-${label}`"
+                          v-for="(count, label) in item.label_breakdown"
+                          :key="label"
                           small
-                          class="label-chip"
                           color="primary"
                           outlined
+                          class="ma-1"
                         >
-                          {{ label }}
+                          {{ label }}: {{ count }}
                         </v-chip>
                       </div>
+                      <span v-else class="grey--text text-caption">
+                        <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                        Sem labels
+                      </span>
                     </div>
-                    <div
-                      v-if="!item.dataset_label_breakdown || Object.keys(item.dataset_label_breakdown).length === 0"
-                      class="no-data-message"
-                    >
-                      <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                      <span class="grey--text text-caption ml-1">Nenhuma anotação encontrada</span>
+                  </template>
+
+                  <!-- Template para Datasets -->
+                  <template #[`item.dataset_label_breakdown`]="{ item }">
+                    <div class="datasets-breakdown-modern">
+                      <div
+                        v-for="(labels, dataset) in item.dataset_label_breakdown"
+                        :key="dataset"
+                        class="dataset-section-modern mb-3"
+                      >
+                        <div class="dataset-header-modern">
+                          <v-icon small color="teal" class="mr-2">{{ mdiDatabase }}</v-icon>
+                          <span class="font-weight-medium text-body-2">{{ dataset }}</span>
+                        </div>
+                        <div class="dataset-labels-modern">
+                          <v-chip
+                            v-for="(count, label) in labels"
+                            :key="`${dataset}-${label}`"
+                            x-small
+                            class="ma-1"
+                            color="teal"
+                            text-color="white"
+                          >
+                            {{ label }}: {{ count }}
+                          </v-chip>
+                        </div>
+                      </div>
+                      <div
+                        v-if="!item.dataset_label_breakdown || Object.keys(item.dataset_label_breakdown).length === 0"
+                        class="no-data-modern"
+                      >
+                        <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                        <span class="text-caption grey--text ml-1">Nenhuma anotação</span>
+                      </div>
                     </div>
-                  </div>
-                </template>
-              </v-data-table>
+                  </template>
+
+                  <!-- Template para Perguntas e Respostas -->
+                  <template #[`item.perspective_questions_answers`]="{ item }">
+                    <div class="qa-breakdown-modern">
+                      <div
+                        v-if="item.perspective_questions_answers && item.perspective_questions_answers.answers && item.perspective_questions_answers.answers.length > 0"
+                      >
+                        <div
+                          v-for="question in getQuestionsWithAnswers(item.perspective_questions_answers)"
+                          :key="question.question_id"
+                          class="question-section-modern mb-3"
+                        >
+                          <div class="question-header-modern">
+                            <v-icon small color="indigo" class="mr-2">{{ mdiHelpCircle }}</v-icon>
+                            <span class="font-weight-medium text-body-2">{{ question.question_text }}</span>
+                          </div>
+                          <div class="question-answers-modern">
+                            <v-chip
+                              v-for="answer in question.answers"
+                              :key="answer.answer_id"
+                              x-small
+                              class="ma-1"
+                              color="indigo"
+                              text-color="white"
+                            >
+                              <v-icon left x-small>{{ mdiCommentCheck }}</v-icon>
+                              {{ answer.answer_text }}
+                            </v-chip>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="no-data-modern">
+                        <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                        <span class="text-caption grey--text ml-1">Nenhuma pergunta/resposta</span>
+                      </div>
+                    </div>
+                  </template>
+                </v-data-table>
+              </v-card>
 
               <!-- Estado vazio -->
               <v-card v-else-if="!isGenerating" flat class="text-center pa-12 elevation-2">
@@ -801,9 +939,10 @@ export default Vue.extend({
       date_from: string | null;
       date_to: string | null;
       labels: number[];
-      perspectives: number[];
       export_formats: string[];
       datasets: string[];
+      perspective_questions: number[];
+      perspective_answers: number[];
     };
     availableUsers: Array<{id: number; username: string}>;
     availableLabels: Array<{id: number; text: string; type: string}>;
@@ -833,7 +972,7 @@ export default Vue.extend({
     isExportingAnnotation: boolean;
     availableExamples: Array<{id: number; text: string}>;
     exportFormatOptions: Array<{value: string; text: string; icon: string; description: string}>;
-    availablePerspectives: Array<{id: number; name: string}>;
+
     availableDatasets: Array<{name: string; count: number}>;
     discrepancyOptions: Array<{value: string; text: string; description: string}>;
     availablePerspectiveQuestions: Array<{id: number; text: string}>;
@@ -873,9 +1012,10 @@ export default Vue.extend({
         date_from: null as string | null,
         date_to: null as string | null,
         labels: [] as number[],
-        perspectives: [] as number[],
         export_formats: [] as string[],
-        datasets: [] as string[]
+        datasets: [] as string[],
+        perspective_questions: [] as number[],
+        perspective_answers: [] as number[]
       },
 
       availableUsers: [] as Array<{id: number; username: string}>,
@@ -884,10 +1024,30 @@ export default Vue.extend({
       reportData: [] as any[],
 
       tableHeaders: [
-        { text: 'Utilizador', value: 'annotator_username', sortable: true, width: '140px' },
-        { text: 'Nome', value: 'annotator_name', sortable: true, width: '180px' },
-        { text: 'Total por Label', value: 'label_breakdown', sortable: false, width: '220px' },
-        { text: 'Labels por Dataset', value: 'dataset_label_breakdown', sortable: false, width: '460px' }
+        { 
+          text: 'Utilizador', 
+          value: 'annotator_username', 
+          sortable: true, 
+          width: '200px'
+        },
+        { 
+          text: 'Perguntas e Respostas', 
+          value: 'perspective_questions_answers', 
+          sortable: false, 
+          width: '300px'
+        },
+        { 
+          text: 'Labels', 
+          value: 'label_breakdown', 
+          sortable: false, 
+          width: '250px'
+        },
+        { 
+          text: 'Datasets', 
+          value: 'dataset_label_breakdown', 
+          sortable: false, 
+          width: '400px'
+        }
       ],
 
       isExporting: false,
@@ -922,7 +1082,7 @@ export default Vue.extend({
         { value: 'csv', text: 'CSV (Comma Separated Values)', icon: mdiFileDelimited, description: 'Ideal para Excel e análise de dados' },
         { value: 'pdf', text: 'PDF (Portable Document Format)', icon: mdiFilePdfBox, description: 'Documento formatado para visualização e impressão' }
       ],
-      availablePerspectives: [] as Array<{id: number; name: string}>,
+
       availableDatasets: [] as Array<{name: string; count: number}>,
       discrepancyOptions: [
         { value: 'all', text: 'Todas', description: 'Incluir todas as anotações' },
@@ -944,11 +1104,12 @@ export default Vue.extend({
       return (
         this.filters.users.length > 0 ||
         this.filters.labels.length > 0 ||
-        this.filters.perspectives.length > 0 ||
         this.filters.export_formats.length > 0 ||
         this.filters.date_from ||
         this.filters.date_to ||
-        this.filters.datasets.length > 0
+        this.filters.datasets.length > 0 ||
+        this.filters.perspective_questions.length > 0 ||
+        this.filters.perspective_answers.length > 0
       )
     },
 
@@ -956,11 +1117,12 @@ export default Vue.extend({
       let count = 0
       if (this.filters.users.length > 0) count++
       if (this.filters.labels.length > 0) count++
-      if (this.filters.perspectives.length > 0) count++
       if (this.filters.export_formats.length > 0) count++
       if (this.filters.date_from) count++
       if (this.filters.date_to) count++
       if (this.filters.datasets.length > 0) count++
+      if (this.filters.perspective_questions.length > 0) count++
+      if (this.filters.perspective_answers.length > 0) count++
       return count
     },
 
@@ -973,6 +1135,30 @@ export default Vue.extend({
         this.annotationFilters.perspective_questions.length > 0 ||
         this.annotationFilters.perspective_answers.length > 0
       )
+    },
+
+    // Filtrar respostas baseadas nas perguntas selecionadas
+    filteredAnswersForSelectedQuestions() {
+      if (this.filters.perspective_questions.length === 0) {
+        return []
+      }
+      
+      return this.availablePerspectiveAnswers.filter(answer =>
+        this.filters.perspective_questions.includes(answer.question_id)
+      )
+    }
+  },
+
+  watch: {
+    // Limpar respostas selecionadas quando as perguntas mudarem
+    'filters.perspective_questions'() {
+      // Se as perguntas mudaram, limpar as respostas que não pertencem às novas perguntas
+      if (this.filters.perspective_answers.length > 0) {
+        const validAnswerIds = this.filteredAnswersForSelectedQuestions.map(answer => answer.id)
+        this.filters.perspective_answers = this.filters.perspective_answers.filter(answerId =>
+          validAnswerIds.includes(answerId)
+        )
+      }
     }
   },
 
@@ -983,12 +1169,14 @@ export default Vue.extend({
   methods: {
     async loadFilterOptions() {
       try {
-        // Carregar utilizadores do projeto
+        // Carregar utilizadores do projeto (apenas anotadores)
         const members = await this.$repositories.member.list(this.projectId)
-        this.availableUsers = members.map((member: any) => ({
-          id: member.user,
-          username: member.username
-        }))
+        this.availableUsers = members
+          .filter((member: any) => member.rolename === 'annotator')
+          .map((member: any) => ({
+            id: member.user,
+            username: member.username
+          }))
 
         // Carregar projeto atual para verificar tipos disponíveis
         const currentProject = await this.$repositories.project.findById(this.projectId)
@@ -1027,21 +1215,7 @@ export default Vue.extend({
           )
         }
 
-        // Carregar perspectivas disponíveis
-        try {
-          const perspective = await this.$repositories.perspective.list(this.projectId)
-          if (perspective) {
-            this.availablePerspectives = [{
-              id: perspective.id,
-              name: perspective.name
-            }]
-          } else {
-            this.availablePerspectives = []
-          }
-        } catch (error) {
-          console.error('Erro ao carregar perspectivas:', error)
-          this.availablePerspectives = []
-        }
+
 
         // Carregar exemplos para filtro
         try {
@@ -1056,8 +1230,9 @@ export default Vue.extend({
 
         // Carregar perguntas e respostas da perspectiva
         try {
-          if (this.availablePerspectives.length > 0) {
-            const perspectiveId = this.availablePerspectives[0].id
+          const currentPerspective = await this.$repositories.perspective.list(this.projectId)
+          if (currentPerspective) {
+            const perspectiveId = currentPerspective.id
             
             // Carregar perguntas da perspectiva usando o endpoint correto
             const perspectiveQuestions = await this.$axios.get(`/v1/projects/${this.projectId}/perspectives/${perspectiveId}/questions`)
@@ -1083,7 +1258,7 @@ export default Vue.extend({
                 question_id: answer.question
               }))
             }
-          }
+            }
         } catch (error) {
           console.error('Erro ao carregar perguntas e respostas da perspectiva:', error)
           // Não mostrar erro ao usuário pois este é um recurso opcional
@@ -1210,12 +1385,16 @@ export default Vue.extend({
           params.append('label_ids', this.filters.labels.join(','))
         }
 
-        if (this.filters.perspectives.length > 0) {
-          params.append('perspective_ids', this.filters.perspectives.join(','))
-        }
-
         if (this.filters.datasets.length > 0) {
           params.append('dataset_names', this.filters.datasets.join(','))
+        }
+
+        if (this.filters.perspective_questions.length > 0) {
+          params.append('perspective_question_ids', this.filters.perspective_questions.join(','))
+        }
+
+        if (this.filters.perspective_answers.length > 0) {
+          params.append('perspective_answer_ids', this.filters.perspective_answers.join(','))
         }
 
         console.log('[FRONTEND DEBUG] Parâmetros enviados:', params.toString())
@@ -1299,12 +1478,16 @@ export default Vue.extend({
           params.append('label_ids', this.filters.labels.join(','))
         }
 
-        if (this.filters.perspectives.length > 0) {
-          params.append('perspective_ids', this.filters.perspectives.join(','))
-        }
-
         if (this.filters.datasets.length > 0) {
           params.append('dataset_names', this.filters.datasets.join(','))
+        }
+
+        if (this.filters.perspective_questions.length > 0) {
+          params.append('perspective_question_ids', this.filters.perspective_questions.join(','))
+        }
+
+        if (this.filters.perspective_answers.length > 0) {
+          params.append('perspective_answer_ids', this.filters.perspective_answers.join(','))
         }
 
         // Usar os formatos selecionados nos filtros
@@ -1381,9 +1564,10 @@ export default Vue.extend({
         date_from: null,
         date_to: null,
         labels: [],
-        perspectives: [],
         export_formats: [],
-        datasets: []
+        datasets: [],
+        perspective_questions: [],
+        perspective_answers: []
       }
       this.showSuccess('Filtros limpos')
     },
@@ -1398,10 +1582,7 @@ export default Vue.extend({
       this.filters.labels = this.filters.labels.filter((id) => id !== labelId)
     },
 
-    removePerspective(perspective: any) {
-      const perspectiveId = typeof perspective === 'object' ? perspective.id : perspective
-      this.filters.perspectives = this.filters.perspectives.filter((id) => id !== perspectiveId)
-    },
+
 
     removeExportFormat(format: string) {
       this.filters.export_formats = this.filters.export_formats.filter((f) => f !== format)
@@ -1717,14 +1898,7 @@ export default Vue.extend({
       return '';
     },
 
-    getSelectedPerspectiveText(perspective: any) {
-      if (typeof perspective === 'object') {
-        return perspective.name;
-      } else if (typeof perspective === 'string') {
-        return perspective;
-      }
-      return '';
-    },
+
 
     // Métodos auxiliares para filtros de discrepância
     getDiscrepancyColor(value: string) {
@@ -1746,12 +1920,14 @@ export default Vue.extend({
     },
 
     // Métodos para remover filtros específicos
-    removePerspectiveQuestion(questionId: number) {
-      this.annotationFilters.perspective_questions = this.annotationFilters.perspective_questions.filter((id) => id !== questionId)
+    removePerspectiveQuestion(question: any) {
+      const questionId = typeof question === 'object' ? question.id : question
+      this.filters.perspective_questions = this.filters.perspective_questions.filter((id) => id !== questionId)
     },
 
-    removePerspectiveAnswer(answerId: number) {
-      this.annotationFilters.perspective_answers = this.annotationFilters.perspective_answers.filter((id) => id !== answerId)
+    removePerspectiveAnswer(answer: any) {
+      const answerId = typeof answer === 'object' ? answer.id : answer
+      this.filters.perspective_answers = this.filters.perspective_answers.filter((id) => id !== answerId)
     },
 
     removeAnnotationExportFormat(format: string) {
@@ -1808,6 +1984,97 @@ export default Vue.extend({
         return answer;
       }
       return '';
+    },
+
+    getSelectedPerspectiveQuestionText(question: any) {
+      if (typeof question === 'object') {
+        return question.text;
+      } else if (typeof question === 'string') {
+        return question;
+      }
+      return '';
+    },
+
+    getSelectedPerspectiveAnswerText(answer: any) {
+      if (typeof answer === 'object') {
+        return answer.text;
+      } else if (typeof answer === 'string') {
+        return answer;
+      }
+      return '';
+    },
+
+    getQuestionsWithAnswers(perspectiveData) {
+      console.log('[DEBUG] getQuestionsWithAnswers chamado com:', perspectiveData)
+      
+      if (!perspectiveData || !perspectiveData.answers || !perspectiveData.questions) {
+        console.log('[DEBUG] Dados inválidos, retornando array vazio')
+        return []
+      }
+
+      // Criar um mapa de perguntas com suas respostas
+      const questionsMap = new Map()
+      
+      // Primeiro, adicionar todas as perguntas
+      perspectiveData.questions.forEach((question) => {
+        questionsMap.set(question.question_id, {
+          question_id: question.question_id,
+          question_text: question.question_text,
+          answers: []
+        })
+      })
+
+      // Depois, adicionar as respostas às respectivas perguntas
+      perspectiveData.answers.forEach((answer) => {
+        if (questionsMap.has(answer.question_id)) {
+          questionsMap.get(answer.question_id).answers.push(answer)
+        }
+      })
+
+      // Converter para array e filtrar apenas perguntas que têm respostas
+      const result = Array.from(questionsMap.values()).filter((question) => question.answers.length > 0)
+      console.log('[DEBUG] Resultado final:', result)
+      return result
+    },
+
+    // Gerar cor dinâmica para labels
+    getLabelColor(label) {
+      const colors = [
+        'deep-purple', 'indigo', 'blue', 'light-blue', 'cyan', 
+        'teal', 'green', 'light-green', 'lime', 'orange', 
+        'deep-orange', 'brown', 'blue-grey', 'pink', 'purple'
+      ]
+      let hash = 0
+      for (let i = 0; i < label.length; i++) {
+        hash = label.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      return colors[Math.abs(hash) % colors.length]
+    },
+
+    // Calcular total de anotações
+    getTotalAnnotations() {
+      if (!this.reportData || this.reportData.length === 0) return 0
+      
+      return this.reportData.reduce((total, annotator) => {
+        const labelTotal = Object.values(annotator.label_breakdown || {}).reduce((sum, count) => sum + count, 0)
+        return total + labelTotal
+      }, 0)
+    },
+
+    // Calcular número de labels únicas
+    getUniqueLabelsCount() {
+      if (!this.reportData || this.reportData.length === 0) return 0
+      
+      const uniqueLabels = new Set()
+      this.reportData.forEach(annotator => {
+        if (annotator.label_breakdown) {
+          Object.keys(annotator.label_breakdown).forEach(label => {
+            uniqueLabels.add(label)
+          })
+        }
+      })
+      
+      return uniqueLabels.size
     }
   }
 })
@@ -1823,12 +2090,14 @@ export default Vue.extend({
 }
 
 .v-data-table >>> .v-data-table__wrapper {
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .v-card {
   border-radius: 12px;
 }
+
+
 
 .text-caption {
   font-size: 0.75rem !important;
@@ -1935,5 +2204,142 @@ export default Vue.extend({
   height: auto !important;
   min-height: 24px;
   padding: 4px 8px;
+}
+
+.perspective-questions-container {
+  max-width: 280px;
+  word-wrap: break-word;
+}
+
+.perspective-questions-container .v-chip {
+  max-width: 100%;
+  white-space: normal;
+  height: auto !important;
+  min-height: 24px;
+  padding: 4px 8px;
+}
+
+.perspective-answers-container {
+  max-width: 280px;
+  word-wrap: break-word;
+}
+
+.perspective-answers-container .v-chip {
+  max-width: 100%;
+  white-space: normal;
+  height: auto !important;
+  min-height: 24px;
+  padding: 4px 8px;
+}
+
+.questions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.question-chip {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  transition: all 0.2s ease;
+}
+
+.question-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.answers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.answer-chip {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  height: 24px !important;
+  transition: all 0.2s ease;
+}
+
+.answer-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Substituir CSS de perguntas e respostas separadas */
+.perspective-qa-breakdown {
+  max-width: 350px;
+  word-wrap: break-word;
+}
+
+.question-section {
+  margin-bottom: 12px;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #3f51b5;
+}
+
+.question-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3f51b5;
+}
+
+.answers-in-question {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-left: 20px;
+}
+
+.answer-chip {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  height: auto !important;
+  min-height: 24px;
+  padding: 4px 8px;
+  max-width: 100%;
+  white-space: normal;
+  transition: all 0.2s ease;
+}
+
+.answer-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+
+
+/* Estilos para containers de dados */
+.labels-container {
+  max-width: 280px;
+  word-wrap: break-word;
+}
+
+.datasets-container {
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
+.qa-container {
+  max-width: 350px;
+  word-wrap: break-word;
+}
+
+.dataset-group {
+  margin-bottom: 8px;
+}
+
+.question-group {
+  margin-bottom: 8px;
 }
 </style>
