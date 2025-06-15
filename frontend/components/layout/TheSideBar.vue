@@ -6,6 +6,46 @@
       </v-icon>
       {{ $t('home.startAnnotation') }}
     </v-btn>
+    
+    <!-- Dialog de aviso para utilizadores sem perspectiva -->
+    <v-dialog v-model="perspectiveWarningDialog" persistent max-width="500">
+      <v-card>
+        <v-card-title class="warning white--text">
+          <v-icon left color="white">mdi-alert</v-icon>
+          Sem perspectiva pessoal definida
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <div class="text-center">
+            <v-icon size="80" color="warning" class="mb-4">mdi-clipboard-alert-outline</v-icon>
+            <h3 class="text-h6 mb-3">Perspectiva pessoal necessária</h3>
+            <p class="text-body-1 grey--text">
+              Para começar a anotar, precisa primeiro de definir a sua perspectiva pessoal respondendo às questões configuradas para este projeto.
+            </p>
+            <p class="text-body-2 grey--text">
+              Isto ajuda a garantir a consistência e qualidade das anotações.
+            </p>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn 
+            color="grey" 
+            text 
+            @click="perspectiveWarningDialog = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn 
+            color="primary" 
+            @click="goToPerspective"
+          >
+            <v-icon left>mdi-clipboard-text</v-icon>
+            Definir Perspectiva
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    
     <v-list-item-group v-model="selected" mandatory>
       <v-list-item
         v-for="(item, i) in filteredItems"
@@ -65,7 +105,9 @@ export default {
   data() {
     return {
       selected: null,
-      mdiPlayCircleOutline
+      mdiPlayCircleOutline,
+      perspectiveWarningDialog: false,
+      isCheckingPerspective: false
     }
   },
 
@@ -177,13 +219,73 @@ export default {
     }
   },
   methods: {
-    toLabeling() {
+    async toLabeling() {
+      // Admins não precisam de verificação de perspectiva - podem anotar sem perspectiva definida
+      if (this.isProjectAdmin) {
+        this.proceedToAnnotation()
+        return
+      }
+
+      // Para não-admins, verificar se tem perspectiva definida
+      this.isCheckingPerspective = true
+      
+      try {
+        const hasPerspective = await this.checkUserHasPerspective()
+        
+        if (hasPerspective) {
+          // Utilizador tem perspectiva definida, pode prosseguir para anotação
+          this.proceedToAnnotation()
+        } else {
+          // Utilizador não tem perspectiva definida, mostrar aviso
+          this.perspectiveWarningDialog = true
+        }
+      } catch (error) {
+        console.error('Erro ao verificar perspectiva:', error)
+        // Em caso de erro, permitir prosseguir (para não bloquear totalmente)
+        this.proceedToAnnotation()
+      } finally {
+        this.isCheckingPerspective = false
+      }
+    },
+
+    async checkUserHasPerspective() {
+      try {
+        // Buscar respostas do utilizador atual
+        const answers = await this.$services.answer.list()
+        
+        // Verificar se existe pelo menos uma resposta do utilizador no projeto atual
+        if (!answers || answers.length === 0) {
+          return false
+        }
+
+        // Buscar o papel do utilizador no projeto para obter o member ID
+        const memberRole = await this.$repositories.member.fetchMyRole(this.$route.params.id)
+        if (!memberRole) {
+          return false
+        }
+
+        // Verificar se existe pelo menos uma resposta deste membro
+        const userAnswers = answers.filter(answer => answer.member === memberRole.id)
+        
+        return userAnswers.length > 0
+      } catch (error) {
+        console.error('Erro ao verificar perspectiva do utilizador:', error)
+        throw error
+      }
+    },
+
+    proceedToAnnotation() {
       const query = this.$services.option.findOption(this.$route.params.id)
       const link = getLinkToAnnotationPage(this.$route.params.id, this.project.projectType)
       this.$router.push({
         path: this.localePath(link),
         query
       })
+    },
+
+    goToPerspective() {
+      this.perspectiveWarningDialog = false
+      this.$router.push(this.localePath(`/projects/${this.$route.params.id}/perspectives`))
     }
   }
 }
