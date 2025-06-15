@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.utils import timezone
 
 # Imports para PDF
 from reportlab.lib import colors
@@ -520,7 +521,7 @@ class AnnotatorReportExportView(APIView):
         return True
 
     def _export_csv(self, report_data):
-        """Exportar relatório em formato CSV"""
+        """Exportar relatório em formato CSV melhorado"""
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.csv"'
         
@@ -529,35 +530,175 @@ class AnnotatorReportExportView(APIView):
         
         writer = csv.writer(response)
         
-        # Cabeçalho
+        # Cabeçalho do relatório
+        writer.writerow(['=== RELATÓRIO SOBRE ANOTADORES ==='])
+        writer.writerow([])
+        
+        # Obter informações do projeto
+        project_name = "N/A"
+        project_type = "N/A"
+        if report_data.get('data') and len(report_data['data']) > 0:
+            first_item = report_data['data'][0]
+            project_name = first_item.get('project_name', "N/A")
+            project_type = first_item.get('project_type', "N/A")
+        
+        # Informações do projeto
+        writer.writerow(['Projeto:', project_name])
+        writer.writerow(['Tipo:', project_type])
+        writer.writerow(['Data de Geração:', timezone.now().strftime('%d/%m/%Y %H:%M:%S')])
+        writer.writerow([])
+        
+        # Estatísticas resumo
+        data_items = report_data.get('data', [])
+        total_annotators = len(data_items)
+        total_annotations = sum(sum(item.get('label_breakdown', {}).values()) for item in data_items)
+        
+        # Calcular labels únicas
+        unique_labels = set()
+        for item in data_items:
+            if item.get('label_breakdown'):
+                unique_labels.update(item['label_breakdown'].keys())
+        
+        writer.writerow(['=== ESTATÍSTICAS RESUMO ==='])
+        writer.writerow(['Total de Anotadores:', total_annotators])
+        writer.writerow(['Total de Anotações:', total_annotations])
+        writer.writerow(['Labels Diferentes:', len(unique_labels)])
+        writer.writerow([])
+        
+        # Informações sobre filtros aplicados
+        writer.writerow(['=== FILTROS APLICADOS ==='])
+        query_params = getattr(self.request, 'query_params', self.request.GET)
+        
+        # Usuários
+        if 'user_ids' in query_params and query_params['user_ids']:
+            try:
+                from django.contrib.auth.models import User
+                user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
+                users = User.objects.filter(id__in=user_ids)
+                user_names = [user.username for user in users]
+                writer.writerow(['Utilizadores:', ', '.join(user_names)])
+            except Exception:
+                writer.writerow(['Utilizadores:', query_params['user_ids']])
+        
+        # Labels
+        if 'label_ids' in query_params and query_params['label_ids']:
+            try:
+                from label_types.models import CategoryType, SpanType, RelationType
+                label_ids = [int(lid.strip()) for lid in query_params['label_ids'].split(',') if lid.strip()]
+                
+                label_names = []
+                label_names.extend([label.text for label in CategoryType.objects.filter(id__in=label_ids)])
+                label_names.extend([label.text for label in SpanType.objects.filter(id__in=label_ids)])
+                label_names.extend([label.text for label in RelationType.objects.filter(id__in=label_ids)])
+                
+                writer.writerow(['Labels:', ', '.join(label_names)])
+            except Exception:
+                writer.writerow(['Labels:', query_params['label_ids']])
+        
+        # Datasets
+        if 'dataset_names' in query_params and query_params['dataset_names']:
+            datasets = [name.strip() for name in query_params['dataset_names'].split(',') if name.strip()]
+            writer.writerow(['Datasets:', ', '.join(datasets)])
+        
+        # Perguntas da perspectiva
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                from projects.models import Question
+                question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                questions = Question.objects.filter(id__in=question_ids)
+                question_texts = [q.question for q in questions]
+                writer.writerow(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+            except Exception:
+                writer.writerow(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
+        
+        # Respostas da perspectiva
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                from projects.models import Answer
+                answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                answers = Answer.objects.filter(id__in=answer_ids)
+                answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
+                writer.writerow(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+            except Exception:
+                writer.writerow(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
+        
+        # Datas
+        if 'date_from' in query_params and query_params['date_from']:
+            writer.writerow(['Data Início:', query_params['date_from']])
+        if 'date_to' in query_params and query_params['date_to']:
+            writer.writerow(['Data Fim:', query_params['date_to']])
+        
+        writer.writerow([])
+        
+        # Cabeçalho da tabela de dados
+        writer.writerow(['=== DADOS DETALHADOS ==='])
         writer.writerow([
             'Utilizador',
-            'Nome',
-            'Labels Breakdown',
-            'Total de Anotações'
+            'Nome Completo',
+            'Labels (Detalhado)',
+            'Total Anotações',
+            'Datasets (Detalhado)',
+            'Perguntas e Respostas'
         ])
         
-        # Dados
-        data_items = report_data.get('data', [])
-        
+        # Dados dos anotadores
         for item in data_items:
-            # Formatar label breakdown
-            label_breakdown = '; '.join([f"{label}: {count}" for label, count in item.get('label_breakdown', {}).items()])
+            # Formatar label breakdown detalhado
+            label_breakdown = []
+            if item.get('label_breakdown'):
+                for label, count in item['label_breakdown'].items():
+                    label_breakdown.append(f"{label}: {count}")
+            label_breakdown_text = '; '.join(label_breakdown) if label_breakdown else 'Nenhuma'
             
             # Calcular total de anotações
             total_annotations = sum(item.get('label_breakdown', {}).values())
             
+            # Formatar datasets breakdown
+            dataset_breakdown = []
+            if item.get('dataset_label_breakdown'):
+                for dataset, labels in item['dataset_label_breakdown'].items():
+                    dataset_labels = []
+                    for label, count in labels.items():
+                        dataset_labels.append(f"{label}: {count}")
+                    dataset_breakdown.append(f"{dataset} ({'; '.join(dataset_labels)})")
+            dataset_breakdown_text = '; '.join(dataset_breakdown) if dataset_breakdown else 'Nenhum'
+            
+            # Formatar perguntas e respostas
+            qa_breakdown = []
+            if item.get('perspective_questions_answers'):
+                qa_data = item['perspective_questions_answers']
+                if qa_data.get('questions') and qa_data.get('answers'):
+                    # Criar mapa de perguntas
+                    questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
+                    
+                    # Agrupar respostas por pergunta
+                    answers_by_question = {}
+                    for answer in qa_data['answers']:
+                        question_id = answer['question_id']
+                        if question_id not in answers_by_question:
+                            answers_by_question[question_id] = []
+                        answers_by_question[question_id].append(answer['answer_text'])
+                    
+                    # Formatar para CSV
+                    for question_id, answers in answers_by_question.items():
+                        question_text = questions_map.get(question_id, f"Pergunta {question_id}")
+                        qa_breakdown.append(f"{question_text}: {', '.join(answers)}")
+            
+            qa_breakdown_text = '; '.join(qa_breakdown) if qa_breakdown else 'Nenhuma'
+            
             writer.writerow([
                 item.get('annotator_username', 'N/A'),
                 item.get('annotator_name', 'N/A'),
-                label_breakdown,
-                total_annotations
+                label_breakdown_text,
+                total_annotations,
+                dataset_breakdown_text,
+                qa_breakdown_text
             ])
         
         return response
 
     def _export_tsv(self, report_data):
-        """Exportar relatório em formato TSV"""
+        """Exportar relatório em formato TSV melhorado"""
         response = HttpResponse(content_type='text/tab-separated-values; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.tsv"'
         
@@ -566,45 +707,186 @@ class AnnotatorReportExportView(APIView):
         
         writer = csv.writer(response, delimiter='\t')
         
-        # Cabeçalho
+        # Cabeçalho do relatório
+        writer.writerow(['=== RELATÓRIO SOBRE ANOTADORES ==='])
+        writer.writerow([])
+        
+        # Obter informações do projeto
+        project_name = "N/A"
+        project_type = "N/A"
+        if report_data.get('data') and len(report_data['data']) > 0:
+            first_item = report_data['data'][0]
+            project_name = first_item.get('project_name', "N/A")
+            project_type = first_item.get('project_type', "N/A")
+        
+        # Informações do projeto
+        writer.writerow(['Projeto:', project_name])
+        writer.writerow(['Tipo:', project_type])
+        writer.writerow(['Data de Geração:', timezone.now().strftime('%d/%m/%Y %H:%M:%S')])
+        writer.writerow([])
+        
+        # Estatísticas resumo
+        data_items = report_data.get('data', [])
+        total_annotators = len(data_items)
+        total_annotations = sum(sum(item.get('label_breakdown', {}).values()) for item in data_items)
+        
+        # Calcular labels únicas
+        unique_labels = set()
+        for item in data_items:
+            if item.get('label_breakdown'):
+                unique_labels.update(item['label_breakdown'].keys())
+        
+        writer.writerow(['=== ESTATÍSTICAS RESUMO ==='])
+        writer.writerow(['Total de Anotadores:', total_annotators])
+        writer.writerow(['Total de Anotações:', total_annotations])
+        writer.writerow(['Labels Diferentes:', len(unique_labels)])
+        writer.writerow([])
+        
+        # Informações sobre filtros aplicados
+        writer.writerow(['=== FILTROS APLICADOS ==='])
+        query_params = getattr(self.request, 'query_params', self.request.GET)
+        
+        # Usuários
+        if 'user_ids' in query_params and query_params['user_ids']:
+            try:
+                from django.contrib.auth.models import User
+                user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
+                users = User.objects.filter(id__in=user_ids)
+                user_names = [user.username for user in users]
+                writer.writerow(['Utilizadores:', ', '.join(user_names)])
+            except Exception:
+                writer.writerow(['Utilizadores:', query_params['user_ids']])
+        
+        # Labels
+        if 'label_ids' in query_params and query_params['label_ids']:
+            try:
+                from label_types.models import CategoryType, SpanType, RelationType
+                label_ids = [int(lid.strip()) for lid in query_params['label_ids'].split(',') if lid.strip()]
+                
+                label_names = []
+                label_names.extend([label.text for label in CategoryType.objects.filter(id__in=label_ids)])
+                label_names.extend([label.text for label in SpanType.objects.filter(id__in=label_ids)])
+                label_names.extend([label.text for label in RelationType.objects.filter(id__in=label_ids)])
+                
+                writer.writerow(['Labels:', ', '.join(label_names)])
+            except Exception:
+                writer.writerow(['Labels:', query_params['label_ids']])
+        
+        # Datasets
+        if 'dataset_names' in query_params and query_params['dataset_names']:
+            datasets = [name.strip() for name in query_params['dataset_names'].split(',') if name.strip()]
+            writer.writerow(['Datasets:', ', '.join(datasets)])
+        
+        # Perguntas da perspectiva
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                from projects.models import Question
+                question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                questions = Question.objects.filter(id__in=question_ids)
+                question_texts = [q.question for q in questions]
+                writer.writerow(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+            except Exception:
+                writer.writerow(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
+        
+        # Respostas da perspectiva
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                from projects.models import Answer
+                answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                answers = Answer.objects.filter(id__in=answer_ids)
+                answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
+                writer.writerow(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+            except Exception:
+                writer.writerow(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
+        
+        # Datas
+        if 'date_from' in query_params and query_params['date_from']:
+            writer.writerow(['Data Início:', query_params['date_from']])
+        if 'date_to' in query_params and query_params['date_to']:
+            writer.writerow(['Data Fim:', query_params['date_to']])
+        
+        writer.writerow([])
+        
+        # Cabeçalho da tabela de dados
+        writer.writerow(['=== DADOS DETALHADOS ==='])
         writer.writerow([
             'Utilizador',
-            'Nome',
-            'Labels Breakdown',
-            'Total de Anotações'
+            'Nome Completo',
+            'Labels (Detalhado)',
+            'Total Anotações',
+            'Datasets (Detalhado)',
+            'Perguntas e Respostas'
         ])
         
-        # Dados
-        data_items = report_data.get('data', [])
-        
+        # Dados dos anotadores
         for item in data_items:
-            # Formatar label breakdown
-            label_breakdown = '; '.join([f"{label}: {count}" for label, count in item.get('label_breakdown', {}).items()])
+            # Formatar label breakdown detalhado
+            label_breakdown = []
+            if item.get('label_breakdown'):
+                for label, count in item['label_breakdown'].items():
+                    label_breakdown.append(f"{label}: {count}")
+            label_breakdown_text = '; '.join(label_breakdown) if label_breakdown else 'Nenhuma'
             
             # Calcular total de anotações
             total_annotations = sum(item.get('label_breakdown', {}).values())
             
+            # Formatar datasets breakdown
+            dataset_breakdown = []
+            if item.get('dataset_label_breakdown'):
+                for dataset, labels in item['dataset_label_breakdown'].items():
+                    dataset_labels = []
+                    for label, count in labels.items():
+                        dataset_labels.append(f"{label}: {count}")
+                    dataset_breakdown.append(f"{dataset} ({'; '.join(dataset_labels)})")
+            dataset_breakdown_text = '; '.join(dataset_breakdown) if dataset_breakdown else 'Nenhum'
+            
+            # Formatar perguntas e respostas
+            qa_breakdown = []
+            if item.get('perspective_questions_answers'):
+                qa_data = item['perspective_questions_answers']
+                if qa_data.get('questions') and qa_data.get('answers'):
+                    # Criar mapa de perguntas
+                    questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
+                    
+                    # Agrupar respostas por pergunta
+                    answers_by_question = {}
+                    for answer in qa_data['answers']:
+                        question_id = answer['question_id']
+                        if question_id not in answers_by_question:
+                            answers_by_question[question_id] = []
+                        answers_by_question[question_id].append(answer['answer_text'])
+                    
+                    # Formatar para TSV
+                    for question_id, answers in answers_by_question.items():
+                        question_text = questions_map.get(question_id, f"Pergunta {question_id}")
+                        qa_breakdown.append(f"{question_text}: {', '.join(answers)}")
+            
+            qa_breakdown_text = '; '.join(qa_breakdown) if qa_breakdown else 'Nenhuma'
+            
             writer.writerow([
                 item.get('annotator_username', 'N/A'),
                 item.get('annotator_name', 'N/A'),
-                label_breakdown,
-                total_annotations
+                label_breakdown_text,
+                total_annotations,
+                dataset_breakdown_text,
+                qa_breakdown_text
             ])
         
         return response
 
     def _export_pdf(self, report_data):
-        """Exportar relatório em formato PDF"""
+        """Exportar relatório em formato PDF melhorado com design profissional"""
         try:
             import io
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import letter, landscape, A4
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, KeepTogether
             from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
-            from reportlab.lib.enums import TA_LEFT, TA_CENTER
-            from reportlab.lib.units import inch
+            from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+            from reportlab.lib.units import inch, cm
+            from datetime import datetime
 
             print(f"[PDF DEBUG] Iniciando exportação PDF com {len(report_data.get('data', []))} itens")
 
@@ -615,52 +897,82 @@ class AnnotatorReportExportView(APIView):
             doc = SimpleDocTemplate(
                 buffer,
                 pagesize=landscape(A4),
-                rightMargin=20,
-                leftMargin=20,
-                topMargin=20,
-                bottomMargin=20
+                rightMargin=1.5*cm,
+                leftMargin=1.5*cm,
+                topMargin=2*cm,
+                bottomMargin=2*cm
             )
             
             # Configurar estilos
             styles = getSampleStyleSheet()
             
-            # Adicionar estilo personalizado para cabeçalho
-            styles.add(
-                ParagraphStyle(
-                    name='TitleStyle',
-                    parent=styles['Heading1'],
-                    fontSize=16,
-                    alignment=TA_CENTER,
-                    spaceAfter=12
-                )
-            )
+            # Estilos personalizados
+            styles.add(ParagraphStyle(
+                name='MainTitle',
+                parent=styles['Heading1'],
+                fontSize=20,
+                alignment=TA_CENTER,
+                spaceAfter=20,
+                textColor=colors.HexColor('#1976d2'),
+                fontName='Helvetica-Bold'
+            ))
             
-            # Adicionar estilo personalizado para subtítulos
-            styles.add(
-                ParagraphStyle(
-                    name='SubtitleStyle',
-                    parent=styles['Heading2'],
-                    fontSize=12,
-                    alignment=TA_LEFT,
-                    spaceAfter=6
-                )
-            )
+            styles.add(ParagraphStyle(
+                name='SectionTitle',
+                parent=styles['Heading2'],
+                fontSize=14,
+                alignment=TA_LEFT,
+                spaceAfter=10,
+                spaceBefore=15,
+                textColor=colors.HexColor('#424242'),
+                fontName='Helvetica-Bold',
+                borderWidth=1,
+                borderColor=colors.HexColor('#e0e0e0'),
+                borderPadding=5,
+                backColor=colors.HexColor('#f5f5f5')
+            ))
             
-            # Estilo para texto pequeno
-            styles.add(
-                ParagraphStyle(
-                    name='SmallText',
-                    parent=styles['Normal'],
-                    fontSize=8,
-                    alignment=TA_LEFT
-                )
-            )
+            styles.add(ParagraphStyle(
+                name='InfoText',
+                parent=styles['Normal'],
+                fontSize=10,
+                alignment=TA_LEFT,
+                spaceAfter=4,
+                textColor=colors.HexColor('#666666')
+            ))
+            
+            styles.add(ParagraphStyle(
+                name='StatText',
+                parent=styles['Normal'],
+                fontSize=12,
+                alignment=TA_CENTER,
+                spaceAfter=6,
+                textColor=colors.HexColor('#1976d2'),
+                fontName='Helvetica-Bold'
+            ))
+            
+            styles.add(ParagraphStyle(
+                name='TableHeader',
+                parent=styles['Normal'],
+                fontSize=9,
+                alignment=TA_CENTER,
+                textColor=colors.white,
+                fontName='Helvetica-Bold'
+            ))
+            
+            styles.add(ParagraphStyle(
+                name='TableCell',
+                parent=styles['Normal'],
+                fontSize=8,
+                alignment=TA_LEFT,
+                textColor=colors.HexColor('#424242')
+            ))
             
             # Elementos do documento
             elements = []
             
-            # Título do relatório
-            elements.append(Paragraph("Relatório sobre Anotadores", styles['TitleStyle']))
+            # Cabeçalho principal
+            elements.append(Paragraph("RELATÓRIO SOBRE ANOTADORES", styles['MainTitle']))
             elements.append(Spacer(1, 10))
             
             # Obter informações do projeto
@@ -671,190 +983,267 @@ class AnnotatorReportExportView(APIView):
                 project_name = first_item.get('project_name', "N/A")
                 project_type = first_item.get('project_type', "N/A")
             
-            # Informações do projeto
-            elements.append(Paragraph(f"Projeto: {project_name}", styles['SubtitleStyle']))
-            elements.append(Paragraph(f"Tipo: {project_type}", styles['SubtitleStyle']))
-            elements.append(Spacer(1, 10))
+            # Informações do projeto em tabela
+            project_info = [
+                ['Projeto:', project_name],
+                ['Tipo:', project_type],
+                ['Data de Geração:', timezone.now().strftime('%d/%m/%Y às %H:%M:%S')]
+            ]
             
-            # Adicionar informações sobre os filtros utilizados
-            elements.append(Paragraph("Filtros aplicados:", styles['SubtitleStyle']))
+            project_table = Table(project_info, colWidths=[3*cm, 12*cm])
+            project_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e3f2fd')),
+                ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#1976d2')),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+                ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#bbbbbb')),
+                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ]))
             
-            # Recuperar os filtros da query string original
+            elements.append(project_table)
+            elements.append(Spacer(1, 20))
+            
+            # Estatísticas resumo
+            data_items = report_data.get('data', [])
+            total_annotators = len(data_items)
+            total_annotations = sum(sum(item.get('label_breakdown', {}).values()) for item in data_items)
+            
+            # Calcular labels únicas
+            unique_labels = set()
+            for item in data_items:
+                if item.get('label_breakdown'):
+                    unique_labels.update(item['label_breakdown'].keys())
+            
+            elements.append(Paragraph("ESTATÍSTICAS RESUMO", styles['SectionTitle']))
+            
+            # Criar tabela de estatísticas em formato de cards
+            stats_data = [
+                ['Total de Anotadores', 'Total de Anotações', 'Labels Diferentes'],
+                [str(total_annotators), str(total_annotations), str(len(unique_labels))]
+            ]
+            
+            stats_table = Table(stats_data, colWidths=[5*cm, 5*cm, 5*cm])
+            stats_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#e3f2fd')),
+                ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 1), (-1, 1), 14),
+                ('TEXTCOLOR', (0, 1), (-1, 1), colors.HexColor('#1976d2')),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#1976d2')),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ]))
+            
+            elements.append(stats_table)
+            elements.append(Spacer(1, 20))
+            
+            # Filtros aplicados
+            elements.append(Paragraph("FILTROS APLICADOS", styles['SectionTitle']))
+            
             query_params = getattr(self.request, 'query_params', self.request.GET)
+            filter_info = []
             
-            # Usuários - converter IDs para nomes
+            # Usuários
             if 'user_ids' in query_params and query_params['user_ids']:
                 try:
                     from django.contrib.auth.models import User
                     user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
                     users = User.objects.filter(id__in=user_ids)
                     user_names = [user.username for user in users]
-                    elements.append(Paragraph(f"Utilizadores: {', '.join(user_names)}", styles['Normal']))
-                except Exception as e:
-                    print(f"[PDF DEBUG] Erro ao processar user_ids: {e}")
-                    elements.append(Paragraph(f"Utilizadores: {query_params['user_ids']}", styles['Normal']))
+                    filter_info.append(['Utilizadores:', ', '.join(user_names)])
+                except Exception:
+                    filter_info.append(['Utilizadores:', query_params['user_ids']])
             
-            # Labels - converter IDs para nomes
+            # Labels
             if 'label_ids' in query_params and query_params['label_ids']:
                 try:
                     from label_types.models import CategoryType, SpanType, RelationType
                     label_ids = [int(lid.strip()) for lid in query_params['label_ids'].split(',') if lid.strip()]
                     
-                    # Buscar em todos os tipos de label
-                    category_labels = CategoryType.objects.filter(id__in=label_ids)
-                    span_labels = SpanType.objects.filter(id__in=label_ids)
-                    relation_labels = RelationType.objects.filter(id__in=label_ids)
-                    
                     label_names = []
-                    label_names.extend([label.text for label in category_labels])
-                    label_names.extend([label.text for label in span_labels])
-                    label_names.extend([label.text for label in relation_labels])
+                    label_names.extend([label.text for label in CategoryType.objects.filter(id__in=label_ids)])
+                    label_names.extend([label.text for label in SpanType.objects.filter(id__in=label_ids)])
+                    label_names.extend([label.text for label in RelationType.objects.filter(id__in=label_ids)])
                     
-                    elements.append(Paragraph(f"Labels: {', '.join(label_names)}", styles['Normal']))
-                except Exception as e:
-                    print(f"[PDF DEBUG] Erro ao processar label_ids: {e}")
-                    elements.append(Paragraph(f"Labels: {query_params['label_ids']}", styles['Normal']))
+                    filter_info.append(['Labels:', ', '.join(label_names)])
+                except Exception:
+                    filter_info.append(['Labels:', query_params['label_ids']])
             
             # Datasets
             if 'dataset_names' in query_params and query_params['dataset_names']:
-                elements.append(Paragraph(f"Datasets: {query_params['dataset_names']}", styles['Normal']))
+                datasets = [name.strip() for name in query_params['dataset_names'].split(',') if name.strip()]
+                filter_info.append(['Datasets:', ', '.join(datasets)])
             
-            elements.append(Spacer(1, 20))
-            
-            # Preparar dados para tabela principal
-            table_data = [
-                ['Utilizador', 'Nome', 'Total por Label', 'Labels por Dataset']
-            ]
-            
-            # Adicionar dados à tabela
-            data_items = report_data.get('data', [])
-            print(f"[PDF DEBUG] Processando {len(data_items)} itens para tabela")
-            
-            for i, item in enumerate(data_items):
+            # Perguntas da perspectiva
+            if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
                 try:
-                    # Formatar breakdown de labels totais
-                    label_breakdown = item.get('label_breakdown', {})
-                    total_labels_text = ""
-                    if label_breakdown:
-                        label_parts = []
-                        for label, count in label_breakdown.items():
-                            label_parts.append(f"{label}: {count}")
-                        total_labels_text = "; ".join(label_parts)
-                    else:
-                        total_labels_text = "Nenhuma label"
-                    
-                    # Formatar breakdown de labels por dataset
-                    dataset_breakdown = item.get('dataset_label_breakdown', {})
-                    dataset_labels_text = ""
-                    if dataset_breakdown:
-                        dataset_parts = []
-                        for dataset, labels in dataset_breakdown.items():
-                            if labels:
-                                label_list = ", ".join(labels.keys())
-                                dataset_parts.append(f"{dataset}: {label_list}")
-                        dataset_labels_text = "; ".join(dataset_parts)
-                    else:
-                        dataset_labels_text = "Nenhuma anotação"
-                    
-                    # Truncar textos se muito longos
-                    if len(total_labels_text) > 100:
-                        total_labels_text = total_labels_text[:97] + "..."
-                    if len(dataset_labels_text) > 150:
-                        dataset_labels_text = dataset_labels_text[:147] + "..."
-                    
-                    # Truncar nome se muito longo
-                    name = item.get('annotator_name', 'N/A')
-                    if len(name) > 25:
-                        name = name[:22] + '...'
-                    
-                    table_data.append([
-                        item.get('annotator_username', 'N/A'),
-                        name,
-                        total_labels_text,
-                        dataset_labels_text
-                    ])
-                except Exception as e:
-                    print(f"[PDF DEBUG] Erro ao processar item {i}: {e}")
-                    table_data.append([
-                        'Erro',
-                        'Erro ao processar',
-                        'Erro',
-                        'Erro'
-                    ])
+                    from projects.models import Question
+                    question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                    questions = Question.objects.filter(id__in=question_ids)
+                    question_texts = [q.question for q in questions]
+                    filter_info.append(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+                except Exception:
+                    filter_info.append(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
             
-            print(f"[PDF DEBUG] Tabela criada com {len(table_data)} linhas")
+            # Respostas da perspectiva
+            if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+                try:
+                    from projects.models import Answer
+                    answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                    answers = Answer.objects.filter(id__in=answer_ids)
+                    answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
+                    filter_info.append(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+                except Exception:
+                    filter_info.append(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
             
-            # Criar tabela com larguras específicas
-            col_widths = [1.5*inch, 2*inch, 3*inch, 4*inch]  # Ajustar larguras das colunas
-            table = Table(table_data, repeatRows=1, colWidths=col_widths)
+            # Datas
+            if 'date_from' in query_params and query_params['date_from']:
+                filter_info.append(['Data Início:', query_params['date_from']])
+            if 'date_to' in query_params and query_params['date_to']:
+                filter_info.append(['Data Fim:', query_params['date_to']])
             
-            # Estilo da tabela
-            table_style = TableStyle([
-                # Cabeçalho
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                
-                # Dados
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 7),
-                ('WORDWRAP', (0, 1), (-1, -1), True),
-                ('LEFTPADDING', (0, 1), (-1, -1), 3),
-                ('RIGHTPADDING', (0, 1), (-1, -1), 3),
-                ('TOPPADDING', (0, 1), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
-            ])
+            if filter_info:
+                filter_table = Table(filter_info, colWidths=[4*cm, 11*cm])
+                filter_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f5f5f5')),
+                    ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#424242')),
+                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 9),
+                    ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+                    ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                    ('TOPPADDING', (0, 0), (-1, -1), 4),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ]))
+                elements.append(filter_table)
+            else:
+                elements.append(Paragraph("Nenhum filtro específico aplicado", styles['InfoText']))
             
-            # Adicionar linhas alternadas
-            for i in range(1, len(table_data)):
-                if i % 2 == 0:
-                    table_style.add('BACKGROUND', (0, i), (-1, i), colors.lightgrey)
-            
-            table.setStyle(table_style)
-            
-            # Adicionar tabela ao documento
-            elements.append(table)
-            
-            # Adicionar resumo no final
             elements.append(Spacer(1, 20))
-            elements.append(Paragraph("Resumo:", styles['SubtitleStyle']))
-            elements.append(Paragraph(f"Total de anotadores: {len(data_items)}", styles['Normal']))
             
-            # Calcular estatísticas gerais
-            total_annotations = 0
-            all_labels = set()
-            all_datasets = set()
+            # Dados detalhados
+            elements.append(Paragraph("DADOS DETALHADOS", styles['SectionTitle']))
             
-            for item in data_items:
-                label_breakdown = item.get('label_breakdown', {})
-                total_annotations += sum(label_breakdown.values())
-                all_labels.update(label_breakdown.keys())
+            if data_items:
+                # Cabeçalho da tabela
+                table_data = [
+                    [
+                        Paragraph('Utilizador', styles['TableHeader']),
+                        Paragraph('Nome', styles['TableHeader']),
+                        Paragraph('Labels', styles['TableHeader']),
+                        Paragraph('Total', styles['TableHeader']),
+                        Paragraph('Datasets', styles['TableHeader']),
+                        Paragraph('Perguntas/Respostas', styles['TableHeader'])
+                    ]
+                ]
                 
-                dataset_breakdown = item.get('dataset_label_breakdown', {})
-                all_datasets.update(dataset_breakdown.keys())
+                # Dados dos anotadores
+                for i, item in enumerate(data_items):
+                    # Formatar labels
+                    label_breakdown = []
+                    if item.get('label_breakdown'):
+                        for label, count in item['label_breakdown'].items():
+                            label_breakdown.append(f"{label}: {count}")
+                    label_text = '<br/>'.join(label_breakdown) if label_breakdown else 'Nenhuma'
+                    
+                    # Total de anotações
+                    total_annotations = sum(item.get('label_breakdown', {}).values())
+                    
+                    # Formatar datasets
+                    dataset_breakdown = []
+                    if item.get('dataset_label_breakdown'):
+                        for dataset, labels in item['dataset_label_breakdown'].items():
+                            dataset_labels = []
+                            for label, count in labels.items():
+                                dataset_labels.append(f"{label}: {count}")
+                            dataset_breakdown.append(f"<b>{dataset}</b><br/>({'; '.join(dataset_labels)})")
+                    dataset_text = '<br/><br/>'.join(dataset_breakdown) if dataset_breakdown else 'Nenhum'
+                    
+                    # Formatar perguntas e respostas
+                    qa_breakdown = []
+                    if item.get('perspective_questions_answers'):
+                        qa_data = item['perspective_questions_answers']
+                        if qa_data.get('questions') and qa_data.get('answers'):
+                            questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
+                            
+                            answers_by_question = {}
+                            for answer in qa_data['answers']:
+                                question_id = answer['question_id']
+                                if question_id not in answers_by_question:
+                                    answers_by_question[question_id] = []
+                                answers_by_question[question_id].append(answer['answer_text'])
+                            
+                            for question_id, answers in answers_by_question.items():
+                                question_text = questions_map.get(question_id, f"Pergunta {question_id}")
+                                qa_breakdown.append(f"<b>{question_text}</b><br/>{', '.join(answers)}")
+                    
+                    qa_text = '<br/><br/>'.join(qa_breakdown) if qa_breakdown else 'Nenhuma'
+                    
+                    # Cor alternada para as linhas
+                    row_color = colors.HexColor('#f9f9f9') if i % 2 == 0 else colors.white
+                    
+                    table_data.append([
+                        Paragraph(item.get('annotator_username', 'N/A'), styles['TableCell']),
+                        Paragraph(item.get('annotator_name', 'N/A'), styles['TableCell']),
+                        Paragraph(label_text, styles['TableCell']),
+                        Paragraph(str(total_annotations), styles['TableCell']),
+                        Paragraph(dataset_text, styles['TableCell']),
+                        Paragraph(qa_text, styles['TableCell'])
+                    ])
+                
+                # Criar tabela
+                main_table = Table(table_data, colWidths=[3*cm, 3*cm, 4*cm, 1.5*cm, 4*cm, 4*cm])
+                main_table.setStyle(TableStyle([
+                    # Cabeçalho
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 9),
+                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    
+                    # Dados
+                    ('FONTSIZE', (0, 1), (-1, -1), 8),
+                    ('ALIGN', (3, 1), (3, -1), 'CENTER'),  # Coluna Total centralizada
+                    
+                    # Bordas e padding
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cccccc')),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 4),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+                    ('TOPPADDING', (0, 0), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    
+                    # Cores alternadas
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9f9f9')])
+                ]))
+                
+                elements.append(main_table)
+            else:
+                elements.append(Paragraph("Nenhum dado encontrado para os filtros aplicados.", styles['InfoText']))
             
-            elements.append(Paragraph(f"Total de anotações: {total_annotations}", styles['Normal']))
-            elements.append(Paragraph(f"Labels únicas utilizadas: {len(all_labels)}", styles['Normal']))
-            elements.append(Paragraph(f"Datasets com anotações: {len(all_datasets)}", styles['Normal']))
-            
-            print(f"[PDF DEBUG] Construindo documento PDF...")
-            
-            # Construir documento
+            # Construir PDF
             doc.build(elements)
-            
-            print(f"[PDF DEBUG] PDF construído com sucesso")
             
             # Preparar resposta
             buffer.seek(0)
-            response = HttpResponse(buffer.read(), content_type='application/pdf')
+            response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.pdf"'
             
+            print(f"[PDF DEBUG] PDF gerado com sucesso")
             return response
             
         except Exception as e:
@@ -1410,7 +1799,7 @@ class AnnotationReportExportView(APIView):
         return True
 
     def _export_csv(self, report_data):
-        """Exportar relatório em formato CSV"""
+        """Exportar relatório em formato CSV melhorado"""
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.csv"'
         
