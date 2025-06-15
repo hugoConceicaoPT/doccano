@@ -22,7 +22,7 @@ export class PerspectiveItem {
   static async list(
     repository: PerspectiveRepository,
     project_id: string
-  ): Promise<PerspectiveItem> {
+  ): Promise<PerspectiveItem | null> {
     return await repository.list(project_id)
   }
 }

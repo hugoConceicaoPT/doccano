@@ -47,12 +47,9 @@
     <template #[`item.meta`]="{ item }">
       {{ JSON.stringify(item.meta, null, 4) }}
     </template>
-    <template #[`item.filename`]="{ item }">
-      <span class="text-caption">{{ getDatasetName(item) }}</span>
-    </template>
-    <template #[`item.assignee`]="{ item: row }">
+    <template #[`item.assignee`]="{ item }">
       <v-combobox
-        :value="toSelected(row)"
+        :value="toSelected(item)"
         :items="members"
         item-text="username"
         no-data-text="No one"
@@ -65,7 +62,7 @@
         small-chips
         solo
         style="width: 200px"
-        @change="onAssignOrUnassign(row, $event)"
+        @change="onAssignOrUnassign(item, $event)"
       >
         <template #selection="{ attrs, item, parent, selected }">
           <v-chip v-bind="attrs" :input-value="selected" small class="mt-1 mb-1">
@@ -90,10 +87,8 @@ import Vue from 'vue'
 import { DataOptions } from 'vuetify/types'
 import { ExampleDTO } from '~/services/application/example/exampleData'
 import { MemberItem } from '~/domain/models/member/member'
-import datasetNameMixin from '~/mixins/datasetName.js'
 
 export default Vue.extend({
-  mixins: [datasetNameMixin],
   props: {
     isLoading: {
       type: Boolean,

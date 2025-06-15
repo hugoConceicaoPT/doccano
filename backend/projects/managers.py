@@ -13,8 +13,14 @@ class PerspectiveManager(Manager):
             dict: {
                 question_id: {
                     "answers": {
-                        "Answer A": 50.0,
-                        "Answer B": 50.0
+                        "Answer A": {
+                            "percentage": 50.0,
+                            "annotator": "User Name"
+                        },
+                        "Answer B": {
+                            "percentage": 50.0,
+                            "annotator": "User Name"
+                        }
                     },
                     "total": 2
                 },
@@ -35,18 +41,27 @@ class PerspectiveManager(Manager):
             distribution = {}
 
             for answer in answers:
-                if answer.answer_option:
-                    key = answer.answer_option.option
-                else:
-                    key = answer.answer_text
+                key = answer.answer_text
+                member = answer.member
 
                 if key not in distribution:
-                    distribution[key] = 0
-                distribution[key] += 1
+                    distribution[key] = {
+                        "count": 0,
+                        "annotators": set()
+                    }
+                distribution[key]["count"] += 1
+                if member and member.user:
+                    distribution[key]["annotators"].add(member.user.username)
 
             # Calcular percentagens (evitar divisão por zero)
             if total_answers > 0:
-                distribution_percent = {k: (v / total_answers) * 100 for k, v in distribution.items()}
+                distribution_percent = {
+                    k: {
+                        "percentage": (v["count"] / total_answers) * 100,
+                        "annotator": ", ".join(v["annotators"])
+                    }
+                    for k, v in distribution.items()
+                }
             else:
                 distribution_percent = {}
 

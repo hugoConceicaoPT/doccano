@@ -109,10 +109,8 @@ import { Distribution } from '~/domain/models/statistics/statistics'
 import { ExampleDTO } from '~/services/application/example/exampleData'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
 import { MemberItem } from '~/domain/models/member/member'
-import datasetNameMixin from '~/mixins/datasetName.js'
 
 export default Vue.extend({
-  mixins: [datasetNameMixin],
 
   props: {
     isLoading: {
@@ -142,7 +140,6 @@ export default Vue.extend({
       required: true
     }
   },
-
   data() {
     return {
       search: '',
@@ -205,9 +202,9 @@ export default Vue.extend({
             .join('\n')
 
           if (labelsValue) {
-            const hasDiscrepancy = Object.values(labels).some(
-              (percentage) => Number(percentage) > this.discrepancyThreshold
-            )
+            const hasDiscrepancy = Object.values(labels).every(
+            (percentage) => percentage < this.discrepancyThreshold
+            );
 
             rows.push({
               exampleName,
@@ -249,11 +246,11 @@ export default Vue.extend({
             return `${label}: ${Math.round(percent)}%`
           })
           .join('\n')
-
+        
         if (labelsValue) {
-          const hasDiscrepancy = Object.values(normalizedPercentages).some(
-            (percentage) => percentage > this.discrepancyThreshold
-          )
+          const hasDiscrepancy = Object.values(normalizedPercentages).every(
+            (percentage) => percentage < this.discrepancyThreshold
+          );
 
           rows.push({
             exampleName,
@@ -383,7 +380,7 @@ export default Vue.extend({
     async resolveExampleName(id: string) {
       if (!this.exampleNameMap[id]) {
         const example = await this.$repositories.example.findById(this.projectId, Number(id))
-        this.$set(this.exampleNameMap, id, this.getDatasetName(example))
+        this.$set(this.exampleNameMap, id, example.filename.replace(/\.[^/.]+$/, ''))
       }
       return this.exampleNameMap[id]
     },

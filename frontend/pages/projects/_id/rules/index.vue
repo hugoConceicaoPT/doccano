@@ -253,7 +253,6 @@ import {
 import { VotingConfigurationItem, AnnotationRuleItem } from '~/domain/models/rules/rule'
 import { MemberItem } from '~/domain/models/member/member'
 import RuleList from '~/components/rules/RuleList.vue'
-import datasetNameMixin from '~/mixins/datasetName.js'
 
 export type Discussion = {
   numberVersion: string
@@ -272,10 +271,9 @@ export default Vue.extend({
   components: {
     RuleList
   },
-  mixins: [datasetNameMixin],
   
   layout: 'project',
-  middleware: ['check-auth', 'auth', 'setCurrentProject'],
+  middleware: ['check-auth', 'auth', 'setCurrentProject', 'project-closed'],
   data() {
     return {
       successMessage: '',

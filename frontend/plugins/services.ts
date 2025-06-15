@@ -21,6 +21,7 @@ import {
   AnnotationRuleApplicationService,
   AnnotationRuleAnswerApplicationService
 } from '~/services/application/rules/ruleApplicationService'
+import { DatasetReviewApplicationService } from '~/services/application/datasetReview/datasetReviewApplicationService'
 
 export interface Services {
   categoryType: LabelApplicationService
@@ -42,6 +43,7 @@ export interface Services {
   votingConfiguration: VotingConfigurationApplicationService
   annotationRule: AnnotationRuleApplicationService
   annotationRuleAnswerService: AnnotationRuleAnswerApplicationService
+  datasetReviewService: DatasetReviewApplicationService
 }
 
 declare module 'vue/types/vue' {
@@ -57,6 +59,7 @@ const plugin: Plugin = (_, inject) => {
     relationType: new LabelApplicationService(repositories.relationType),
     project: new ProjectApplicationService(repositories.project),
     example: new ExampleApplicationService(repositories.example),
+    datasetReviewService: new DatasetReviewApplicationService(repositories.datasetReview),
     sequenceLabeling: new SequenceLabelingApplicationService(
       repositories.span,
       repositories.relation

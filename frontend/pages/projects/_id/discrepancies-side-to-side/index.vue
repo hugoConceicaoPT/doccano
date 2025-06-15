@@ -156,7 +156,6 @@
 import Vue from 'vue'
 import { Percentage, Progress } from '~/domain/models/metrics/metrics'
 import { MemberItem } from '~/domain/models/member/member'
-import datasetNameMixin from '~/mixins/datasetName.js'
 
 interface LabelInfo {
   id: number
@@ -170,7 +169,6 @@ interface UserProgress {
 }
 
 export default Vue.extend({
-  mixins: [datasetNameMixin],
   
   layout: 'project',
   middleware: ['check-auth', 'auth', 'setCurrentProject', 'project-closed'],
@@ -311,7 +309,7 @@ export default Vue.extend({
       if (!this.exampleNameMap[id]) {
         try {
           const example = await this.$repositories.example.findById(this.projectId, Number(id))
-          this.$set(this.exampleNameMap, id, this.getDatasetName(example))
+          this.$set(this.exampleNameMap, id, example.filename.replace(/\.[^/.]+$/, ''))
         } catch (error) {
           console.error('Erro ao carregar nome do exemplo:', error)
         }

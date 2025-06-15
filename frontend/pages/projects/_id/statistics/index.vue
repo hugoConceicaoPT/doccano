@@ -127,22 +127,23 @@
     </v-col>
 
     <!-- Resultados filtrados -->
-    <v-col v-if="filtersApplied" cols="12">
-      <perspective-percentage-distribution
-        title="Perspective Distribution"
-        :distribution="filteredPerspectiveDistribution"
-        class="perspective-distribution"
-        @chart-perspective-rendered="onPerspectiveChartReady"
+    <v-col v-if="!!projectId && filtersApplied" cols="12">
+      <perspective-distribution-table
+        :perspective-distribution="perspectiveDistribution"
+        :selected-perspective-question="selectedPerspectiveQuestion"
+        :selected-perspective-answer="selectedPerspectiveAnswer"
+        :selected-annotators="selectedAnnotators"
       />
     </v-col>
 
-    <v-col v-if="!!project.canDefineCategory && filtersApplied" cols="12">
+    <v-col v-if="!!projectId && filtersApplied" cols="12">
       <label-percentage-distribution
         title="Label Discrepancy Percentage"
         :distribution="filteredCategoryPercentage"
         class="label-distribution"
         :examples="examples"
         :label-types="categoryTypes"
+        :datasetReviews="datasetReviews"
         @chart-label-rendered="onLabelChartReady"
       />
     </v-col>
@@ -153,24 +154,26 @@
 import Vue from 'vue'
 import { mdiClose, mdiFilterCheck, mdiHome } from '@mdi/js'
 import Papa from 'papaparse'
-import html2canvas from 'html2canvas'
 import { jsPDF as JsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 import { mapGetters } from 'vuex'
 import LabelPercentageDistribution from '~/components/statistics/LabelPercentageDistribution.vue'
-import PerspectivePercentageDistribution from '~/components/statistics/PerspectivePercentageDistribution.vue'
+import PerspectiveDistributionTable from '~/components/statistics/PerspectiveDistributionTable.vue'
 import { MemberItem } from '~/domain/models/member/member'
 import { Distribution } from '~/domain/models/statistics/statistics'
-import datasetNameMixin from '~/mixins/datasetName.js'
+import { DatasetReviewItem } from '~/domain/models/datasetReview/datasetReview'
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 export default Vue.extend({
   components: {
     LabelPercentageDistribution,
-    PerspectivePercentageDistribution
+    PerspectiveDistributionTable
   },
-
-  mixins: [datasetNameMixin],
-
   layout: 'project',
 
   middleware: ['check-auth', 'auth'],
@@ -189,6 +192,7 @@ export default Vue.extend({
       categoryPercentage: {} as Record<string, any>,
       examples: {} as any,
       perspectiveDistribution: {} as Distribution,
+      datasetReviews: [] as DatasetReviewItem[],
       annotators: [] as string[],
       members: [] as MemberItem[],
       errorMessage: '',
@@ -206,42 +210,16 @@ export default Vue.extend({
       return this.$route.params.id
     },
 
-    filteredPerspectiveDistribution() {
-      if (!this.selectedPerspectiveQuestion.length || !this.selectedPerspectiveAnswer.length) {
-        return this.perspectiveDistribution
-      }
-
-      const dist: Distribution = {}
-
-      for (const key in this.perspectiveDistribution) {
-        const entry = this.perspectiveDistribution[key]
-
-        if (this.selectedPerspectiveQuestion.includes(entry.question)) {
-          const matchingAnswers = Object.keys(entry.answers).filter((answer) =>
-            this.selectedPerspectiveAnswer.includes(answer)
-          )
-
-          if (matchingAnswers.length > 0) {
-            dist[key] = {
-              question: entry.question,
-              answers: Object.fromEntries(matchingAnswers.map((a) => [a, entry.answers[a]])),
-              total: matchingAnswers.reduce((sum, a) => sum + entry.answers[a], 0)
-            }
-          }
-        }
-      }
-
-      return dist
-    },
-
     filteredCategoryPercentage() {
       if (!this.filtersApplied) return this.categoryPercentage
 
       const filtered: Record<string, any> = {}
 
       for (const [key, value] of Object.entries(this.categoryPercentage)) {
-        const matchesAnnotation =
-          this.selectedAnnotations.length === 0 || this.selectedAnnotations.includes(Number(key))
+        // Check if the annotation matches the selected annotations
+        const matchesAnnotation = 
+          this.selectedAnnotations.length === 0 || 
+          this.selectedAnnotations.includes(Number(key))
 
         if (matchesAnnotation) {
           filtered[key] = value
@@ -281,7 +259,7 @@ export default Vue.extend({
     formattedAnnotations(): { text: string; value: number }[] {
       if (!this.examples || !this.examples.items) return []
       return this.examples.items.map((item: any) => ({
-        text: this.getDatasetName(item),
+        text: item.filename.replace(/\.[^/.]+$/, ''),
         value: item.id
       }))
     }
@@ -291,6 +269,7 @@ export default Vue.extend({
     try {
       this.examples = await this.$services.example.list(this.projectId, this.$route.query)
       this.members = await this.$repositories.member.list(this.projectId)
+      this.datasetReviews = await this.$services.datasetReviewService.list(this.projectId)
       this.annotators = this.members
         .filter((m: MemberItem) => m.isAnnotator)
         .map((item) => item.name)
@@ -309,6 +288,9 @@ export default Vue.extend({
           this.projectId
         )
         this.filtersApplied = true
+        if (this.exportOption !== 'None') {
+          this.export()
+        }
       } catch (error) {
         this.handleError(error)
       }
@@ -331,114 +313,207 @@ export default Vue.extend({
     },
     onPerspectiveChartReady() {
       this.isPerspectiveChartReady = true
-      this.export()
+      if (this.exportOption !== 'None') {
+        this.export()
+      }
     },
     onLabelChartReady() {
       this.isLabelChartReady = true
-      this.export()
+      if (this.exportOption !== 'None') {
+        this.export()
+      }
     },
     export() {
-      if (this.isPerspectiveChartReady && this.isLabelChartReady) {
-        try {
-          if (this.exportOption === 'PDF') {
-            this.exportPDF()
-          } else if (this.exportOption === 'CSV') {
-            this.exportCSV()
-          } else if (this.exportOption === 'PDF & CSV') {
-            this.exportPDF()
-            this.exportCSV()
-          }
-        } catch (error) {
-          this.handleError(error)
-        } finally {
-          this.isPerspectiveChartReady = false
-          this.isLabelChartReady = false
+      try {
+        if (this.exportOption === 'PDF') {
+          this.exportToPDF()
+        } else if (this.exportOption === 'CSV') {
+          this.exportToCSV()
+        } else if (this.exportOption === 'PDF & CSV') {
+          this.exportToPDF()
+          this.exportToCSV()
         }
+      } catch (error) {
+        this.errorMessage = 'Failed to export report'
+        console.error('Export error:', error)
+      } finally {
+        this.exportOption = 'None'
       }
     },
-    exportCSV() {
-      const data: any[] = []
+    exportToPDF() {
+      try {
+        const doc = new JsPDF()
+        const pageWidth = doc.internal.pageSize.getWidth()
+        const margin = 20
+        let yPos = 20
 
-      // Exportar Perspectivas
-      for (const key in this.filteredPerspectiveDistribution) {
-        const entry = this.filteredPerspectiveDistribution[key]
-        for (const [answer, count] of Object.entries(entry.answers)) {
-          data.push({
-            Type: 'Perspective',
-            Question: entry.question,
-            Answer: answer,
-            Percentage: count
+        // Add title
+        doc.setFontSize(16)
+        doc.text('Statistics Report', pageWidth / 2, yPos, { align: 'center' })
+        yPos += 20
+
+        // Add filters section
+        doc.setFontSize(12)
+        doc.text('Filters Applied:', margin, yPos)
+        yPos += 10
+
+        const filters = [
+          ['Perspective Questions:', this.selectedPerspectiveQuestion.join(', ') || 'None'],
+          ['Perspective Answers:', this.selectedPerspectiveAnswer.join(', ') || 'None'],
+          ['Annotations:', this.selectedAnnotations.join(', ') || 'None'],
+          ['Annotators:', this.selectedAnnotators.join(', ') || 'None'],
+          ['Discrepancy Status:', this.selectedDiscrepancy]
+        ]
+
+        filters.forEach(([label, value]) => {
+          doc.setFontSize(10)
+          doc.text(`${label} ${value}`, margin, yPos)
+          yPos += 7
+        })
+
+        yPos += 10
+
+        // Add Perspective Distribution section
+        doc.setFontSize(12)
+        doc.text('Perspective Distribution', margin, yPos)
+        yPos += 10
+
+        const perspectiveData = []
+        for (const data of Object.values(this.perspectiveDistribution)) {
+          if (this.selectedPerspectiveQuestion.length === 0 || 
+              this.selectedPerspectiveQuestion.includes(data.question)) {
+            const answers = Object.entries(data.answers)
+              .filter(([answer, _data]) => 
+                this.selectedPerspectiveAnswer.length === 0 || 
+                this.selectedPerspectiveAnswer.includes(answer)
+              )
+              .filter(([_answer, answerData]) =>
+                this.selectedAnnotators.length === 0 ||
+                this.selectedAnnotators.includes(answerData.annotator)
+              )
+              .map(([answer, answerData]) => ({
+                answer,
+                percentage: answerData.percentage,
+                annotator: answerData.annotator
+              }))
+
+            if (answers.length > 0) {
+              perspectiveData.push({
+                question: data.question,
+                answers
+              })
+            }
+          }
+        }
+
+        if (perspectiveData.length > 0) {
+          const tableData = perspectiveData.flatMap(qData => 
+            qData.answers.map(answer => [
+              qData.question,
+              answer.answer,
+              `${answer.percentage}%`,
+              answer.annotator
+            ])
+          )
+
+          // @ts-ignore
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Question', 'Answer', 'Percentage', 'Annotator']],
+            body: tableData,
+            margin: { left: margin }
+          })
+          // @ts-ignore
+          yPos = doc.lastAutoTable.finalY + 10
+        }
+
+        // Add Label Discrepancy Percentage section
+        doc.setFontSize(12)
+        doc.text('Label Discrepancy Percentage', margin, yPos)
+        yPos += 10
+
+        const labelData = Object.entries(this.filteredCategoryPercentage)
+          .map(([label, percentage]) => [label, `${percentage}%`])
+
+        if (labelData.length > 0) {
+          // @ts-ignore
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Label', 'Percentage']],
+            body: labelData,
+            margin: { left: margin }
+          })
+        }
+
+        // Save the PDF
+        doc.save('statistics_report.pdf')
+      } catch (error) {
+        console.error('Error generating PDF:', error)
+        this.errorMessage = 'Failed to generate PDF report'
+      }
+    },
+
+    exportToCSV() {
+      const data = []
+
+      // Add filters information
+      data.push(['Filters Applied'])
+      data.push(['Perspective Questions:', this.selectedPerspectiveQuestion.join(', ') || 'None'])
+      data.push(['Perspective Answers:', this.selectedPerspectiveAnswer.join(', ') || 'None'])
+      data.push(['Annotations:', this.selectedAnnotations.join(', ') || 'None'])
+      data.push(['Annotators:', this.selectedAnnotators.join(', ') || 'None'])
+      data.push(['Discrepancy Status:', this.selectedDiscrepancy])
+      data.push([])
+
+      // Add Perspective Distribution data
+      data.push(['Perspective Distribution'])
+      data.push(['Question', 'Answer', 'Percentage', 'Annotator'])
+
+      for (const qData of Object.values(this.perspectiveDistribution)) {
+        if (this.selectedPerspectiveQuestion.length === 0 || 
+            this.selectedPerspectiveQuestion.includes(qData.question)) {
+          const answers = Object.entries(qData.answers)
+            .filter(([answer, _data]) => 
+              this.selectedPerspectiveAnswer.length === 0 || 
+              this.selectedPerspectiveAnswer.includes(answer)
+            )
+            .filter(([_answer, answerData]) =>
+              this.selectedAnnotators.length === 0 ||
+              this.selectedAnnotators.includes(answerData.annotator)
+            )
+
+          answers.forEach(([answer, answerData]) => {
+            data.push([
+              qData.question,
+              answer,
+              `${answerData.percentage}%`,
+              answerData.annotator
+            ])
           })
         }
       }
 
-      // Exportar Discrepância de Categorias
-      this.selectedAnnotations.forEach((annotationId, index) => {
-        const categories = this.filteredCategoryPercentage[index]
-        console.log(categories)
-        if (!categories) return
+      data.push([])
 
-        for (const [categoryName, percentage] of Object.entries(categories)) {
-          data.push({
-            Type: 'Label Discrepancy',
-            AnnotationID: annotationId,
-            Category: categoryName,
-            Percentage: percentage
-          })
-        }
+      // Add Label Discrepancy Percentage data
+      data.push(['Label Discrepancy Percentage'])
+      data.push(['Label', 'Percentage'])
+
+      Object.entries(this.filteredCategoryPercentage).forEach(([label, percentage]) => {
+        data.push([label, `${percentage}%`])
       })
 
+      // Convert to CSV and download
       const csv = Papa.unparse(data)
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.setAttribute('download', 'statistics.csv')
+      link.href = url
+      link.download = 'statistics_report.csv'
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-    },
-    async exportPDF() {
-      // Aguarda 500ms para garantir que os gráficos foram renderizados (podes ajustar o tempo conforme necessário)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const doc = new JsPDF()
-      const filename = 'statistics.pdf'
-
-      // Seleciona os gráficos pelo seletor de componente
-      const perspectiveChart = document.querySelector('.perspective-distribution')
-      const labelChart = document.querySelector('.label-distribution')
-
-      if (!perspectiveChart || !labelChart) {
-        console.error('Um ou mais elementos de gráfico não foram encontrados.')
-        return
-      }
-      const addChartToPDF = async (element: Element, yOffset: number) => {
-        if (!element) return yOffset
-
-        const canvas = await html2canvas(element as HTMLElement, {
-          scale: 2,
-          useCORS: true
-        })
-
-        const imgData = canvas.toDataURL('image/png')
-        const imgProps = doc.getImageProperties(imgData)
-        const pdfWidth = doc.internal.pageSize.getWidth()
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-
-        doc.addImage(imgData, 'PNG', 10, yOffset, pdfWidth - 20, pdfHeight)
-        return yOffset + pdfHeight + 10
-      }
-
-      const currentY = 10
-
-      addChartToPDF(perspectiveChart, currentY)
-        .then((y) => addChartToPDF(labelChart, y))
-        .then(() => {
-          doc.save(filename)
-        })
-        .catch((err) => {
-          console.error('Erro ao gerar PDF com gráficos:', err)
-        })
+      URL.revokeObjectURL(url)
     }
   }
 })

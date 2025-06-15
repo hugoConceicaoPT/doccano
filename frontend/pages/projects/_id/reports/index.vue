@@ -756,7 +756,6 @@ import {
   mdiCheckCircle,
   mdiCloseCircle
 } from '@mdi/js'
-import datasetNameMixin from '~/mixins/datasetName.js'
 
 declare module 'vue/types/vue' {
   interface Vue {
@@ -765,7 +764,6 @@ declare module 'vue/types/vue' {
 }
 
 export default Vue.extend({
-  mixins: [datasetNameMixin],
 
   layout: 'project',
 

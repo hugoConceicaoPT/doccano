@@ -131,7 +131,7 @@ class ManualDiscrepancySerializer(serializers.ModelSerializer):
 
 class DatasetReviewSerializer(serializers.ModelSerializer):
     example = serializers.PrimaryKeyRelatedField(queryset=Example.objects.all())
-
+    comment = serializers.CharField(allow_null=True, required=False)
     class Meta:
         model = DatasetReview
         fields = (

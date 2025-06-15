@@ -23,6 +23,7 @@ from .views.rule import (
     )
 from .views.project import CloneProject, ProjectDetail, ProjectList
 from .views.tag import TagDetail, TagList
+from .views.dataset_review import DatasetReviewView, DatasetReviewListView
 
 urlpatterns = [
     path(route="projects", view=ProjectList.as_view(), name="project_list"),
@@ -49,4 +50,6 @@ urlpatterns = [
     path(route="projects/<int:project_id>/annotation-rule-answers/create", view=AnnotationRuleAnswersCreation.as_view(), name="annotation_rule_answers_create"),
     path(route="projects/<int:project_id>/annotation-rule-answers", view=AnnotationRuleAnswersList.as_view(), name="annotation_rule_answers_list"),
     path(route="projects/<int:project_id>/annotation-rule-answers/<int:annotation_rule_answer_id>", view=AnnotationRuleAnswerDetail.as_view(), name="annotation_rule_answer_detail"),
+    path(route="projects/<int:project_id>/dataset-reviews", view=DatasetReviewView.as_view(), name="dataset_reviews"),
+    path(route="projects/<int:project_id>/dataset-reviews/list", view=DatasetReviewListView.as_view(), name="dataset_reviews_list"),
 ]

@@ -54,7 +54,7 @@ class DatasetReview(models.Model):
     example = models.ForeignKey(to=Example, on_delete=models.CASCADE, related_name="dataset_reviews")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="dataset_reviews")
     is_approved = models.BooleanField(help_text="Whether the dataset is approved (True) or has discrepancies (False)")
-    comment = models.TextField(blank=True, help_text="Optional comment about the discrepancy")
+    comment = models.TextField(null=True, blank=True, help_text="Optional comment about the discrepancy")
     label_agreements = models.JSONField(default=list, help_text="Label agreement details")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

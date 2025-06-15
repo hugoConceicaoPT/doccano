@@ -16,7 +16,6 @@ export class ExampleItem {
     readonly isConfirmed: boolean,
     readonly filename: string,
     readonly assignments: Assignment[],
-    readonly uploadName?: string
   ) {}
 
   get url() {

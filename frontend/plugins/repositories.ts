@@ -36,6 +36,7 @@ import {
   APIAnnotationRuleAnswerRepository
 } from '~/repositories/rules/apiRuleRepository'
 import { APIStatisticsRepository } from '~/repositories/statistics/apiStatisticsRepository'
+import { ApiDatasetReviewRepository } from '~/repositories/datasetReview/apiDatasetReviewRepository'
 
 export interface Repositories {
   // User
@@ -64,6 +65,7 @@ export interface Repositories {
   statistics: APIStatisticsRepository
   option: LocalStorageOptionRepository
   assignment: APIAssignmentRepository
+  datasetReview: ApiDatasetReviewRepository
 
   // Auto Labeling
   config: APIConfigRepository
@@ -124,6 +126,7 @@ const repositories: Repositories = {
   statistics: new APIStatisticsRepository(),
   option: new LocalStorageOptionRepository(),
   assignment: new APIAssignmentRepository(),
+  datasetReview: new ApiDatasetReviewRepository(),
 
   // Auto Labeling
   config: new APIConfigRepository(),
