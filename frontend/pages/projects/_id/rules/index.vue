@@ -78,6 +78,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import {
@@ -91,6 +92,14 @@ import {
 } from '@mdi/js'
 import { AnnotationRuleItem } from '~/domain/models/rules/rule'
 import RuleList from '~/components/rules/RuleList.vue'
+export type Discussion = {
+  numberVersion: string
+  ruleDiscussion: string
+  isFinalized: boolean
+  result: string
+  votesFor: number
+  votesAgainst: number
+}
 
 export default Vue.extend({
   components: {

@@ -36,7 +36,7 @@ RUN pip install -U --no-cache-dir pip==22.2.2 \
  && curl -sSL https://install.python-poetry.org | python - \
  && export PATH="/root/.local/bin:$PATH" \
  && poetry export --without-hashes -o /requirements.txt \
- && echo "psycopg2-binary==2.8.6" >> /requirements.txt \
+ && echo "psycopg2-binary" >> /requirements.txt \
  && echo "django-heroku==0.3.1" >> /requirements.txt \
  && pip install --no-cache-dir -r /requirements.txt
 

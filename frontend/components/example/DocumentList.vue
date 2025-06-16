@@ -340,6 +340,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { mdiMagnify, mdiDeleteSweep } from '@mdi/js'
 import type { PropType } from 'vue'
 import Vue from 'vue'

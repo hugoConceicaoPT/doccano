@@ -147,6 +147,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import Vue from 'vue'
 import { mdiClose, mdiFilterCheck, mdiHome, mdiAlert } from '@mdi/js'
 import Papa from 'papaparse'

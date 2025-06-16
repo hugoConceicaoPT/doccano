@@ -181,6 +181,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import {

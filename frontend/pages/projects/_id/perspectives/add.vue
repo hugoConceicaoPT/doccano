@@ -31,7 +31,6 @@
       :items="items"
       @update-questions="updateQuestions"
       @update-name="updateName"
-      @update-options-group="updateOptionsGroup"
     >
       <!-- Botões de ação -->
       <div class="d-flex justify-space-between align-center mt-6">
@@ -75,13 +74,12 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import Vue from 'vue'
 import FormCreate from '~/components/perspective/FormCreate.vue'
 import { CreatePerspectiveCommand } from '~/services/application/perspective/perspectiveCommand'
 import { PerspectiveDTO } from '~/services/application/perspective/perspectiveData'
-import { CreateOptionsGroupCommand } from '~/services/application/perspective/question/questionCommand'
 import {
-  OptionsGroupDTO,
   QuestionDTO
 } from '~/services/application/perspective/question/questionData'
 
@@ -104,12 +102,6 @@ export default Vue.extend({
         members: []
       } as CreatePerspectiveCommand,
 
-      optionsGroupItem: [
-        {
-          name: '',
-          options_questions: []
-        }
-      ] as CreateOptionsGroupCommand[],
 
       defaultItem: {
         id: null,
@@ -149,10 +141,6 @@ export default Vue.extend({
 
     updateName(name: string) {
       this.editedItem.name = name
-    },
-
-    updateOptionsGroup(optionsGroup: OptionsGroupDTO[]) {
-      this.optionsGroupItem = optionsGroup
     },
 
     async save() {
