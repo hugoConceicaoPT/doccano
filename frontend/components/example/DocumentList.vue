@@ -98,21 +98,20 @@
       <v-card>
         <v-card-title class="headline d-flex align-center">
           <v-icon class="mr-2" color="primary">{{ require('@mdi/js').mdiClipboardCheck }}</v-icon>
-          Revisão de Concordância entre Anotadores
+          Inter-Annotator Agreement Review
         </v-card-title>
         <v-card-text>
           <div class="mb-4">
-            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br />
             <strong>Texto:</strong> {{ itemToReport?.text | truncate(100) }}
           </div>
 
           <v-divider class="mb-4"></v-divider>
 
-          <h3 class="mb-3">Concordância por Label:</h3>
+                      <h3 class="mb-3">Agreement by Label:</h3>
 
           <div v-if="loadingLabels" class="text-center py-4">
             <v-progress-circular indeterminate color="primary"></v-progress-circular>
-            <p class="mt-2">Analisando concordância entre anotadores...</p>
+                          <p class="mt-2">Analyzing agreement between annotators...</p>
           </div>
 
           <div v-else-if="hasConnectionError" class="text-center py-4">
@@ -139,7 +138,7 @@
 
           <div v-else-if="datasetLabels.length === 0" class="text-center py-4">
             <v-icon large color="grey">{{ require('@mdi/js').mdiInformationOutline }}</v-icon>
-            <p class="mt-2 grey--text">Nenhuma anotação encontrada para análise de concordância</p>
+                          <p class="mt-2 grey--text">No annotation found for agreement analysis</p>
           </div>
 
           <div v-else>
@@ -175,7 +174,7 @@
                       v-if="label.annotators && label.annotators.length > 0"
                       class="caption grey--text mt-1"
                     >
-                      <strong>Anotadores:</strong> {{ label.annotators.join(', ') }}
+                      <strong>Annotators:</strong> {{ label.annotators.join(', ') }}
                     </div>
                   </div>
                 </div>
@@ -188,7 +187,7 @@
             <!-- Aviso se não há anotadores suficientes -->
             <v-alert v-if="!hasAllAnnotatorsCompleted()" type="warning" outlined class="mb-4">
               <div>
-                <strong>Análise de concordância não disponível</strong>
+                <strong>Agreement analysis not available</strong>
                 <br />
                 {{ minimumAnnotatorsMessage }}
               </div>
@@ -198,19 +197,19 @@
               <v-card-text class="py-4">
                 <div class="d-flex align-center justify-space-between mb-4">
                   <div>
-                    <h4 class="mb-2">Avaliação Geral do Dataset</h4>
+                    <h4 class="mb-2">Overall Dataset Evaluation</h4>
                     <p class="body-2 grey--text mb-0">
-                      Com base nas concordâncias das labels acima, como avalia este dataset?
+                      Based on the label agreements above, how do you evaluate this dataset?
                     </p>
                   </div>
                   <v-btn-toggle v-model="datasetApproval" :disabled="!hasAllAnnotatorsCompleted()" dense>
                     <v-btn :value="true" color="success" outlined :disabled="!hasAllAnnotatorsCompleted()">
                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiCheck }}</v-icon>
-                      Dataset Concordante
+                      Concordant Dataset
                     </v-btn>
                     <v-btn :value="false" color="error" outlined :disabled="!hasAllAnnotatorsCompleted()">
                       <v-icon small class="mr-1">{{ require('@mdi/js').mdiAlert }}</v-icon>
-                      Dataset Discrepante
+                      Discrepant Dataset
                     </v-btn>
                   </v-btn-toggle>
                 </div>
@@ -218,8 +217,8 @@
                 <v-textarea
                   v-if="datasetApproval === false"
                   v-model="datasetComment"
-                  label="Comentário sobre a discrepância (opcional)"
-                  placeholder="Descreva os problemas de concordância identificados no dataset..."
+                  label="Comment on discrepancy (optional)"
+                  placeholder="Describe the agreement issues identified in the dataset..."
                   outlined
                   dense
                   rows="3"
@@ -232,7 +231,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" text @click="closeReportDialog">Cancelar</v-btn>
+          <v-btn color="grey" text @click="closeReportDialog">Cancel</v-btn>
           <v-tooltip bottom :disabled="hasAllAnnotatorsCompleted()">
             <template #activator="{ on, attrs }">
               <v-btn
@@ -244,7 +243,7 @@
                 @click="submitReview"
               >
                 <v-icon left small>{{ require('@mdi/js').mdiContentSave }}</v-icon>
-                {{ hasAllAnnotatorsCompleted() ? 'Submeter Análise' : 'Análise Indisponível' }}
+                {{ hasAllAnnotatorsCompleted() ? 'Submit Analysis' : 'Analysis Unavailable' }}
               </v-btn>
             </template>
             <span>{{ minimumAnnotatorsMessage }}</span>
@@ -258,19 +257,18 @@
       <v-card>
         <v-card-title class="headline d-flex align-center">
           <v-icon class="mr-2" color="success">{{ require('@mdi/js').mdiEye }}</v-icon>
-          Resultado da Revisão de Concordância
+          Agreement Review Results
           <v-spacer></v-spacer>
           <v-chip :color="datasetApproval ? 'success' : 'error'" text-color="white" small>
             <v-icon left small>{{
               datasetApproval ? require('@mdi/js').mdiCheck : require('@mdi/js').mdiAlert
             }}</v-icon>
-            {{ datasetApproval ? 'Concordante' : 'Discrepante' }}
+            {{ datasetApproval ? 'Concordant' : 'Discrepant' }}
           </v-chip>
         </v-card-title>
         <v-card-text>
           <div class="mb-4">
-            <strong>Dataset ID:</strong> {{ itemToReport?.id }}<br />
-            <strong>Texto:</strong> {{ itemToReport?.text | truncate(100) }}
+            <strong>Text:</strong> {{ itemToReport?.text | truncate(100) }}
           </div>
 
           <v-divider class="mb-4"></v-divider>
@@ -284,14 +282,14 @@
               }}</v-icon>
               <div>
                 <strong>{{
-                  datasetApproval ? 'Dataset Aprovado' : 'Dataset com Discrepâncias'
+                  datasetApproval ? 'Dataset Approved' : 'Dataset with Discrepancies'
                 }}</strong>
                 <br />
                 <span class="body-2">
                   {{
                     datasetApproval
-                      ? 'Este dataset foi avaliado como tendo boa concordância entre anotadores.'
-                      : 'Este dataset foi identificado como tendo problemas de concordância entre anotadores.'
+                      ? 'This dataset was evaluated as having good agreement between annotators.'
+                      : 'This dataset was identified as having agreement issues between annotators.'
                   }}
                 </span>
               </div>
@@ -299,7 +297,7 @@
           </v-alert>
 
           <div v-if="datasetComment" class="mb-4">
-            <h4 class="mb-2">Comentário da Revisão:</h4>
+            <h4 class="mb-2">Review Comment:</h4>
             <v-card outlined class="pa-3">
               <p class="mb-0">{{ datasetComment }}</p>
             </v-card>
@@ -308,14 +306,14 @@
           <div class="text-center py-4">
             <v-icon large color="grey">{{ require('@mdi/js').mdiLock }}</v-icon>
             <p class="mt-2 grey--text">
-              <strong>Revisão Finalizada</strong><br />
-              Esta avaliação foi submetida e não pode ser alterada.
+              <strong>Review Completed</strong><br />
+              This evaluation has been submitted and cannot be changed.
             </p>
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="closeResultsDialog">Fechar</v-btn>
+          <v-btn color="primary" @click="closeResultsDialog">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -324,7 +322,7 @@
     <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="snackbarTimeout" top>
       {{ snackbarMessage }}
       <template #action="{ attrs }">
-        <v-btn text v-bind="attrs" @click="showSnackbar = false"> Fechar </v-btn>
+        <v-btn text v-bind="attrs" @click="showSnackbar = false"> Close </v-btn>
       </template>
     </v-snackbar>
 
@@ -332,10 +330,10 @@
     <div v-if="$nuxt.isDev" class="mt-4 text-center">
       <v-btn small outlined color="warning" @click="clearReviewState">
         <v-icon left small>{{ require('@mdi/js').mdiDeleteSweep }}</v-icon>
-        Limpar Estado Reviews (Debug)
+        Clear Review State (Debug)
       </v-btn>
       <div class="caption mt-2 grey--text">
-        Reviews guardados: {{ reportedIds.length }} | Projeto: {{ projectId }}
+        Reviews saved: {{ reportedIds.length }} | Project: {{ projectId }}
       </div>
     </div>
   </div>
@@ -479,13 +477,13 @@ export default Vue.extend({
 
     minimumAnnotatorsMessage() {
       if (this.datasetLabels.length === 0) {
-        return 'Nenhuma anotação encontrada no dataset'
+        return 'No annotation found in the dataset'
       }
 
       const projectAnnotators = this.members.filter(member => member.isAnnotator)
       
       if (projectAnnotators.length === 0) {
-        return 'Nenhum anotador associado ao projeto.'
+        return 'No annotator associated with the project.'
       }
 
       // Obter todos os anotadores únicos que anotaram este dataset
@@ -505,7 +503,7 @@ export default Vue.extend({
       )
       
       if (missingAnnotators.length > 0) {
-        return `Nem todos os anotadores completaram as anotações deste dataset. Todos os anotadores devem anotar antes da aprovação.`
+        return `Not all annotators have completed the annotations for this dataset. All annotators must annotate before approval.`
       }
 
       return ''
@@ -761,7 +759,7 @@ export default Vue.extend({
 
       const result = this.reviewResults[item.id]
       if (result) {
-        return result.approved ? 'Concordante' : 'Discrepante'
+        return result.approved ? 'Concordant' : 'Discrepant'
       }
 
       return 'Reviewed' // fallback para compatibilidade
@@ -771,12 +769,12 @@ export default Vue.extend({
       const result = this.reviewResults[item.id]
       if (result) {
         const status = result.approved
-          ? 'Dataset avaliado como CONCORDANTE'
-          : 'Dataset avaliado como DISCREPANTE'
-        const comment = result.comment ? `\nComentário: ${result.comment}` : ''
-        return `${status}${comment}\n\nClique para ver detalhes (somente leitura)`
+          ? 'Dataset evaluated as CONCORDANT'
+          : 'Dataset evaluated as DISCREPANT'
+        const comment = result.comment ? `\nComment: ${result.comment}` : ''
+        return `${status}${comment}\n\nClick to view details (read-only)`
       }
-      return 'Dataset já foi revisado'
+      return 'Dataset has been reviewed'
     },
 
     isDatabaseConnectionError(error: any) {
@@ -923,7 +921,7 @@ export default Vue.extend({
             total: 0,
             color: label.backgroundColor || 'primary',
             annotators: [],
-            agreementDetails: 'Nenhuma anotação encontrada'
+            agreementDetails: 'No annotation found'
           }))
           return
         }
@@ -953,7 +951,7 @@ export default Vue.extend({
             count: usersWhoAnnotatedThisLabel,
             total: totalAnnotators,
             annotators: annotatorsWithLabel,
-            agreementDetails: `${usersWhoAnnotatedThisLabel} de ${totalAnnotators} anotadores concordam`
+            agreementDetails: `${usersWhoAnnotatedThisLabel} of ${totalAnnotators} annotators agree`
           }
         })
 
@@ -986,10 +984,10 @@ export default Vue.extend({
             'Database is slow or unavailable. Please try again later.'
           this.snackbarMessage = '❌ ' + this.connectionErrorMessage
         } else if (this.isNetworkError(error)) {
-          this.connectionErrorMessage = 'Erro de rede. Verifique a sua ligação à internet.'
+          this.connectionErrorMessage = 'Network error. Check your internet connection.'
           this.snackbarMessage = '🌐 ' + this.connectionErrorMessage
         } else if (this.isAuthenticationError(error)) {
-          this.connectionErrorMessage = 'Erro de autenticação. Faça login novamente.'
+          this.connectionErrorMessage = 'Authentication error. Please login again.'
           this.snackbarMessage = '🔐 ' + this.connectionErrorMessage
         } else {
           this.connectionErrorMessage =
@@ -1046,7 +1044,7 @@ export default Vue.extend({
 
         this.showSnackbar = true
         this.snackbarColor = 'success'
-        this.snackbarMessage = 'Revisão do dataset submetida com sucesso!'
+        this.snackbarMessage = 'Dataset review submitted successfully!'
         this.snackbarTimeout = 4000 // Timeout normal para sucesso
 
         this.closeReportDialog()
@@ -1062,14 +1060,14 @@ export default Vue.extend({
           this.snackbarTimeout = 10000 // Mais tempo para erros críticos
         } else if (this.isNetworkError(error)) {
           this.snackbarMessage =
-            '🌐 Erro de rede. Verifique a sua ligação à internet e tente novamente.'
+            '🌐 Network error. Check your internet connection and try again.'
           this.snackbarTimeout = 8000
         } else if (this.isAuthenticationError(error)) {
-          this.snackbarMessage = '🔐 Sessão expirada. Faça login novamente para submeter a revisão.'
+          this.snackbarMessage = '🔐 Session expired. Please login again to submit the review.'
           this.snackbarTimeout = 8000
         } else {
           this.snackbarMessage =
-            '⚠️ Erro inesperado ao submeter revisão. Tente novamente em alguns momentos.'
+            '⚠️ Unexpected error when submitting review. Please try again in a few moments.'
           this.snackbarTimeout = 6000
         }
 

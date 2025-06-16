@@ -15,7 +15,7 @@ class DatasetReviewView(APIView):
 
     def post(self, request, project_id):
         """
-        Endpoint para submeter revisões de concordância entre anotadores
+        Endpoint to submit inter-annotator agreement reviews
         """
         try:
             # Log da revisão recebida
@@ -29,7 +29,7 @@ class DatasetReviewView(APIView):
             
             if not dataset_id:
                 return Response(
-                    {"error": "dataset_id é obrigatório"},
+                    {"error": "dataset_id is required"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -38,7 +38,7 @@ class DatasetReviewView(APIView):
                 example = Example.objects.get(id=dataset_id)
             except Example.DoesNotExist:
                 return Response(
-                    {"error": f"Exemplo com ID {dataset_id} não encontrado"},
+                    {"error": f"Example with ID {dataset_id} not found"},
                     status=status.HTTP_404_NOT_FOUND
                 )
             
@@ -56,13 +56,13 @@ class DatasetReviewView(APIView):
             # Serializar a resposta
             serializer = DatasetReviewSerializer(dataset_review)
             
-            action = "criada" if created else "atualizada"
-            logger.info(f"Dataset review {action} com sucesso: ID {dataset_review.id}")
+            action = "created" if created else "updated"
+            logger.info(f"Dataset review {action} successfully: ID {dataset_review.id}")
             
             return Response(
                 {
                     "id": dataset_review.id,
-                    "message": f"Revisão {action} com sucesso",
+                    "message": f"Review {action} successfully",
                     "reviewed_by": request.user.id,
                     "status": "success",
                     "data": serializer.data
@@ -74,7 +74,7 @@ class DatasetReviewView(APIView):
             logger.error(f"Error submitting dataset review: {str(e)}")
             return Response(
                 {
-                    "error": "Erro interno do servidor",
+                    "error": "Internal server error",
                     "detail": str(e)
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

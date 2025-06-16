@@ -139,7 +139,7 @@
               @click="openConfirmDialog"
             >
               <v-icon left>mdi-check-circle</v-icon>
-              Submeter Respostas
+              Submit Answers
             </v-btn>
             
             <v-btn 
@@ -148,7 +148,7 @@
               @click="clearAnswers"
             >
               <v-icon left>mdi-refresh</v-icon>
-              Limpar Respostas
+              Clear Answers
             </v-btn>
           </v-card-text>
         </v-card>
@@ -160,23 +160,23 @@
       <v-card>
         <v-card-title class="primary white--text">
           <v-icon left color="white">mdi-help-circle</v-icon>
-          Confirmar Submissão
+          Confirm Submission
         </v-card-title>
         <v-card-text class="pt-4">
           <div class="text-center">
             <v-icon size="64" color="primary" class="mb-4">mdi-clipboard-check</v-icon>
-            <p class="text-h6 mb-2">Tem certeza que deseja submeter as respostas?</p>
-            <p class="grey--text">Esta ação não pode ser desfeita.</p>
+            <p class="text-h6 mb-2">Are you sure you want to submit the answers?</p>
+            <p class="grey--text">This action cannot be undone.</p>
           </div>
         </v-card-text>
         <v-card-actions class="pa-4">
           <v-spacer />
           <v-btn color="grey" text @click="handleConfirmCancel">
-            Cancelar
+            Cancel
           </v-btn>
           <v-btn color="primary" @click="handleConfirmOk">
             <v-icon left>mdi-check</v-icon>
-            Confirmar
+            Confirm
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -225,12 +225,12 @@ export default Vue.extend({
   methods: {
     getAnswerTypeLabel(answerType: string | undefined): string {
       const labels: {[key: string]: string} = {
-        'boolean': 'Sim/Não',
-        'int': 'Número Inteiro', 
-        'double': 'Número Decimal',
-        'string': 'Texto'
+        'boolean': 'Yes/No',
+        'int': 'Integer Number', 
+        'double': 'Decimal Number',
+        'string': 'Text'
       }
-      return labels[answerType || 'string'] || 'Texto'
+      return labels[answerType || 'string'] || 'Text'
     },
     
     getAnswerTypeColor(answerType: string | undefined): string {
