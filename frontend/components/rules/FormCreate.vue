@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title>Configure Voting and Add Annotation Rules</v-card-title>
     <v-card-text>
-      <v-form ref="form" v-model="valid">
+      <v-form ref="form" v-model="internalValid">
         <v-text-field
           label="Maximum Number of Votes"
           type="number"
@@ -40,22 +40,13 @@
         ></v-text-field>
 
         <v-text-field
-          label="Versão"
+          label="Version"
           :value="editedItem.version"
           readonly
           disabled
-          hint="A versão é determinada automaticamente pelo sistema"
+          hint="The version is automatically determined by the system"
           persistent-hint
-        >
-          <template #prepend>
-            <v-tooltip bottom>
-              <template #activator="{ on }">
-                <v-icon small v-on="on">mdi-information-outline</v-icon>
-              </template>
-              <span>A versão é incrementada automaticamente com base nas versões existentes</span>
-            </v-tooltip>
-          </template>
-        </v-text-field>
+        ></v-text-field>
 
         <v-divider class="my-4"></v-divider>
 
@@ -83,6 +74,7 @@
           <v-col cols="12">
             <v-list dense>
               <v-list-item-group>
+                <!-- eslint-disable-next-line -->
                 <v-list-item v-for="(rule, index) in annotationRulesList" :key="index">
                   <v-list-item-content>
                     <v-list-item-title>
@@ -90,7 +82,9 @@
                     </v-list-item-title>
                   </v-list-item-content>
                   <v-list-item-action>
-                    <v-btn icon color="red" @click="removeRule(index)"> Delete </v-btn>
+                    <v-btn icon color="red" @click="removeRule(index)">
+                      <v-icon>{{ mdiDelete }}</v-icon>
+                    </v-btn>
                   </v-list-item-action>
                 </v-list-item>
               </v-list-item-group>
@@ -106,28 +100,32 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import {
-  CreateVotingConfigurationCommand,
-  CreateAnnotationRuleCommand
-} from '~/services/application/rules/ruleCommand'
+import { mdiDelete } from '@mdi/js'
 
 export default Vue.extend({
   props: {
     editedItem: {
-      type: Object as () => CreateVotingConfigurationCommand,
+      type: Object,
       required: true
     },
     annotationRulesList: {
-      type: Array as () => CreateAnnotationRuleCommand[],
+      type: Array,
       required: true
+    },
+    valid: {
+      type: Boolean,
+      default: false
     }
   },
 
   data() {
     return {
-      valid: false,
+      mdiDelete,
+      internalValid: false,
       rules: {
-        required: (value: any) => !!value || 'Required field.',
+        required: (value: string | number) => {
+          return (value !== null && value !== undefined && value !== '') || 'Required field'
+        },
         requiredIf: (otherValue: any) => (value: any) => {
           if (otherValue && !value) return 'Required field when the other field is filled.'
           return true
@@ -137,16 +135,15 @@ export default Vue.extend({
           return true
         },
         integer: (value: any) => Number.isInteger(value) || 'Must be an integer.',
-        min: (min: number) => (value: number) =>
-          value >= min || `Must be greater than or equal to ${min}.`,
-        max: (max: number) => (value: number) =>
-          value <= max || `Must be less than or equal to ${max}.`,
-        isAfter: (startDate: any) => (endDate: any) => {
+        min: (min: number) => (value: number) => {
+          return value >= min || `Minimum value is ${min}`
+        },
+        max: (max: number) => (value: number) => {
+          return value <= max || `Maximum value is ${max}`
+        },
+        isAfter: (startDate: string) => (endDate: string) => {
           if (!startDate || !endDate) return true
-          return (
-            new Date(endDate).getTime() > new Date(startDate).getTime() ||
-            'End date must be after start date.'
-          )
+          return new Date(endDate) > new Date(startDate) || 'End date must be after start date'
         }
       },
       newRuleText: '',
@@ -156,37 +153,45 @@ export default Vue.extend({
 
   computed: {
     isFormValid(): boolean {
-      return this.valid && (this.annotationRulesList.length > 0 || this.newRuleName.trim() !== '')
+      return this.internalValid && (this.annotationRulesList.length > 0 || this.newRuleName.trim() !== '')
     }
   },
 
   watch: {
     editedItem: {
       handler() {
-        ;(this.$refs.form as Vue & { validate: () => boolean })?.validate()
+        this.validateForm()
       },
       deep: true
     }
   },
 
   methods: {
+    validateForm() {
+      this.$nextTick(() => {
+        const form = this.$refs.form as any
+        if (form && form.validate) {
+          this.internalValid = form.validate()
+        }
+      })
+    },
+    
     addRule() {
       if (this.newRuleName.trim()) {
-        const newRule: CreateAnnotationRuleCommand = {
-          project: this.editedItem.project,
+        const newRule = {
+          project: (this.editedItem as any).project,
           name: this.newRuleName.trim(),
-          description: 'NULO',
           voting_configuration: 0,
           final_result: '',
           is_finalized: false
         }
-        const updatedRulesList = [...this.annotationRulesList, newRule]
+        const updatedRulesList = [...(this.annotationRulesList as any[]), newRule]
         this.$emit('update:annotationRulesList', updatedRulesList)
         this.newRuleName = ''
       }
     },
     removeRule(index: number) {
-      const updatedRulesList = this.annotationRulesList.filter((_, i) => i !== index)
+      const updatedRulesList = (this.annotationRulesList as any[]).filter((_, i) => i !== index)
       this.$emit('update:annotationRulesList', updatedRulesList)
     }
   }

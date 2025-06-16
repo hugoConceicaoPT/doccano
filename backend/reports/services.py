@@ -787,10 +787,6 @@ class AnnotationReportService:
         # Construir query base
         base_filter = Q(example__project_id__in=project_ids)
         
-        # Aplicar filtros comuns
-        if user_ids:
-            base_filter &= Q(user_id__in=user_ids)
-        
         # Filtrar apenas anotadores (excluir admins)
         from django.conf import settings
         annotator_user_ids = Member.objects.filter(
@@ -798,7 +794,36 @@ class AnnotationReportService:
             role__name=settings.ROLE_ANNOTATOR
         ).values_list('user_id', flat=True).distinct()
         
-        if annotator_user_ids:
+        # Aplicar filtros comuns
+        if user_ids:
+            # Se user_ids foi especificado, usar interseção com anotadores
+            if annotator_user_ids:
+                # Filtrar apenas utilizadores que são anotadores E estão na lista especificada
+                valid_user_ids = set(user_ids).intersection(set(annotator_user_ids))
+                if valid_user_ids:
+                    base_filter &= Q(user_id__in=list(valid_user_ids))
+                    print(f"[DEBUG] Filtro de utilizadores aplicado: {list(valid_user_ids)}")
+                else:
+                    print(f"[DEBUG] Nenhum utilizador válido encontrado na interseção")
+                    # Se não há interseção, retornar resultado vazio
+                    return {
+                        'summary': {
+                            'total_annotations': 0,
+                            'total_examples': 0,
+                            'total_annotators': 0,
+                            'date_range_from': date_from.isoformat() if date_from else None,
+                            'date_range_to': date_to.isoformat() if date_to else None,
+                            'annotation_type_counts': {}
+                        },
+                        'data': [],
+                        'total_pages': 0,
+                        'current_page': page,
+                        'page_size': page_size
+                    }
+            else:
+                base_filter &= Q(user_id__in=user_ids)
+        elif annotator_user_ids:
+            # Se não há filtro de utilizadores específico, usar todos os anotadores
             base_filter &= Q(user_id__in=annotator_user_ids)
         if example_ids:
             base_filter &= Q(example_id__in=example_ids)
@@ -897,6 +922,82 @@ class AnnotationReportService:
                     'page_size': page_size
                 }
         
+        # Se há filtro de discrepâncias, precisamos primeiro identificar exemplos com discrepâncias
+        # usando TODAS as anotações (não apenas as filtradas por utilizador)
+        examples_with_discrepancy = set()
+        if discrepancy_filter and discrepancy_filter != 'all':
+            print(f"[DEBUG] Pré-calculando discrepâncias para filtro: {discrepancy_filter}")
+            
+            # Construir filtro base SEM filtro de utilizadores para detectar discrepâncias
+            discrepancy_base_filter = Q(example__project_id__in=project_ids)
+            
+            # Aplicar apenas filtros que não sejam de utilizador
+            if example_ids:
+                discrepancy_base_filter &= Q(example_id__in=example_ids)
+            if date_from:
+                discrepancy_base_filter &= Q(created_at__gte=date_from)
+            if date_to:
+                discrepancy_base_filter &= Q(created_at__lte=date_to)
+            
+            # Filtrar apenas anotadores (excluir admins) para detecção de discrepâncias
+            if annotator_user_ids:
+                discrepancy_base_filter &= Q(user_id__in=annotator_user_ids)
+            
+            # Coletar todas as anotações para análise de discrepâncias
+            all_annotations_for_discrepancy = []
+            
+            for anno_type in valid_types:
+                model_class = AnnotationReportService.ANNOTATION_TYPES[anno_type]
+                
+                # Construir filtro específico para o tipo
+                type_filter = Q()
+                if label_ids:
+                    if anno_type == 'category':
+                        type_filter &= Q(label_id__in=label_ids)
+                    elif anno_type == 'span':
+                        type_filter &= Q(label_id__in=label_ids)
+                    elif anno_type == 'relation':
+                        type_filter &= Q(type_id__in=label_ids)
+                
+                # Obter anotações para análise de discrepâncias (sem filtro de utilizador)
+                discrepancy_annotations = model_class.objects.filter(discrepancy_base_filter & type_filter)
+                
+                if anno_type == 'category':
+                    discrepancy_annotations = discrepancy_annotations.select_related('example', 'user', 'label')
+                elif anno_type == 'span':
+                    discrepancy_annotations = discrepancy_annotations.select_related('example', 'user', 'label')
+                elif anno_type == 'relation':
+                    discrepancy_annotations = discrepancy_annotations.select_related('example', 'user', 'type')
+                else:
+                    discrepancy_annotations = discrepancy_annotations.select_related('example', 'user')
+                
+                # Processar anotações para análise de discrepâncias
+                for anno in discrepancy_annotations:
+                    try:
+                        if anno_type == 'category':
+                            label_text = anno.label.text if hasattr(anno, 'label') and anno.label else None
+                        elif anno_type == 'span':
+                            label_text = anno.label.text if hasattr(anno, 'label') and anno.label else None
+                        elif anno_type == 'relation':
+                            label_text = anno.type.text if hasattr(anno, 'type') and anno.type else None
+                        else:
+                            label_text = None
+                        
+                        annotation_item = {
+                            'user_id': anno.user_id if hasattr(anno, 'user_id') else None,
+                            'example_id': anno.example_id if hasattr(anno, 'example_id') else None,
+                            'label_text': label_text,
+                            'type': anno_type
+                        }
+                        
+                        all_annotations_for_discrepancy.append(annotation_item)
+                    except Exception as e:
+                        print(f"Erro ao processar anotação para discrepâncias {anno.id}: {str(e)}")
+            
+            # Detectar exemplos com discrepâncias
+            examples_with_discrepancy = AnnotationReportService._get_examples_with_discrepancy(all_annotations_for_discrepancy)
+            print(f"[DEBUG] Exemplos com discrepâncias detectados: {examples_with_discrepancy}")
+        
         all_annotations = []
         type_counts = defaultdict(int)
         
@@ -916,6 +1017,19 @@ class AnnotationReportService:
                 elif anno_type == 'relation':
                     # Para relações, filtrar por type_id
                     type_filter &= Q(type_id__in=label_ids)
+            
+            # Se há filtro de discrepâncias, aplicar filtro de exemplos
+            if discrepancy_filter and discrepancy_filter != 'all':
+                if discrepancy_filter == 'with_discrepancy':
+                    if examples_with_discrepancy:
+                        type_filter &= Q(example_id__in=examples_with_discrepancy)
+                    else:
+                        # Se não há exemplos com discrepâncias, pular este tipo
+                        continue
+                elif discrepancy_filter == 'without_discrepancy':
+                    if examples_with_discrepancy:
+                        type_filter &= Q(example_id__in=examples_with_discrepancy).negate()
+                    # Se não há exemplos com discrepâncias, todos os exemplos são válidos
                     
             # Obter anotações para este tipo
             annotations = model_class.objects.filter(base_filter & type_filter)
@@ -1027,27 +1141,15 @@ class AnnotationReportService:
                         # Log erro sem interromper o processamento
                         print(f"Erro ao processar anotação {anno.id} do tipo {anno_type}: {str(e)}")
         
-        # Aplicar filtro de discrepâncias se especificado
-        if discrepancy_filter and discrepancy_filter != 'all':
-            print(f"[DEBUG] Aplicando filtro de discrepâncias: {discrepancy_filter}")
-            print(f"[DEBUG] Total de anotações antes do filtro: {len(all_annotations)}")
+        print(f"[DEBUG] Total de anotações coletadas: {len(all_annotations)}")
+        if all_annotations:
+            # Debug: mostrar utilizadores únicos nas anotações
+            unique_users = set(anno.get('user_id') for anno in all_annotations if anno.get('user_id'))
+            print(f"[DEBUG] Utilizadores únicos nas anotações finais: {list(unique_users)}")
             
-            # Verificar se há anotações para processar
-            if not all_annotations:
-                print(f"[DEBUG] Nenhuma anotação encontrada para aplicar filtro de discrepâncias")
-            else:
-                # Usar lógica simples baseada na contagem de utilizadores únicos por exemplo
-                examples_with_discrepancy = AnnotationReportService._get_examples_with_discrepancy(all_annotations)
-                print(f"[DEBUG] Exemplos com discrepância encontrados: {examples_with_discrepancy}")
-                
-                if discrepancy_filter == 'with_discrepancy':
-                    # Filtrar apenas anotações de exemplos com discrepâncias
-                    all_annotations = [anno for anno in all_annotations if anno.get('example_id') in examples_with_discrepancy]
-                    print(f"[DEBUG] Anotações com discrepância encontradas: {len(all_annotations)}")
-                elif discrepancy_filter == 'without_discrepancy':
-                    # Filtrar apenas anotações de exemplos sem discrepâncias
-                    all_annotations = [anno for anno in all_annotations if anno.get('example_id') not in examples_with_discrepancy]
-                    print(f"[DEBUG] Anotações sem discrepância encontradas: {len(all_annotations)}")
+            # Debug: mostrar exemplos únicos nas anotações
+            unique_examples = set(anno.get('example_id') for anno in all_annotations if anno.get('example_id'))
+            print(f"[DEBUG] Exemplos únicos nas anotações finais: {list(unique_examples)[:5]}...")  # Mostrar apenas os primeiros 5
         
         # Agrupar anotações por utilizador e exemplo para consolidar labels
         consolidated_annotations = AnnotationReportService._consolidate_annotations_by_user_example(all_annotations)
@@ -1086,11 +1188,11 @@ class AnnotationReportService:
     @staticmethod
     def _get_examples_with_discrepancy(all_annotations: List[Dict[str, Any]]) -> set:
         """
-        Identifica exemplos que têm discrepâncias usando lógica simples.
+        Identifica exemplos que têm discrepâncias usando lógica simples e eficaz.
         
         Um exemplo tem discrepância se:
         - Há múltiplos utilizadores que anotaram o mesmo exemplo
-        - E esses utilizadores fizeram anotações diferentes (diferentes labels ou tipos)
+        - E esses utilizadores usaram labels diferentes
         
         Args:
             all_annotations: Lista de todas as anotações
@@ -1109,64 +1211,54 @@ class AnnotationReportService:
                     examples_annotations[example_id] = []
                 examples_annotations[example_id].append(anno)
         
+        print(f"[DEBUG] Analisando {len(examples_annotations)} exemplos para discrepâncias")
+        
         # Verificar cada exemplo
         for example_id, annotations in examples_annotations.items():
-            # Obter utilizadores únicos neste exemplo
-            users = set(anno.get('user_id') for anno in annotations if anno.get('user_id'))
-            
-            # Se há apenas um utilizador, não há discrepância
-            if len(users) < 2:
-                continue
-            
-            # Verificar se há anotações diferentes entre utilizadores
-            has_discrepancy = False
-            
-            # Agrupar anotações por utilizador
-            user_annotations = {}
+            # Agrupar por utilizador e coletar labels usadas
+            user_labels = {}
             for anno in annotations:
                 user_id = anno.get('user_id')
-                if user_id:
-                    if user_id not in user_annotations:
-                        user_annotations[user_id] = []
-                    user_annotations[user_id].append(anno)
-            
-            # Comparar anotações entre utilizadores
-            user_signatures = {}
-            for user_id, user_annos in user_annotations.items():
-                # Criar uma "assinatura" das anotações do utilizador
-                signature = set()
-                for anno in user_annos:
-                    anno_type = anno.get('type')
-                    label_id = anno.get('label_id')
-                    
-                    # Para spans, incluir posições na assinatura
-                    if anno_type == 'span':
-                        detail = anno.get('detail', {})
-                        start = detail.get('start_offset')
-                        end = detail.get('end_offset')
-                        signature.add((anno_type, label_id, start, end))
-                    # Para outros tipos, usar apenas tipo e label
-                    else:
-                        signature.add((anno_type, label_id))
+                label_text = anno.get('label_text', '').strip()
                 
-                user_signatures[user_id] = signature
+                if user_id:
+                    if user_id not in user_labels:
+                        user_labels[user_id] = set()
+                    # Incluir também casos onde não há label (anotação vazia)
+                    if label_text:
+                        user_labels[user_id].add(label_text)
+                    else:
+                        user_labels[user_id].add('__NO_LABEL__')  # Marcador para ausência de label
             
-            # Se há utilizadores com assinaturas diferentes, há discrepância
-            signatures_list = list(user_signatures.values())
-            if len(signatures_list) > 1:
-                # Comparar todas as assinaturas entre si
-                first_signature = signatures_list[0]
-                for signature in signatures_list[1:]:
-                    if signature != first_signature:
+            # Se há menos de 2 utilizadores, não há discrepância
+            if len(user_labels) < 2:
+                continue
+            
+            print(f"[DEBUG] Exemplo {example_id}: {len(user_labels)} utilizadores")
+            for user_id, labels in user_labels.items():
+                print(f"[DEBUG]   Utilizador {user_id}: {labels}")
+            
+            # Verificar se há diferenças nas labels entre utilizadores
+            all_label_sets = list(user_labels.values())
+            has_discrepancy = False
+            
+            # Comparar labels entre utilizadores
+            for i, labels1 in enumerate(all_label_sets):
+                for j, labels2 in enumerate(all_label_sets[i+1:], i+1):
+                    # Se os conjuntos de labels são diferentes, há discrepância
+                    if labels1 != labels2:
                         has_discrepancy = True
-                        print(f"[DEBUG] Discrepância detectada no exemplo {example_id}: {first_signature} != {signature}")
+                        print(f"[DEBUG] Discrepância detectada no exemplo {example_id}: {labels1} vs {labels2}")
                         break
+                
+                if has_discrepancy:
+                    break
             
             if has_discrepancy:
                 examples_with_discrepancy.add(example_id)
-                print(f"[DEBUG] Discrepância detectada no exemplo {example_id} com {len(users)} utilizadores")
+                print(f"[DEBUG] ✓ Exemplo {example_id} marcado como discrepante")
         
-        print(f"[DEBUG] Total de exemplos com discrepância: {len(examples_with_discrepancy)}")
+        print(f"[DEBUG] Total de exemplos com discrepância detectados: {len(examples_with_discrepancy)}")
         return examples_with_discrepancy
     
     @staticmethod

@@ -19,7 +19,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+from reportlab.lib.units import inch, cm
 
 from projects.permissions import IsProjectAdmin, IsProjectStaffAndReadOnly
 from .serializers import (
@@ -569,8 +569,9 @@ class AnnotatorReportExportView(APIView):
         # Calcular labels únicas
         unique_labels = set()
         for item in data_items:
-            if item.get('label_breakdown'):
-                unique_labels.update(item['label_breakdown'].keys())
+            label_breakdown = item.get('label_breakdown', {})
+            if label_breakdown:
+                unique_labels.update(label_breakdown.keys())
         
         writer.writerow(['=== SUMMARY STATISTICS ==='])
         writer.writerow(['Total Annotators:', total_annotators])
@@ -659,8 +660,9 @@ class AnnotatorReportExportView(APIView):
             
             # Labels utilizadas
             writer.writerow(['LABELS USED:'])
-            if item.get('label_breakdown'):
-                for label, count in item['label_breakdown'].items():
+            label_breakdown = item.get('label_breakdown', {})
+            if label_breakdown:
+                for label, count in label_breakdown.items():
                     writer.writerow(['', f'{label}', f'{count} annotations'])
             else:
                 writer.writerow(['', 'No labels used'])
@@ -668,8 +670,9 @@ class AnnotatorReportExportView(APIView):
             
             # Datasets e suas labels
             writer.writerow(['DATASETS AND LABELS:'])
-            if item.get('dataset_label_breakdown'):
-                for dataset, labels in item['dataset_label_breakdown'].items():
+            dataset_breakdown = item.get('dataset_label_breakdown', {})
+            if dataset_breakdown:
+                for dataset, labels in dataset_breakdown.items():
                     writer.writerow(['', f'Dataset: {dataset}'])
                     if labels:
                         for label, count in labels.items():
@@ -685,8 +688,8 @@ class AnnotatorReportExportView(APIView):
             
             # Perguntas e respostas da perspectiva
             writer.writerow(['PERSPECTIVE QUESTIONS AND ANSWERS:'])
-            if item.get('perspective_questions_answers'):
-                qa_data = item['perspective_questions_answers']
+            qa_data = item.get('perspective_questions_answers', {})
+            if qa_data:
                 if qa_data.get('questions') and qa_data.get('answers'):
                     # Criar mapa de perguntas
                     questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
@@ -858,8 +861,9 @@ class AnnotatorReportExportView(APIView):
             # Calcular labels únicas
             unique_labels = set()
             for item in data_items:
-                if item.get('label_breakdown'):
-                    unique_labels.update(item['label_breakdown'].keys())
+                label_breakdown = item.get('label_breakdown', {})
+                if label_breakdown:
+                    unique_labels.update(label_breakdown.keys())
             
             elements.append(Paragraph("ESTATÍSTICAS RESUMO", styles['SectionTitle']))
             
@@ -995,15 +999,17 @@ class AnnotatorReportExportView(APIView):
                 for i, item in enumerate(data_items):
                     # Formatar labels
                     label_breakdown = []
-                    if item.get('label_breakdown'):
-                        for label, count in item['label_breakdown'].items():
+                    label_data = item.get('label_breakdown', {})
+                    if label_data:
+                        for label, count in label_data.items():
                             label_breakdown.append(f"{label}: {count}")
                     label_text = '<br/>'.join(label_breakdown) if label_breakdown else 'Nenhuma'
                     
                     # Formatar datasets
                     dataset_breakdown = []
-                    if item.get('dataset_label_breakdown'):
-                        for dataset, labels in item['dataset_label_breakdown'].items():
+                    dataset_data = item.get('dataset_label_breakdown', {})
+                    if dataset_data:
+                        for dataset, labels in dataset_data.items():
                             dataset_labels = []
                             for label, count in labels.items():
                                 dataset_labels.append(f"{label}: {count}")
@@ -1012,8 +1018,8 @@ class AnnotatorReportExportView(APIView):
                     
                     # Formatar perguntas e respostas
                     qa_breakdown = []
-                    if item.get('perspective_questions_answers'):
-                        qa_data = item['perspective_questions_answers']
+                    qa_data = item.get('perspective_questions_answers', {})
+                    if qa_data:
                         if qa_data.get('questions') and qa_data.get('answers'):
                             questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
                             
@@ -1649,6 +1655,8 @@ class AnnotationReportExportView(APIView):
 
     def _export_csv(self, report_data):
         """Exportar relatório em formato CSV melhorado"""
+        from django.utils import timezone
+        
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="annotations_report.csv"'
         
@@ -1658,16 +1666,20 @@ class AnnotationReportExportView(APIView):
         writer = csv.writer(response)
         
         # Obter informações do projeto (assumindo que todas as anotações são do mesmo projeto)
-        project_name = ""
+        project_name = "N/A"
+        project_id = ""
         if report_data.get('data') and len(report_data['data']) > 0:
-            project_name = report_data['data'][0].get('project_name', "")
+            first_item = report_data['data'][0]
+            project_name = first_item.get('project_name', "N/A")
+            project_id = first_item.get('project_id', "")
         
         # Adicionar cabeçalho com informações do projeto
-        writer.writerow(['Annotations Report'])
-        writer.writerow(['Project:', project_name])
-        
-        # Adicionar informações sobre os filtros utilizados
-        writer.writerow(['Applied filters:'])
+        writer.writerow(['=== ANNOTATIONS REPORT ==='])
+        writer.writerow(['Generated on:', timezone.now().strftime('%Y-%m-%d %H:%M:%S')])
+        writer.writerow(['Project Name:', project_name])
+        if project_id:
+            writer.writerow(['Project ID:', project_id])
+        writer.writerow([])
         
         # Recuperar os filtros da query string original
         query_params = getattr(self, 'request', None)
@@ -1675,6 +1687,24 @@ class AnnotationReportExportView(APIView):
             query_params = getattr(query_params, 'query_params', getattr(query_params, 'GET', {}))
         else:
             query_params = {}
+        
+        # Verificar se há filtros aplicados
+        has_filters = any([
+            query_params.get('user_ids'),
+            query_params.get('label_ids'),
+            query_params.get('example_ids'),
+            query_params.get('discrepancy_filter'),
+            query_params.get('perspective_question_ids'),
+            query_params.get('perspective_answer_ids'),
+            query_params.get('date_from'),
+            query_params.get('date_to')
+        ])
+        
+        # Adicionar informações sobre os filtros utilizados
+        writer.writerow(['=== APPLIED FILTERS ==='])
+        
+        if not has_filters:
+            writer.writerow(['No specific filters applied - showing all annotations'])
         
         # Usuários - converter IDs para nomes
         if 'user_ids' in query_params and query_params['user_ids']:
@@ -1730,7 +1760,68 @@ class AnnotationReportExportView(APIView):
             except Exception:
                 writer.writerow(['Examples:', query_params['example_ids']])
         
+        # Filtro de discrepâncias
+        if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
+            discrepancy_text = {
+                'all': 'All annotations',
+                'with_discrepancy': 'Only annotations with discrepancies',
+                'without_discrepancy': 'Only annotations without discrepancies'
+            }.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])
+            writer.writerow(['Discrepancy Filter:', discrepancy_text])
+        
+        # Perguntas da perspectiva
+        if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
+            try:
+                from projects.models import Question
+                question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
+                questions = Question.objects.filter(id__in=question_ids)
+                question_texts = [q.question for q in questions]
+                writer.writerow(['Perspective Questions:', ', '.join(question_texts)])
+            except Exception:
+                writer.writerow(['Perspective Questions:', query_params['perspective_question_ids']])
+        
+        # Respostas da perspectiva
+        if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
+            try:
+                from projects.models import Answer
+                answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
+                answers = Answer.objects.filter(id__in=answer_ids)
+                answer_texts = [a.answer_text or a.answer_option or f"Answer {a.id}" for a in answers]
+                writer.writerow(['Perspective Answers:', ', '.join(answer_texts)])
+            except Exception:
+                writer.writerow(['Perspective Answers:', query_params['perspective_answer_ids']])
+        
+        # Datas
+        if 'date_from' in query_params and query_params['date_from']:
+            writer.writerow(['Start Date:', query_params['date_from']])
+        if 'date_to' in query_params and query_params['date_to']:
+            writer.writerow(['End Date:', query_params['date_to']])
+        
+        # Estatísticas do relatório
         writer.writerow([])  # Linha em branco
+        writer.writerow(['=== REPORT STATISTICS ==='])
+        
+        # Calcular estatísticas
+        total_annotations = len(report_data.get('data', []))
+        unique_users = set()
+        unique_examples = set()
+        unique_labels = set()
+        
+        for item in report_data.get('data', []):
+            if item.get('username'):
+                unique_users.add(item['username'])
+            if item.get('example_name'):
+                unique_examples.add(item['example_name'])
+            if item.get('label_text'):
+                unique_labels.add(item['label_text'])
+        
+        writer.writerow(['Total Annotations:', total_annotations])
+        writer.writerow(['Unique Users:', len(unique_users)])
+        writer.writerow(['Unique Examples:', len(unique_examples)])
+        writer.writerow(['Unique Labels:', len(unique_labels)])
+        
+        writer.writerow([])  # Linha em branco
+        writer.writerow(['=== ANNOTATION DATA ==='])
         
         # Cabeçalho da tabela
         writer.writerow([
@@ -1747,26 +1838,28 @@ class AnnotationReportExportView(APIView):
         for item in data_items:
             # Formatar detalhes como string JSON simplificada
             detail_str = ""
-            if item['detail']:
-                detail_str = "; ".join([f"{k}: {v}" for k, v in item['detail'].items()])
+            detail_data = item.get('detail', {})
+            if detail_data and isinstance(detail_data, dict):
+                detail_str = "; ".join([f"{k}: {v}" for k, v in detail_data.items()])
             
             # Formatar data (agora é uma string ISO)
             date_str = '-'
-            if item['created_at']:
+            created_at = item.get('created_at')
+            if created_at:
                 # Se já for string, usar diretamente ou formatar
                 try:
                     from datetime import datetime
                     # Tentar converter para datetime e formatar
-                    dt = datetime.fromisoformat(item['created_at'].replace('Z', '+00:00'))
+                    dt = datetime.fromisoformat(str(created_at).replace('Z', '+00:00'))
                     date_str = dt.strftime('%Y-%m-%d %H:%M')
                 except (ValueError, AttributeError, TypeError):
                     # Se falhar, usar a string original
-                    date_str = item['created_at']
+                    date_str = str(created_at)
             
             writer.writerow([
-                item['example_name'],
-                item['username'],
-                item['label_text'] or '-',
+                item.get('example_name', '-'),
+                item.get('username', '-'),
+                item.get('label_text', '-') or '-',
                 date_str,
                 detail_str
             ])
@@ -1786,7 +1879,7 @@ class AnnotationReportExportView(APIView):
             from reportlab.pdfbase import pdfmetrics
             from reportlab.pdfbase.ttfonts import TTFont
             from reportlab.lib.enums import TA_LEFT, TA_CENTER
-            from reportlab.lib.units import inch
+            from reportlab.lib.units import inch, cm
 
             print(f"[PDF DEBUG] Iniciando exportação PDF com {len(report_data.get('data', []))} itens")
 
@@ -1838,6 +1931,51 @@ class AnnotationReportExportView(APIView):
                 )
             )
             
+            # Adicionar estilo para seções
+            styles.add(
+                ParagraphStyle(
+                    name='SectionTitle',
+                    parent=styles['Heading2'],
+                    fontSize=14,
+                    alignment=TA_LEFT,
+                    spaceAfter=8,
+                    spaceBefore=12,
+                    textColor=colors.HexColor('#1976d2')
+                )
+            )
+            
+            # Estilo para texto informativo
+            styles.add(
+                ParagraphStyle(
+                    name='InfoText',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    alignment=TA_LEFT,
+                    textColor=colors.HexColor('#666666')
+                )
+            )
+            
+            # Estilo para cabeçalho de tabela
+            styles.add(
+                ParagraphStyle(
+                    name='TableHeader',
+                    parent=styles['Normal'],
+                    fontSize=9,
+                    alignment=TA_CENTER,
+                    textColor=colors.white
+                )
+            )
+            
+            # Estilo para células de tabela
+            styles.add(
+                ParagraphStyle(
+                    name='TableCell',
+                    parent=styles['Normal'],
+                    fontSize=8,
+                    alignment=TA_LEFT
+                )
+            )
+            
             # Elementos do documento
             elements = []
             
@@ -1853,8 +1991,8 @@ class AnnotationReportExportView(APIView):
             
             # Informações do projeto em tabela
             project_info = [
-                ['Projeto:', project_name],
-                ['Data de Geração:', timezone.now().strftime('%d/%m/%Y às %H:%M:%S')]
+                ['Project:', project_name],
+                ['Generation Date:', timezone.now().strftime('%d/%m/%Y at %H:%M:%S')]
             ]
             
             project_table = Table(project_info, colWidths=[4*cm, 11*cm])
@@ -1877,7 +2015,7 @@ class AnnotationReportExportView(APIView):
             elements.append(Spacer(1, 20))
             
             # Adicionar informações sobre os filtros aplicados
-            elements.append(Paragraph("FILTROS APLICADOS", styles['SubtitleStyle']))
+            elements.append(Paragraph("APPLIED FILTERS", styles['SubtitleStyle']))
             
             filter_info = []
             
@@ -1895,10 +2033,10 @@ class AnnotationReportExportView(APIView):
                     user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
                     users = User.objects.filter(id__in=user_ids)
                     user_names = [user.username for user in users]
-                    filter_info.append(['Utilizadores:', ', '.join(user_names)])
+                    filter_info.append(['Users:', ', '.join(user_names)])
                 except Exception as e:
                     print(f"[PDF DEBUG] Erro ao processar user_ids: {e}")
-                    filter_info.append(['Utilizadores:', query_params['user_ids']])
+                    filter_info.append(['Users:', query_params['user_ids']])
             
             # Labels - converter IDs para nomes
             if 'label_ids' in query_params and query_params['label_ids']:
@@ -1938,20 +2076,20 @@ class AnnotationReportExportView(APIView):
                             text = str(example.text)
                             example_names.append(text[:30] + ('...' if len(text) > 30 else ''))
                         else:
-                            example_names.append(f"Exemplo {example.id}")
+                            example_names.append(f"Example {example.id}")
                     
-                    filter_info.append(['Exemplos:', ', '.join(example_names)])
+                    filter_info.append(['Examples:', ', '.join(example_names)])
                 except Exception:
-                    filter_info.append(['Exemplos:', query_params['example_ids']])
+                    filter_info.append(['Examples:', query_params['example_ids']])
             
             # Filtro de discrepâncias
             if 'discrepancy_filter' in query_params and query_params['discrepancy_filter']:
                 discrepancy_map = {
-                    'all': 'Todas as anotações',
-                    'with_discrepancy': 'Apenas com discrepâncias',
-                    'without_discrepancy': 'Apenas sem discrepâncias'
+                    'all': 'All annotations',
+                    'with_discrepancy': 'Only with discrepancies',
+                    'without_discrepancy': 'Only without discrepancies'
                 }
-                filter_info.append(['Filtro de Discrepâncias:', discrepancy_map.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])])
+                filter_info.append(['Discrepancy Filter:', discrepancy_map.get(query_params['discrepancy_filter'], query_params['discrepancy_filter'])])
             
             # Perguntas da perspectiva
             if 'perspective_question_ids' in query_params and query_params['perspective_question_ids']:
@@ -1960,9 +2098,9 @@ class AnnotationReportExportView(APIView):
                     question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
                     questions = Question.objects.filter(id__in=question_ids)
                     question_texts = [q.question for q in questions]
-                    filter_info.append(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+                    filter_info.append(['Perspective Questions:', ', '.join(question_texts)])
                 except Exception:
-                    filter_info.append(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
+                    filter_info.append(['Perspective Questions:', query_params['perspective_question_ids']])
             
             # Respostas da perspectiva
             if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
@@ -1970,10 +2108,10 @@ class AnnotationReportExportView(APIView):
                     from projects.models import Answer
                     answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
                     answers = Answer.objects.filter(id__in=answer_ids)
-                    answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
-                    filter_info.append(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+                    answer_texts = [a.answer_text or a.answer_option or f"Answer {a.id}" for a in answers]
+                    filter_info.append(['Perspective Answers:', ', '.join(answer_texts)])
                 except Exception:
-                    filter_info.append(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
+                    filter_info.append(['Perspective Answers:', query_params['perspective_answer_ids']])
             
             # Criar tabela de filtros se houver filtros
             if filter_info:
@@ -1994,77 +2132,97 @@ class AnnotationReportExportView(APIView):
                 ]))
                 elements.append(KeepTogether([filter_table]))
             else:
-                elements.append(Paragraph("Nenhum filtro específico aplicado", styles['Normal']))
+                elements.append(Paragraph("No specific filters applied", styles['Normal']))
             
             elements.append(Spacer(1, 20))
             
+            # Adicionar seção de estatísticas do relatório
+            elements.append(Paragraph("REPORT STATISTICS", styles['SectionTitle']))
+            
+            # Calcular estatísticas
+            total_annotations = len(report_data.get('data', []))
+            unique_users = set()
+            unique_examples = set()
+            unique_labels = set()
+            
+            for item in report_data.get('data', []):
+                if item.get('username'):
+                    unique_users.add(item['username'])
+                if item.get('example_name'):
+                    unique_examples.add(item['example_name'])
+                if item.get('label_text'):
+                    unique_labels.add(item['label_text'])
+            
+            # Criar tabela de estatísticas
+            stats_info = [
+                ['Total Annotations:', str(total_annotations)],
+                ['Unique Users:', str(len(unique_users))],
+                ['Unique Examples:', str(len(unique_examples))],
+                ['Unique Labels:', str(len(unique_labels))]
+            ]
+            
+            stats_table = Table(stats_info, colWidths=[4*cm, 3*cm])
+            stats_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e8f5e8')),
+                ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#2e7d32')),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+                ('ALIGN', (1, 0), (1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#81c784')),
+                ('LEFTPADDING', (0, 0), (-1, -1), 12),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            
+            elements.append(stats_table)
+            elements.append(Spacer(1, 20))
+            
             # Dados detalhados
-            detailed_title = Paragraph("DADOS DETALHADOS", styles['SectionTitle'])
+            detailed_title = Paragraph("DETAILED DATA", styles['SectionTitle'])
+            
+            # Obter dados das anotações
+            data_items = report_data.get('data', [])
             
             if data_items:
-                # Cabeçalho da tabela
+                # Cabeçalho da tabela para anotações
                 table_data = [
                     [
-                        Paragraph('Utilizador', styles['TableHeader']),
-                        Paragraph('Nome', styles['TableHeader']),
+                        Paragraph('Example', styles['TableHeader']),
+                        Paragraph('User', styles['TableHeader']),
                         Paragraph('Labels', styles['TableHeader']),
-                        Paragraph('Datasets', styles['TableHeader']),
-                        Paragraph('Perguntas/Respostas', styles['TableHeader'])
+                        Paragraph('Date', styles['TableHeader'])
                     ]
                 ]
                 
-                # Dados dos anotadores
+                # Dados das anotações
                 for i, item in enumerate(data_items):
-                    # Formatar labels
-                    label_breakdown = []
-                    if item.get('label_breakdown'):
-                        for label, count in item['label_breakdown'].items():
-                            label_breakdown.append(f"{label}: {count}")
-                    label_text = '<br/>'.join(label_breakdown) if label_breakdown else 'Nenhuma'
-                    
-                    # Formatar datasets
-                    dataset_breakdown = []
-                    if item.get('dataset_label_breakdown'):
-                        for dataset, labels in item['dataset_label_breakdown'].items():
-                            dataset_labels = []
-                            for label, count in labels.items():
-                                dataset_labels.append(f"{label}: {count}")
-                            dataset_breakdown.append(f"<b>{dataset}</b><br/>({'; '.join(dataset_labels)})")
-                    dataset_text = '<br/><br/>'.join(dataset_breakdown) if dataset_breakdown else 'Nenhum'
-                    
-                    # Formatar perguntas e respostas
-                    qa_breakdown = []
-                    if item.get('perspective_questions_answers'):
-                        qa_data = item['perspective_questions_answers']
-                        if qa_data.get('questions') and qa_data.get('answers'):
-                            questions_map = {q['question_id']: q['question_text'] for q in qa_data['questions']}
-                            
-                            answers_by_question = {}
-                            for answer in qa_data['answers']:
-                                question_id = answer['question_id']
-                                if question_id not in answers_by_question:
-                                    answers_by_question[question_id] = []
-                                answers_by_question[question_id].append(answer['answer_text'])
-                            
-                            for question_id, answers in answers_by_question.items():
-                                question_text = questions_map.get(question_id, f"Pergunta {question_id}")
-                                qa_breakdown.append(f"<b>{question_text}</b><br/>{', '.join(answers)}")
-                    
-                    qa_text = '<br/><br/>'.join(qa_breakdown) if qa_breakdown else 'Nenhuma'
-                    
-                    # Cor alternada para as linhas
-                    row_color = colors.HexColor('#f9f9f9') if i % 2 == 0 else colors.white
+                    # Formatar data
+                    created_at = item.get('created_at', '')
+                    if created_at:
+                        try:
+                            from datetime import datetime
+                            if isinstance(created_at, str):
+                                date_obj = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                                formatted_date = date_obj.strftime('%d/%m/%Y %H:%M')
+                            else:
+                                formatted_date = str(created_at)
+                        except:
+                            formatted_date = str(created_at)
+                    else:
+                        formatted_date = 'N/A'
                     
                     table_data.append([
-                        Paragraph(item.get('annotator_username', 'N/A'), styles['TableCell']),
-                        Paragraph(item.get('annotator_name', 'N/A'), styles['TableCell']),
-                        Paragraph(label_text, styles['TableCell']),
-                        Paragraph(dataset_text, styles['TableCell']),
-                        Paragraph(qa_text, styles['TableCell'])
+                        Paragraph(item.get('example_name', 'N/A'), styles['TableCell']),
+                        Paragraph(item.get('username', 'N/A'), styles['TableCell']),
+                        Paragraph(item.get('label_text', 'No labels'), styles['TableCell']),
+                        Paragraph(formatted_date, styles['TableCell'])
                     ])
                 
                 # Criar tabela
-                main_table = Table(table_data, colWidths=[3.5*cm, 3.5*cm, 5.5*cm, 5.5*cm, 6*cm])
+                main_table = Table(table_data, colWidths=[6*cm, 4*cm, 6*cm, 4*cm])
                 main_table.setStyle(TableStyle([
                     # Cabeçalho
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1976d2')),
@@ -2091,7 +2249,7 @@ class AnnotationReportExportView(APIView):
                 # Adicionar título e tabela juntos com KeepTogether
                 elements.append(KeepTogether([detailed_title, Spacer(1, 10), main_table]))
             else:
-                no_data_msg = Paragraph("Nenhum dado encontrado para os filtros aplicados.", styles['InfoText'])
+                no_data_msg = Paragraph("No data found for the applied filters.", styles['InfoText'])
                 elements.append(KeepTogether([detailed_title, Spacer(1, 10), no_data_msg]))
             
             # Construir PDF
@@ -2102,7 +2260,7 @@ class AnnotationReportExportView(APIView):
             # Preparar resposta
             buffer.seek(0)
             response = HttpResponse(buffer.read(), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="annotations_report.pdf"'
             
             return response
             

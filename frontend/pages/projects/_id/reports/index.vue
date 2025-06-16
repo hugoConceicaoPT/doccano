@@ -2012,7 +2012,7 @@ export default Vue.extend({
           console.log('[DEBUG] IDs expandidos enviados:', expandedAnswerIds)
         }
         
-        // Adicionar máximo de resultados
+        // Adicionar máximo de resultados para exportação
         params.append('max_results', this.annotationExportMaxResults.toString())
         
         // Exportar cada formato selecionado
@@ -2205,7 +2205,7 @@ export default Vue.extend({
       return '';
     },
 
-    getQuestionsWithAnswers(perspectiveData) {
+    getQuestionsWithAnswers(perspectiveData: any) {
       console.log('[DEBUG] getQuestionsWithAnswers chamado com:', perspectiveData)
       
       if (!perspectiveData || !perspectiveData.answers || !perspectiveData.questions) {
@@ -2217,7 +2217,7 @@ export default Vue.extend({
       const questionsMap = new Map()
       
       // Primeiro, adicionar todas as perguntas
-      perspectiveData.questions.forEach((question) => {
+      perspectiveData.questions.forEach((question: any) => {
         questionsMap.set(question.question_id, {
           question_id: question.question_id,
           question_text: question.question_text,
@@ -2226,7 +2226,7 @@ export default Vue.extend({
       })
 
       // Depois, adicionar as respostas às respectivas perguntas
-      perspectiveData.answers.forEach((answer) => {
+      perspectiveData.answers.forEach((answer: any) => {
         if (questionsMap.has(answer.question_id)) {
           questionsMap.get(answer.question_id).answers.push(answer)
         }
@@ -2239,7 +2239,7 @@ export default Vue.extend({
     },
 
     // Gerar cor dinâmica para labels
-    getLabelColor(label) {
+    getLabelColor(label: string) {
       const colors = [
         'deep-purple', 'indigo', 'blue', 'light-blue', 'cyan', 
         'teal', 'green', 'light-green', 'lime', 'orange', 
@@ -2257,7 +2257,7 @@ export default Vue.extend({
       if (!this.reportData || this.reportData.length === 0) return 0
       
       return this.reportData.reduce((total, annotator) => {
-        const labelTotal = Object.values(annotator.label_breakdown || {}).reduce((sum, count) => sum + count, 0)
+        const labelTotal = Object.values(annotator.label_breakdown || {}).reduce((sum: number, count: unknown) => sum + (count as number), 0)
         return total + labelTotal
       }, 0)
     },

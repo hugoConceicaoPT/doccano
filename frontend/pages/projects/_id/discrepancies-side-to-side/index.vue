@@ -407,7 +407,7 @@ export default Vue.extend({
             })
           } catch (error: any) {
             console.error('Error fetching annotations:', error)
-            this.errorMessage = `Error fetching annotations: ${error.message || 'Unknown error'}`
+            this.errorMessage = `Database is slow or unavailable. Please try again later.`
           }
         } catch (error) {
           this.handleError(error)

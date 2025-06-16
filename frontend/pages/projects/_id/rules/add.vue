@@ -132,7 +132,7 @@ export default Vue.extend({
             const uniqueVersions = [...new Set(existingVersions)]
             if (uniqueVersions.length !== existingVersions.length) {
               console.warn(
-                'Atenção: Foram detectadas versões duplicadas nas configurações de votação.'
+                'Warning: Duplicate versions were detected in voting configurations.'
               )
             }
 
@@ -140,7 +140,7 @@ export default Vue.extend({
             nextVersion = maxVersion + 1
 
             console.log(
-              `Versões existentes no projeto ${this.projectId}: ${uniqueVersions.join(', ')}. Próxima versão: ${nextVersion}`
+              `Existing versions in project ${this.projectId}: ${uniqueVersions.join(', ')}. Next version: ${nextVersion}`
             )
           } else {
             console.log(`No voting configuration found for project ${this.projectId}. Starting with version 1.`)
@@ -160,7 +160,7 @@ export default Vue.extend({
 
         await this.determineNextVersion()
 
-        // Verificar a unicidade da versão para este projeto
+        // Check version uniqueness for this project
         const existingConfigs = await this.votingConfigurationService.list(this.projectId)
         const projectConfigs = existingConfigs.filter(
           (config: { project: number }) => config.project === projectId
@@ -171,23 +171,23 @@ export default Vue.extend({
         )
 
         if (versionExists) {
-          this.errorMessage = `A versão ${this.editedItem.version} já existe para este projeto. Tentando a próxima versão...`
+          this.errorMessage = `Version ${this.editedItem.version} already exists for this project. Trying the next version...`
           this.editedItem.version += 1
-          console.log(`Atualizando para a próxima versão disponível: ${this.editedItem.version}`)
+          console.log(`Updating to the next available version: ${this.editedItem.version}`)
         }
 
-        // Processar datas para garantir formato correto
-        // O campo datetime-local envia datas sem timezone, assumimos que são locais (Lisboa)
+        // Process dates to ensure correct format
+        // The datetime-local field sends dates without timezone, we assume they are local (Lisbon)
         let processedBeginDate = this.editedItem.begin_date
         let processedEndDate = this.editedItem.end_date
         
-        // Se as datas não têm timezone, adicionar informação de que são locais
+        // If dates don't have timezone, add information that they are local
         if (processedBeginDate && !processedBeginDate.includes('T')) {
-          // Se não tem 'T', adicionar formato de hora
+          // If it doesn't have 'T', add time format
           processedBeginDate += 'T00:00'
         }
         if (processedEndDate && !processedEndDate.includes('T')) {
-          // Se não tem 'T', adicionar formato de hora
+          // If it doesn't have 'T', add time format
           processedEndDate += 'T23:59'
         }
 
@@ -208,12 +208,12 @@ export default Vue.extend({
 
         const votingConfigs = await this.votingConfigurationService.list(this.projectId)
         if (votingConfigs && votingConfigs.length > 0) {
-          // Ordenar por ID para pegar o mais recente
+          // Sort by ID to get the most recent
           const sortedConfigs = [...votingConfigs].sort((a, b) => b.id - a.id)
           this.votingConfigurationId = sortedConfigs[0].id
           console.log('Voting configuration ID:', this.votingConfigurationId)
         } else {
-                      throw new Error('Unable to get voting configuration ID')
+          throw new Error('Unable to get voting configuration ID')
         }
 
         for (const rule of this.annotationRulesList) {
@@ -224,11 +224,11 @@ export default Vue.extend({
             is_finalized: false,
             final_result: ''
           }
-          console.log('Enviando regra:', rulePayload)
+          console.log('Sending rule:', rulePayload)
           await this.annotationRuleService.create(this.projectId, rulePayload)
         }
 
-        this.successMessage = 'Annotation rules saved successfully.'
+        this.sucessMessage = 'Annotation rules saved successfully.'
         setTimeout(() => {
           this.$router.push(`/projects/${this.projectId}/rules`)
         }, 1000)
@@ -240,7 +240,7 @@ export default Vue.extend({
       if (error.response && error.response.status === 400) {
         this.errorMessage = 'Error saving annotation rules.'
       } else {
-        this.errorMessage = 'The database is slow or unavailable. Please try again later.'
+        this.errorMessage = 'Database is slow or unavailable. Please try again later.'
       }
     }
   }
