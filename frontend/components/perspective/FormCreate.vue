@@ -42,7 +42,7 @@
                   @change="onPerspectiveChange"
                   @input="onPerspectiveInput"
               >
-                <template v-slot:item="{ item }">
+                <template #item="{ item }">
                   <v-list-item-avatar>
                     <v-icon :color="item.isExisting ? 'orange' : 'green'">
                       {{ item.isExisting ? 'mdi-recycle' : 'mdi-plus-circle' }}

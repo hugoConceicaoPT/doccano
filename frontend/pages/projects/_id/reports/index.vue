@@ -27,20 +27,20 @@
       <v-col cols="12">
         <v-card>
           <v-tabs v-model="activeTab" background-color="primary" dark grow>
-            <v-tab key="annotators">Relatórios sobre Anotadores</v-tab>
-            <v-tab key="annotations">Relatórios sobre Anotações</v-tab>
+            <v-tab key="annotators">Annotator Reports</v-tab>
+                            <v-tab key="annotations">Annotation Reports</v-tab>
           </v-tabs>
 
           <v-tabs-items v-model="activeTab">
-            <!-- Aba de Relatórios sobre Anotadores -->
+            <!-- Annotator Reports Tab -->
             <v-tab-item key="annotators">
           <v-card-title class="primary white--text">
             <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
-            Relatórios sobre Anotadores
+                          Annotator Reports
             <v-spacer />
             <v-btn color="white" text :loading="isGenerating" @click="generateAndExportReport">
               <v-icon left>{{ mdiRefresh }}</v-icon>
-              {{ filters.export_formats.length > 0 ? 'Gerar e Exportar Relatório' : 'Gerar Relatório' }}
+                              {{ filters.export_formats.length > 0 ? 'Generate and Export Report' : 'Generate Report' }}
             </v-btn>
           </v-card-title>
 
@@ -49,11 +49,11 @@
             <v-card flat class="ma-4 elevation-2">
               <v-card-title class="pb-2">
                 <v-icon left color="primary">{{ mdiFilter }}</v-icon>
-                <span class="text-h6">Filtros de Pesquisa</span>
+                                    <span class="text-h6">Search Filters</span>
                 <v-spacer />
                 <v-btn small text color="primary" @click="clearFilters">
                   <v-icon small left>{{ mdiFilterRemove }}</v-icon>
-                  Limpar Filtros
+                                      Clear Filters
                 </v-btn>
               </v-card-title>
 
@@ -66,7 +66,7 @@
                       :items="availableUsers"
                       item-text="username"
                       item-value="id"
-                      label="Anotadores"
+                      label="Annotators"
                       multiple
                       chips
                       deletable-chips
@@ -74,7 +74,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiAccount"
-                      hint="Selecione os anotadores específicos ou deixe vazio para todos"
+                      hint="Select specific annotators or leave empty for all"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
@@ -89,7 +89,7 @@
                           {{ getSelectedUserText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.users.length - 2 }} outros)
+                          (+{{ filters.users.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -118,7 +118,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiTag"
-                      hint="Selecione labels específicos ou deixe vazio para todos"
+                      hint="Select specific labels or leave empty for all"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
@@ -133,7 +133,7 @@
                           {{ getSelectedLabelText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.labels.length - 2 }} outros)
+                          (+{{ filters.labels.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -164,7 +164,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiDatabase"
-                      hint="Selecione datasets específicos ou deixe vazio para todos"
+                      hint="Select specific datasets or leave empty for all"
                       persistent-hint
                     >
                       <template #selection="{ index }">
@@ -180,7 +180,7 @@
                           {{ filters.datasets[index] }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.datasets.length - 2 }} outros)
+                          (+{{ filters.datasets.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -201,7 +201,7 @@
                       :items="availablePerspectiveQuestions"
                       item-text="text"
                       item-value="id"
-                      label="Perguntas da Perspectiva"
+                      label="Perspective Questions"
                       multiple
                       chips
                       deletable-chips
@@ -209,7 +209,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiHelpCircle"
-                      hint="Selecione perguntas específicas ou deixe vazio para todas"
+                      hint="Select specific questions or leave empty for all"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
@@ -225,7 +225,7 @@
                           {{ getSelectedPerspectiveQuestionText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.perspective_questions.length - 2 }} outras)
+                          (+{{ filters.perspective_questions.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -246,7 +246,7 @@
                       :items="filteredAnswersForSelectedQuestions"
                       item-text="text"
                       item-value="id"
-                      label="Respostas da Perspectiva"
+                      label="Perspective Answers"
                       multiple
                       chips
                       deletable-chips
@@ -254,7 +254,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiCommentCheck"
-                      hint="Selecione respostas específicas ou deixe vazio para todas"
+                      hint="Select specific answers or leave empty for all"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
@@ -270,7 +270,7 @@
                           {{ getSelectedPerspectiveAnswerText(item) }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.perspective_answers.length - 2 }} outras)
+                          (+{{ filters.perspective_answers.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -291,7 +291,7 @@
                       :items="exportFormatOptions"
                       item-text="text"
                       item-value="value"
-                      label="Formatos de Exportação"
+                      label="Export Formats"
                       multiple
                       chips
                       deletable-chips
@@ -299,7 +299,7 @@
                       outlined
                       dense
                       :prepend-inner-icon="mdiDownload"
-                      hint="Selecione os formatos de exportação desejados (PDF, CSV ou ambos)"
+                      hint="Select the desired export formats (PDF, CSV or both)"
                       persistent-hint
                     >
                       <template #selection="{ item, index }">
@@ -315,7 +315,7 @@
                           {{ item.value.toUpperCase() }}
                         </v-chip>
                         <span v-if="index === 2" class="grey--text text-caption">
-                          (+{{ filters.export_formats.length - 2 }} outros)
+                          (+{{ filters.export_formats.length - 2 }} others)
                         </span>
                       </template>
                       <template #item="{ item }">
@@ -333,16 +333,16 @@
                   </v-col>
                 </v-row>
 
-                <!-- Resumo dos Filtros Ativos -->
+                <!-- Active Filters Summary -->
                 <v-row v-if="hasActiveFilters" class="mt-2">
                   <v-col cols="12">
                     <v-divider class="mb-3" />
                     <div class="d-flex align-center">
                       <v-icon small color="primary" class="mr-2">{{ mdiInformation }}</v-icon>
-                      <span class="text-caption font-weight-medium">Filtros ativos:</span>
+                                              <span class="text-caption font-weight-medium">Active filters:</span>
                       <v-spacer />
                       <span class="text-caption grey--text"
-                        >{{ getActiveFiltersCount }} filtro(s) aplicado(s)</span
+                        >{{ getActiveFiltersCount }} filter(s) applied</span
                       >
                     </div>
                   </v-col>
@@ -352,41 +352,41 @@
 
             <!-- Tabela de Resultados -->
             <div class="ma-4">
-              <!-- Resumo do Relatório de Anotadores -->
+              <!-- Annotator Report Summary -->
               <v-card v-if="reportData" flat class="ma-4">
                 <v-card-title class="subtitle-1">
                   <v-icon left color="info">{{ mdiInformationOutline }}</v-icon>
-                  Resumo do Relatório
+                  Report Summary
                 </v-card-title>
                 <v-card-text>
                   <v-row>
                     <v-col cols="12" sm="6" md="4">
                       <v-card outlined class="text-center pa-3">
                         <div class="text-h5 primary--text">{{ reportData.length }}</div>
-                        <div class="caption">Total de Anotadores</div>
+                        <div class="caption">Total Annotators</div>
                       </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" md="4">
                       <v-card outlined class="text-center pa-3">
                         <div class="text-h5 primary--text">{{ getTotalAnnotations() }}</div>
-                        <div class="caption">Total de Anotações</div>
+                        <div class="caption">Total Annotations</div>
                       </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" md="4">
                       <v-card outlined class="text-center pa-3">
                         <div class="text-h5 primary--text">{{ getUniqueLabelsCount() }}</div>
-                        <div class="caption">Labels Diferentes</div>
+                        <div class="caption">Different Labels</div>
                       </v-card>
                     </v-col>
                   </v-row>
                 </v-card-text>
               </v-card>
 
-              <!-- Tabela de Anotadores -->
+              <!-- Annotators Table -->
               <v-card v-if="reportData" flat class="ma-4">
                 <v-card-title>
                   <v-icon left color="primary">{{ mdiTable }}</v-icon>
-                  Detalhes dos Anotadores
+                  Annotator Details
                   <v-spacer></v-spacer>
                   <v-btn
                     color="primary"
@@ -397,7 +397,7 @@
                     @click="generateAndExportReport"
                   >
                     <v-icon left small>{{ mdiRefresh }}</v-icon>
-                    Atualizar
+                    Update
                   </v-btn>
                 </v-card-title>
                 <v-data-table
@@ -408,11 +408,11 @@
                   :items-per-page="15"
                   :footer-props="{
                     'items-per-page-options': [10, 15, 25, 50, -1],
-                    'items-per-page-text': 'Itens por página:',
+                    'items-per-page-text': 'Items per page:',
                     showFirstLastPage: true
                   }"
-                  loading-text="Carregando dados..."
-                  no-data-text="Nenhum dado disponível"
+                  loading-text="Loading data..."
+                  no-data-text="No data available"
                 >
                   <!-- Template para nome de utilizador -->
                   <template #[`item.annotator_username`]="{ item }">
@@ -444,7 +444,7 @@
                       </div>
                       <span v-else class="grey--text text-caption">
                         <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                        Sem labels
+                        No labels
                       </span>
                     </div>
                   </template>
@@ -479,7 +479,7 @@
                         class="no-data-modern"
                       >
                         <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                        <span class="text-caption grey--text ml-1">Nenhuma anotação</span>
+                        <span class="text-caption grey--text ml-1">No annotations</span>
                       </div>
                     </div>
                   </template>
@@ -516,7 +516,7 @@
                       </div>
                       <div v-else class="no-data-modern">
                         <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                        <span class="text-caption grey--text ml-1">Nenhuma pergunta/resposta</span>
+                        <span class="text-caption grey--text ml-1">No questions/answers</span>
                       </div>
                     </div>
                   </template>
@@ -526,9 +526,9 @@
               <!-- Loading -->
               <v-card v-if="isGenerating" flat class="text-center pa-12 elevation-2">
                 <v-progress-circular indeterminate color="primary" size="80" width="6" />
-                <h3 class="mt-6 mb-2">Gerando relatório...</h3>
+                <h3 class="mt-6 mb-2">Generating report...</h3>
                 <p class="grey--text">
-                  Por favor aguarde enquanto processamos os dados dos anotadores
+                  Please wait while we process the annotator data
                 </p>
               </v-card>
             </div>
@@ -539,7 +539,7 @@
             <v-tab-item key="annotations">
               <v-card-title class="primary white--text">
                 <v-icon left color="white">{{ mdiFileDocumentOutline }}</v-icon>
-                Relatórios sobre Anotações
+                Annotation Reports
                 <v-spacer />
                 <v-btn 
                   color="white" 
@@ -548,7 +548,7 @@
                   @click="generateAndExportAnnotationReport"
                 >
                   <v-icon left>{{ annotationExportFormats.length > 0 ? mdiDownload : mdiEye }}</v-icon>
-                  {{ annotationExportFormats.length > 0 ? 'Gerar e Exportar Relatório' : 'Gerar Relatório' }}
+                  {{ annotationExportFormats.length > 0 ? 'Generate and Export Report' : 'Generate Report' }}
                 </v-btn>
               </v-card-title>
 
@@ -557,11 +557,11 @@
                 <v-card flat class="ma-4 elevation-2">
                   <v-card-title class="pb-2">
                     <v-icon left color="primary">{{ mdiFilter }}</v-icon>
-                    <span class="text-h6">Filtros de Pesquisa</span>
+                    <span class="text-h6">Search Filters</span>
                     <v-spacer />
                     <v-btn small text color="primary" @click="clearAnnotationFilters">
                       <v-icon small left>{{ mdiFilterRemove }}</v-icon>
-                      Limpar Filtros
+                      Clear Filters
                     </v-btn>
                   </v-card-title>
 
@@ -574,7 +574,7 @@
                           :items="availableUsers"
                           item-text="username"
                           item-value="id"
-                          label="Anotadores"
+                          label="Annotators"
                           multiple
                           chips
                           deletable-chips
@@ -582,7 +582,7 @@
                           outlined
                           dense
                           :prepend-inner-icon="mdiAccount"
-                          hint="Selecione os anotadores específicos ou deixe vazio para todos"
+                          hint="Select specific annotators or leave empty for all"
                           persistent-hint
                         />
                       </v-col>
@@ -602,7 +602,7 @@
                           outlined
                           dense
                           :prepend-inner-icon="mdiTag"
-                          hint="Selecione labels específicos ou deixe vazio para todos"
+                          hint="Select specific labels or leave empty for all"
                           persistent-hint
                         />
                       </v-col>
@@ -614,7 +614,7 @@
                           :items="availableExamples"
                           item-text="text"
                           item-value="id"
-                          label="Exemplos"
+                          label="Examples"
                           multiple
                           chips
                           deletable-chips
@@ -622,7 +622,7 @@
                           outlined
                           dense
                           :prepend-inner-icon="mdiFileDocumentOutline"
-                          hint="Selecione exemplos específicos ou deixe vazio para todos"
+                          hint="Select specific examples or leave empty for all"
                           persistent-hint
                         />
                       </v-col>
@@ -634,12 +634,12 @@
                           :items="discrepancyOptions"
                           item-text="text"
                           item-value="value"
-                          label="Filtro de Discrepâncias"
+                          label="Discrepancy Filter"
                           outlined
                           dense
                           clearable
                           :prepend-inner-icon="mdiAlertCircle"
-                          hint="Filtre por anotações com ou sem discrepâncias"
+                          hint="Filter by annotations with or without discrepancies"
                           persistent-hint
                         >
                           <template #selection="{ item }">
@@ -658,7 +658,7 @@
                           :items="availablePerspectiveQuestions"
                           item-text="text"
                           item-value="id"
-                          label="Perguntas da Perspectiva"
+                          label="Perspective Questions"
                           multiple
                           chips
                           deletable-chips
@@ -679,7 +679,7 @@
                           :items="filteredPerspectiveAnswers"
                           item-text="text"
                           item-value="id"
-                          label="Respostas da Perspectiva"
+                          label="Perspective Answers"
                           multiple
                           chips
                           deletable-chips
@@ -715,7 +715,7 @@
                           :items="exportFormatOptions"
                           item-text="text"
                           item-value="value"
-                          label="Formatos de Exportação"
+                          label="Export Formats"
                           multiple
                           chips
                           deletable-chips
@@ -723,7 +723,7 @@
                           outlined
                           dense
                           :prepend-inner-icon="mdiFileDelimited"
-                          hint="Selecione os formatos para exportar (deixe vazio para apenas visualizar)"
+                          hint="Select formats to export (leave empty to just view)"
                           persistent-hint
                         >
                           <template #selection="{ item, index }">
@@ -739,7 +739,7 @@
                               {{ item.value.toUpperCase() }}
                             </v-chip>
                             <span v-if="index === 2" class="grey--text text-caption">
-                              (+{{ annotationExportFormats.length - 2 }} outros)
+                              (+{{ annotationExportFormats.length - 2 }} others)
                             </span>
                           </template>
                           <template #item="{ item }">
@@ -760,7 +760,7 @@
                 <!-- Resultados do Relatório de Anotações -->
                 <div v-if="isGeneratingAnnotations" class="text-center py-5">
                   <v-progress-circular indeterminate color="primary" size="64" width="5" />
-                  <div class="mt-3">Gerando relatório...</div>
+                  <div class="mt-3">Generating report...</div>
                 </div>
                 
                 <div v-else-if="annotationReportError" class="text-center py-5 error--text">
@@ -779,14 +779,14 @@
                   <v-card flat class="ma-4">
                     <v-card-title class="subtitle-1">
                       <v-icon left color="info">{{ mdiInformationOutline }}</v-icon>
-                      Resumo do Relatório
+                      Report Summary
                     </v-card-title>
                     <v-card-text>
                       <v-row>
                         <v-col cols="12" sm="6" md="4">
                           <v-card outlined class="text-center pa-3">
                             <div class="text-h5 primary--text">{{ annotationReportData?.summary?.total_annotations || 0 }}</div>
-                            <div class="caption">Total de Anotações</div>
+                            <div class="caption">Total Annotations</div>
                           </v-card>
                         </v-col>
                         <v-col cols="12" sm="6" md="4">
@@ -798,7 +798,7 @@
                         <v-col cols="12" sm="6" md="4">
                           <v-card outlined class="text-center pa-3">
                             <div class="text-h5 primary--text">{{ annotationReportData?.summary?.total_annotators || 0 }}</div>
-                            <div class="caption">Total de Anotadores</div>
+                            <div class="caption">Total Annotators</div>
                           </v-card>
                         </v-col>
                       </v-row>
@@ -809,12 +809,12 @@
                   <v-card flat class="ma-4">
                     <v-card-title>
                       <v-icon left color="primary">{{ mdiTable }}</v-icon>
-                      Detalhes das Anotações
+                      Annotation Details
                       <v-spacer></v-spacer>
                       <v-text-field
                         v-model="annotationSearch"
                         append-icon="mdi-magnify"
-                        label="Pesquisar"
+                                                  label="Search"
                         single-line
                         hide-details
                         dense
@@ -844,7 +844,7 @@
                       <template #[`item.label_text`]="{ item }">
                         <div class="labels-container">
                           <v-chip
-                            v-if="item.label_text && item.label_text !== 'Sem labels'"
+                            v-if="item.label_text && item.label_text !== 'No labels'"
                             small
                             color="primary"
                             outlined
@@ -852,10 +852,10 @@
                           >
                             {{ item.label_text }}
                           </v-chip>
-                          <span v-else class="grey--text text-caption">
-                            <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
-                            Sem labels
-                          </span>
+                                                      <span v-else class="grey--text text-caption">
+                              <v-icon small color="grey">{{ mdiInformationOutline }}</v-icon>
+                              No labels
+                            </span>
                         </div>
                       </template>
                     </v-data-table>
@@ -891,7 +891,7 @@
             @click="cancelConfirmDialog"
           >
             <v-icon left>{{ mdiClose }}</v-icon>
-            Cancelar
+                          Cancel
           </v-btn>
           <v-btn 
             color="primary" 
@@ -899,7 +899,7 @@
             @click="executeConfirmAction"
           >
             <v-icon left>{{ mdiCheckCircle }}</v-icon>
-            Confirmar
+                                Confirm
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -1085,13 +1085,13 @@ export default Vue.extend({
 
       tableHeaders: [
         { 
-          text: 'Utilizador', 
+          text: 'User', 
           value: 'annotator_username', 
           sortable: true, 
           width: '250px'
         },
         { 
-          text: 'Perguntas e Respostas', 
+          text: 'Questions and Answers', 
           value: 'perspective_questions_answers', 
           sortable: false, 
           width: '400px'
@@ -1128,10 +1128,10 @@ export default Vue.extend({
       annotationReportError: null as string | null,
       annotationSearch: '',
       annotationHeaders: [
-        { text: 'Exemplo', value: 'example_name', width: '200px' },
-        { text: 'Utilizador', value: 'username', width: '130px' },
-        { text: 'Labels Utilizadas', value: 'label_text', width: '300px' },
-        { text: 'Data', value: 'created_at', width: '180px' }
+        { text: 'Example', value: 'example_name', width: '200px' },
+        { text: 'User', value: 'username', width: '130px' },
+        { text: 'Labels Used', value: 'label_text', width: '300px' },
+        { text: 'Date', value: 'created_at', width: '180px' }
       ],
       annotationPage: 1,
       annotationExportFormats: [],
@@ -1145,9 +1145,9 @@ export default Vue.extend({
 
       availableDatasets: [] as Array<{name: string; count: number}>,
       discrepancyOptions: [
-        { value: 'all', text: 'Todas', description: 'Incluir todas as anotações' },
-        { value: 'with_discrepancy', text: 'Com Discrepância', description: 'Apenas anotações com discrepâncias' },
-        { value: 'without_discrepancy', text: 'Sem Discrepância', description: 'Apenas anotações sem discrepâncias' }
+        { value: 'all', text: 'All', description: 'Include all annotations' },
+        { value: 'with_discrepancy', text: 'With Discrepancy', description: 'Only annotations with discrepancies' },
+        { value: 'without_discrepancy', text: 'Without Discrepancy', description: 'Only annotations without discrepancies' }
       ] as Array<{value: string; text: string; description: string}>,
       availablePerspectiveQuestions: [] as Array<{id: number; text: string}>,
       availablePerspectiveAnswers: [] as Array<{id: number; text: string; question_id: number}>,
@@ -1229,7 +1229,7 @@ export default Vue.extend({
   methods: {
     async loadFilterOptions() {
       try {
-        // Carregar utilizadores do projeto (apenas anotadores)
+        // Load project users (annotators only)
         const members = await this.$repositories.member.list(this.projectId)
         this.availableUsers = members
           .filter((member: any) => member.rolename === 'annotator')
@@ -1285,7 +1285,7 @@ export default Vue.extend({
             text: example.filename || example.text?.substring(0, 30) || `Exemplo #${example.id}`
           }))
         } catch (error) {
-          console.error('Erro ao carregar exemplos:', error)
+          console.error('Error loading examples:', error)
         }
 
         // Carregar perguntas e respostas da perspectiva
@@ -1320,8 +1320,8 @@ export default Vue.extend({
             }
             }
         } catch (error) {
-          console.error('Erro ao carregar perguntas e respostas da perspectiva:', error)
-          // Não mostrar erro ao usuário pois este é um recurso opcional
+                  console.error('Error loading perspective questions and answers:', error)
+        // Don't show error to user as this is an optional feature
           this.availablePerspectiveQuestions = []
           this.availablePerspectiveAnswers = []
         }
@@ -1395,40 +1395,40 @@ export default Vue.extend({
           console.log('[DEBUG] Primeiro dataset:', this.availableDatasets[0])
           console.log('[DEBUG] Tipos dos nomes:', this.availableDatasets.map(d => typeof d.name))
         } catch (error) {
-          console.error('Erro ao carregar datasets:', error)
+          console.error('Error loading datasets:', error)
         }
       } catch (error) {
-        console.error('Erro ao carregar opções de filtro:', error)
-        this.showError('Erro ao carregar opções de filtro')
+                  console.error('Error loading filter options:', error)
+          this.showError('Error loading filter options')
       }
     },
 
     generateAndExportReport() {
-      // Mostrar diálogo de confirmação
-      this.confirmDialogTitle = 'Confirmar Geração de Relatório'
+      // Show confirmation dialog
+      this.confirmDialogTitle = 'Confirm Report Generation'
       
-      let message = 'Deseja gerar o relatório sobre anotadores?'
+      let message = 'Do you want to generate the annotator report?'
       
-      // Adicionar informações sobre filtros ativos
+      // Add information about active filters
       if (this.hasActiveFilters) {
-        message += `\n\nFiltros ativos (${this.getActiveFiltersCount}):`
+        message += `\n\nActive filters (${this.getActiveFiltersCount}):`
         if (this.filters.users.length > 0) {
-          message += `\n• ${this.filters.users.length} anotador(es) selecionado(s)`
+          message += `\n• ${this.filters.users.length} annotator(s) selected`
         }
         if (this.filters.labels.length > 0) {
-          message += `\n• ${this.filters.labels.length} label(s) selecionado(s)`
+          message += `\n• ${this.filters.labels.length} label(s) selected`
         }
         if (this.filters.datasets.length > 0) {
-          message += `\n• ${this.filters.datasets.length} dataset(s) selecionado(s)`
+          message += `\n• ${this.filters.datasets.length} dataset(s) selected`
         }
         if (this.filters.date_from || this.filters.date_to) {
-          message += `\n• Filtro de datas aplicado`
+                      message += `\n• Date filter applied`
         }
         if (this.filters.export_formats.length > 0) {
-          message += `\n• Exportação automática em ${this.filters.export_formats.join(', ').toUpperCase()}`
+          message += `\n• Automatic export in ${this.filters.export_formats.join(', ').toUpperCase()}`
         }
       } else {
-        message += '\n\nNenhum filtro ativo - será gerado relatório completo.'
+        message += '\n\nNo active filters - complete report will be generated.'
       }
       
       this.confirmDialogMessage = message
@@ -1437,22 +1437,22 @@ export default Vue.extend({
     },
 
     async executeGenerateAndExportReport() {
-      // Fechar o diálogo imediatamente para mostrar o relatório
+      // Close dialog immediately to show the report
       this.showConfirmDialog = false
       this.isGenerating = true
       
       try {
-        // Primeiro gerar o relatório
+        // First generate the report
         await this.generateReport()
         
-        // Mostrar mensagem de sucesso
+        // Show success message
         if (this.reportData.length > 0) {
-          this.showSuccess(`✅ Relatório gerado com sucesso! ${this.reportData.length} anotador(es) encontrado(s).`)
+          this.showSuccess(`Report generated successfully! ${this.reportData.length} annotator(s) found.`)
         } else {
-          this.showSuccess(`ℹ️ Relatório gerado! Nenhum anotador encontrado com os filtros aplicados.`)
+                      this.showSuccess(`Report generated! No annotators found with the applied filters.`)
         }
         
-        // Se há formatos de exportação selecionados e o relatório foi gerado com sucesso, exportar automaticamente
+        // If export formats are selected and report was generated successfully, export automatically
         if (this.filters.export_formats.length > 0) {
           await this.exportReport()
         }
@@ -1482,10 +1482,10 @@ export default Vue.extend({
 
     async generateReport() {
       try {
-        // Preparar parâmetros de filtro com nomes corretos para a API
+        // Prepare filter parameters with correct names for the API
         const params = new URLSearchParams()
 
-        // project_ids é obrigatório - usar sempre o projeto atual
+        // project_ids is mandatory - always use current project
         params.append('project_ids', this.projectId)
 
         if (this.filters.users.length > 0) {
@@ -1516,44 +1516,44 @@ export default Vue.extend({
           params.append('perspective_answer_ids', this.filters.perspective_answers.join(','))
         }
 
-        console.log('[FRONTEND DEBUG] Parâmetros enviados:', params.toString())
+        console.log('[FRONTEND DEBUG] Parameters sent:', params.toString())
         console.log(
-          '[FRONTEND DEBUG] URL completa:',
+          '[FRONTEND DEBUG] Complete URL:',
           `/v1/reports/annotators/?${params.toString()}`
         )
 
-        // Fazer chamada para a API
+        // Make API call
         const response = await this.$axios.get(`/v1/reports/annotators/?${params.toString()}`)
-        console.log('[FRONTEND DEBUG] Resposta da API:', response)
+        console.log('[FRONTEND DEBUG] API response:', response)
         console.log('[FRONTEND DEBUG] Status:', response.status)
         console.log('[FRONTEND DEBUG] Data:', response.data)
 
         if (response.data && response.data.data) {
           this.reportData = response.data.data
           console.log(
-            '[FRONTEND DEBUG] Dados do relatório definidos:',
+            '[FRONTEND DEBUG] Report data set:',
             this.reportData.length,
-            'anotadores'
+            'annotators'
           )
         } else {
-          console.warn('[FRONTEND DEBUG] Estrutura de resposta inesperada:', response.data)
+          console.warn('[FRONTEND DEBUG] Unexpected response structure:', response.data)
           this.reportData = []
         }
 
         // Não mostrar mensagem de sucesso automática - o relatório aparece diretamente
       } catch (error: any) {
-        console.error('[FRONTEND DEBUG] Erro completo:', error)
-        console.error('[FRONTEND DEBUG] Erro response:', error.response)
-        console.error('[FRONTEND DEBUG] Erro message:', error.message)
+        console.error('[FRONTEND DEBUG] Complete error:', error)
+        console.error('[FRONTEND DEBUG] Error response:', error.response)
+        console.error('[FRONTEND DEBUG] Error message:', error.message)
 
-        let errorMessage = 'Erro ao gerar relatório'
+        let errorMessage = 'Error generating report'
         
         // Verificar se é erro de conexão com a base de dados (usando interceptor)
         if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
           errorMessage = error.userMessage
         } else if (error.response) {
-          console.error('[FRONTEND DEBUG] Status do erro:', error.response.status)
-          console.error('[FRONTEND DEBUG] Data do erro:', error.response.data)
+          console.error('[FRONTEND DEBUG] Error status:', error.response.status)
+          console.error('[FRONTEND DEBUG] Error data:', error.response.data)
 
           // Verificar se é erro 503 (Service Unavailable - base de dados indisponível)
           if (error.response.status === 503) {
@@ -1569,12 +1569,12 @@ export default Vue.extend({
                 errorMessage = error.response.data.detail
               }
             } else if (error.response.data.errors) {
-              errorMessage = 'Parâmetros inválidos: ' + JSON.stringify(error.response.data.errors)
+              errorMessage = 'Invalid parameters: ' + JSON.stringify(error.response.data.errors)
             }
           }
         } else if (error.request) {
-          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
-          console.error('[FRONTEND DEBUG] Erro de request:', error.request)
+          errorMessage = 'Network error: Could not connect to server. Check your internet connection and if the database is running.'
+          console.error('[FRONTEND DEBUG] Request error:', error.request)
         }
 
         throw new Error(errorMessage)
@@ -1646,15 +1646,15 @@ export default Vue.extend({
           let filename, mimeType
           switch (format) {
             case 'csv':
-              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.csv`
+              filename = `annotators_report_${new Date().toISOString().split('T')[0]}.csv`
               mimeType = 'text/csv'
               break
             case 'pdf':
-              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.pdf`
+              filename = `annotators_report_${new Date().toISOString().split('T')[0]}.pdf`
               mimeType = 'application/pdf'
               break
             default:
-              filename = `relatorio_anotadores_${new Date().toISOString().split('T')[0]}.${format}`
+              filename = `annotators_report_${new Date().toISOString().split('T')[0]}.${format}`
               mimeType = 'application/octet-stream'
           }
 
@@ -1672,9 +1672,9 @@ export default Vue.extend({
 
         // Exportação concluída - não mostrar mensagem automática
       } catch (error: any) {
-        console.error('[EXPORT DEBUG] Erro ao exportar:', error)
+        console.error('[EXPORT DEBUG] Error exporting:', error)
         
-        let errorMessage = 'Erro ao exportar relatório'
+        let errorMessage = 'Error exporting report'
         
         // Verificar se é erro de conexão com a base de dados (usando interceptor)
         if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
@@ -1686,15 +1686,10 @@ export default Vue.extend({
           } else if (error.response.status >= 500) {
             errorMessage = 'Database is slow or unavailable. Please try again later.'
           } else if (error.response.data?.detail) {
-            // Se a mensagem já contém informação sobre base de dados, adicionar ícone
-            if (error.response.data.detail.toLowerCase().includes('base de dados')) {
-              errorMessage = '🔌 ' + error.response.data.detail
-            } else {
-              errorMessage = error.response.data.detail
-            }
+            errorMessage = error.response.data.detail
           }
         } else if (error.request) {
-          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
+          errorMessage = 'Network error: Could not connect to server. Check your internet connection and if the database is running.'
         }
         
         this.showError(errorMessage)
@@ -1714,7 +1709,7 @@ export default Vue.extend({
         perspective_questions: [],
         perspective_answers: []
       }
-      this.showSuccess('Filtros limpos')
+      this.showSuccess('Filters cleared')
     },
 
     removeUser(user: any) {
@@ -1734,20 +1729,20 @@ export default Vue.extend({
     },
 
     removeDataset(datasetName: string) {
-      console.log('[DEBUG] Removendo dataset:', datasetName)
+      console.log('[DEBUG] Removing dataset:', datasetName)
       const index = this.filters.datasets.indexOf(datasetName)
       if (index > -1) {
         this.filters.datasets.splice(index, 1)
       }
-      console.log('[DEBUG] Datasets depois:', this.filters.datasets)
+      console.log('[DEBUG] Datasets after:', this.filters.datasets)
     },
 
     getDatasetDisplayName(dataset: any) {
       if (typeof dataset === 'object') {
-        // Se é um objeto, usar a propriedade name
+        // If it's an object, use the name property
         return dataset.name || dataset
       }
-      // Se é uma string, retornar diretamente
+      // If it's a string, return directly
       return dataset
     },
 
@@ -1773,13 +1768,13 @@ export default Vue.extend({
 
     showSuccess(message: string) {
       this.successMessage = message
-      this.errorMessage = '' // Limpar mensagem de erro
+      this.errorMessage = '' // Clear error message
       console.log('SUCCESS:', message)
     },
 
     showError(message: string) {
       this.errorMessage = message
-      this.successMessage = '' // Limpar mensagem de sucesso
+      this.successMessage = '' // Clear success message
       console.error('ERROR:', message)
     },
 
@@ -1800,30 +1795,30 @@ export default Vue.extend({
     
     generateAndExportAnnotationReport() {
       // Mostrar diálogo de confirmação
-      this.confirmDialogTitle = 'Confirmar Geração de Relatório'
+      this.confirmDialogTitle = 'Confirm Report Generation'
       
-      let message = 'Deseja gerar o relatório sobre anotações?'
+              let message = 'Do you want to generate the annotation report?'
       
       // Adicionar informações sobre filtros ativos
       if (this.hasActiveAnnotationFilters) {
-        message += '\n\nFiltros ativos:'
+        message += '\n\nActive filters:'
         if (this.annotationFilters.users.length > 0) {
-          message += `\n• ${this.annotationFilters.users.length} anotador(es) selecionado(s)`
+          message += `\n• ${this.annotationFilters.users.length} annotator(s) selected`
         }
         if (this.annotationFilters.labels.length > 0) {
-          message += `\n• ${this.annotationFilters.labels.length} label(s) selecionado(s)`
+          message += `\n• ${this.annotationFilters.labels.length} label(s) selected`
         }
         if (this.annotationFilters.examples.length > 0) {
-          message += `\n• ${this.annotationFilters.examples.length} exemplo(s) selecionado(s)`
+          message += `\n• ${this.annotationFilters.examples.length} example(s) selected`
         }
         if (this.annotationFilters.discrepancy_filter) {
-          message += `\n• Filtro de discrepâncias: ${this.getDiscrepancyText(this.annotationFilters.discrepancy_filter)}`
+          message += `\n• Discrepancy filter: ${this.getDiscrepancyText(this.annotationFilters.discrepancy_filter)}`
         }
         if (this.annotationExportFormats.length > 0) {
-          message += `\n• Exportação automática em ${this.annotationExportFormats.join(', ').toUpperCase()}`
+          message += `\n• Automatic export in ${this.annotationExportFormats.join(', ').toUpperCase()}`
         }
       } else {
-        message += '\n\nNenhum filtro ativo - será gerado relatório completo.'
+        message += '\n\nNo active filters - complete report will be generated.'
       }
       
       this.confirmDialogMessage = message
@@ -1842,9 +1837,9 @@ export default Vue.extend({
         
         // Mostrar mensagem de sucesso
         if (this.annotationReportData && this.annotationReportData.data && this.annotationReportData.data.length > 0) {
-          this.showSuccess(`✅ Relatório gerado com sucesso! ${this.annotationReportData.data.length} anotação(ões) encontrada(s).`)
+          this.showSuccess(`Report generated successfully! ${this.annotationReportData.data.length} annotation(s) found.`)
         } else {
-          this.showSuccess(`ℹ️ Relatório gerado! Nenhuma anotação encontrada com os filtros aplicados.`)
+          this.showSuccess(`Report generated! No annotations found with the applied filters.`)
         }
         
         // Se há formatos selecionados e o relatório foi gerado com sucesso, exportar
@@ -1852,8 +1847,8 @@ export default Vue.extend({
           await this.exportAnnotationReport()
         }
       } catch (error) {
-        console.error('Erro ao gerar relatório:', error)
-        this.showError('Erro ao gerar relatório')
+        console.error('Error generating report:', error)
+        this.showError('Error generating report')
       } finally {
         this.isGeneratingAnnotations = false
       }
@@ -1919,9 +1914,9 @@ export default Vue.extend({
         this.annotationReportData = response.data
         
       } catch (error: any) {
-        console.error('Erro ao gerar relatório de anotações:', error)
+        console.error('Error generating annotations report:', error)
         
-        let errorMessage = 'Erro ao gerar relatório'
+        let errorMessage = 'Error generating report'
         
         // Verificar se é erro de conexão com a base de dados (usando interceptor)
         if (error.isNetworkError || error.isDatabaseError || error.isServerError || error.isTimeoutError) {
@@ -1941,11 +1936,11 @@ export default Vue.extend({
                 errorMessage = error.response.data.detail
               }
             } else if (error.response.data.errors) {
-              errorMessage = 'Parâmetros inválidos: ' + JSON.stringify(error.response.data.errors)
+              errorMessage = 'Invalid parameters: ' + JSON.stringify(error.response.data.errors)
             }
           }
         } else if (error.request) {
-          errorMessage = '🌐 Erro de rede: Não foi possível conectar ao servidor. Verifique sua conexão com a internet e se a base de dados está ligada.'
+          errorMessage = 'Network error: Could not connect to server. Check your internet connection and if the database is running.'
         }
         
         this.annotationReportError = errorMessage
@@ -2035,15 +2030,15 @@ export default Vue.extend({
           let filename, mimeType
           switch (format) {
             case 'csv':
-              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.csv`
+              filename = `annotations_report_${new Date().toISOString().split('T')[0]}.csv`
               mimeType = 'text/csv'
               break
             case 'pdf':
-              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.pdf`
+              filename = `annotations_report_${new Date().toISOString().split('T')[0]}.pdf`
               mimeType = 'application/pdf'
               break
             default:
-              filename = `relatorio_anotacoes_${new Date().toISOString().split('T')[0]}.${format}`
+              filename = `annotations_report_${new Date().toISOString().split('T')[0]}.${format}`
               mimeType = 'application/octet-stream'
           }
           
@@ -2062,8 +2057,8 @@ export default Vue.extend({
         // Exportação concluída - não mostrar mensagem automática
         
       } catch (error) {
-        console.error('Erro ao exportar relatório:', error)
-        this.showError('Erro ao exportar relatório')
+        console.error('Error exporting report:', error)
+        this.showError('Error exporting report')
       } finally {
         this.isExportingAnnotation = false
       }

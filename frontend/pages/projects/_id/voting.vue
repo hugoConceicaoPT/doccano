@@ -257,12 +257,6 @@ export default Vue.extend({
     }
   },
 
-  head() {
-    return {
-      title: 'Voting'
-    }
-  },
-
   async fetch() {
     this.loading = true
     try {
@@ -301,6 +295,12 @@ export default Vue.extend({
       this.handleError(error)
     } finally {
       this.loading = false
+    }
+  },
+
+  head() {
+    return {
+      title: 'Voting'
     }
   },
 

@@ -24,7 +24,7 @@ class ApiService {
         } else if (error.response.status === 503) {
           // Service Unavailable - base de dados indisponível
           error.isDatabaseError = true
-          error.userMessage = 'Base de dados indisponível: A base de dados está temporariamente desligada ou sem conexão. Tente novamente em alguns instantes.'
+          error.userMessage = 'Database is slow or unavailable. Please try again later.'
         } else if (error.response.status >= 500) {
           // Erro interno do servidor
           error.isServerError = true

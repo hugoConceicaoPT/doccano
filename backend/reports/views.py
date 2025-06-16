@@ -539,7 +539,7 @@ class AnnotatorReportExportView(APIView):
     def _export_csv(self, report_data):
         """Exportar relatório em formato CSV melhorado"""
         response = HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = 'attachment; filename="relatorio_anotadores.csv"'
+        response['Content-Disposition'] = 'attachment; filename="annotators_report.csv"'
         
         # Adicionar BOM para UTF-8
         response.write('\ufeff')
@@ -547,7 +547,7 @@ class AnnotatorReportExportView(APIView):
         writer = csv.writer(response)
         
         # Cabeçalho do relatório
-        writer.writerow(['=== RELATÓRIO SOBRE ANOTADORES ==='])
+        writer.writerow(['=== ANNOTATORS REPORT ==='])
         writer.writerow([])
         
         # Obter informações do projeto
@@ -557,8 +557,8 @@ class AnnotatorReportExportView(APIView):
             project_name = first_item.get('project_name', "N/A")
         
         # Informações do projeto
-        writer.writerow(['Projeto:', project_name])
-        writer.writerow(['Data de Geração:', timezone.now().strftime('%d/%m/%Y %H:%M:%S')])
+        writer.writerow(['Project:', project_name])
+        writer.writerow(['Generation Date:', timezone.now().strftime('%d/%m/%Y %H:%M:%S')])
         writer.writerow([])
         
         # Estatísticas resumo
@@ -572,14 +572,14 @@ class AnnotatorReportExportView(APIView):
             if item.get('label_breakdown'):
                 unique_labels.update(item['label_breakdown'].keys())
         
-        writer.writerow(['=== ESTATÍSTICAS RESUMO ==='])
-        writer.writerow(['Total de Anotadores:', total_annotators])
-        writer.writerow(['Total de Anotações:', total_annotations])
-        writer.writerow(['Labels Diferentes:', len(unique_labels)])
+        writer.writerow(['=== SUMMARY STATISTICS ==='])
+        writer.writerow(['Total Annotators:', total_annotators])
+        writer.writerow(['Total Annotations:', total_annotations])
+        writer.writerow(['Different Labels:', len(unique_labels)])
         writer.writerow([])
         
         # Informações sobre filtros aplicados
-        writer.writerow(['=== FILTROS APLICADOS ==='])
+        writer.writerow(['=== APPLIED FILTERS ==='])
         query_params = getattr(self.request, 'query_params', self.request.GET)
         
         # Usuários
@@ -589,9 +589,9 @@ class AnnotatorReportExportView(APIView):
                 user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
                 users = User.objects.filter(id__in=user_ids)
                 user_names = [user.username for user in users]
-                writer.writerow(['Utilizadores:', ', '.join(user_names)])
+                writer.writerow(['Users:', ', '.join(user_names)])
             except Exception:
-                writer.writerow(['Utilizadores:', query_params['user_ids']])
+                writer.writerow(['Users:', query_params['user_ids']])
         
         # Labels
         if 'label_ids' in query_params and query_params['label_ids']:
@@ -620,9 +620,9 @@ class AnnotatorReportExportView(APIView):
                 question_ids = [int(qid.strip()) for qid in query_params['perspective_question_ids'].split(',') if qid.strip()]
                 questions = Question.objects.filter(id__in=question_ids)
                 question_texts = [q.question for q in questions]
-                writer.writerow(['Perguntas da Perspectiva:', ', '.join(question_texts)])
+                writer.writerow(['Perspective Questions:', ', '.join(question_texts)])
             except Exception:
-                writer.writerow(['Perguntas da Perspectiva:', query_params['perspective_question_ids']])
+                writer.writerow(['Perspective Questions:', query_params['perspective_question_ids']])
         
         # Respostas da perspectiva
         if 'perspective_answer_ids' in query_params and query_params['perspective_answer_ids']:
@@ -630,61 +630,61 @@ class AnnotatorReportExportView(APIView):
                 from projects.models import Answer
                 answer_ids = [int(aid.strip()) for aid in query_params['perspective_answer_ids'].split(',') if aid.strip()]
                 answers = Answer.objects.filter(id__in=answer_ids)
-                answer_texts = [a.answer_text or a.answer_option or f"Resposta {a.id}" for a in answers]
-                writer.writerow(['Respostas da Perspectiva:', ', '.join(answer_texts)])
+                answer_texts = [a.answer_text or a.answer_option or f"Answer {a.id}" for a in answers]
+                writer.writerow(['Perspective Answers:', ', '.join(answer_texts)])
             except Exception:
-                writer.writerow(['Respostas da Perspectiva:', query_params['perspective_answer_ids']])
+                writer.writerow(['Perspective Answers:', query_params['perspective_answer_ids']])
         
         # Datas
         if 'date_from' in query_params and query_params['date_from']:
-            writer.writerow(['Data Início:', query_params['date_from']])
+            writer.writerow(['Start Date:', query_params['date_from']])
         if 'date_to' in query_params and query_params['date_to']:
-            writer.writerow(['Data Fim:', query_params['date_to']])
+            writer.writerow(['End Date:', query_params['date_to']])
         
         writer.writerow([])
         
         # Dados detalhados organizados por linhas (formato vertical)
-        writer.writerow(['=== DADOS DETALHADOS (FORMATO ORGANIZADO) ==='])
+        writer.writerow(['=== DETAILED DATA (ORGANIZED FORMAT) ==='])
         writer.writerow([])
         
         # Dados dos anotadores - formato vertical para melhor legibilidade
         for i, item in enumerate(data_items, 1):
             # Separador entre anotadores
-            writer.writerow([f'--- ANOTADOR {i} ---'])
+            writer.writerow([f'--- ANNOTATOR {i} ---'])
             
             # Informações básicas
-            writer.writerow(['Nome de Utilizador:', item.get('annotator_username', 'N/A')])
-            writer.writerow(['Nome Completo:', item.get('annotator_name', 'N/A')])
+            writer.writerow(['Username:', item.get('annotator_username', 'N/A')])
+            writer.writerow(['Full Name:', item.get('annotator_name', 'N/A')])
             writer.writerow([])
             
             # Labels utilizadas
-            writer.writerow(['LABELS UTILIZADAS:'])
+            writer.writerow(['LABELS USED:'])
             if item.get('label_breakdown'):
                 for label, count in item['label_breakdown'].items():
-                    writer.writerow(['', f'{label}', f'{count} anotações'])
+                    writer.writerow(['', f'{label}', f'{count} annotations'])
             else:
-                writer.writerow(['', 'Nenhuma label utilizada'])
+                writer.writerow(['', 'No labels used'])
             writer.writerow([])
             
             # Datasets e suas labels
-            writer.writerow(['DATASETS E LABELS:'])
+            writer.writerow(['DATASETS AND LABELS:'])
             if item.get('dataset_label_breakdown'):
                 for dataset, labels in item['dataset_label_breakdown'].items():
                     writer.writerow(['', f'Dataset: {dataset}'])
                     if labels:
                         for label, count in labels.items():
-                            writer.writerow(['', '', f'{label}: {count} anotações'])
+                            writer.writerow(['', '', f'{label}: {count} annotations'])
                         dataset_total = sum(labels.values())
-                        writer.writerow(['', '', f'Total no dataset: {dataset_total}'])
+                        writer.writerow(['', '', f'Total in dataset: {dataset_total}'])
                     else:
-                        writer.writerow(['', '', 'Nenhuma anotação neste dataset'])
+                        writer.writerow(['', '', 'No annotations in this dataset'])
                     writer.writerow([''])
             else:
-                writer.writerow(['', 'Nenhum dataset encontrado'])
+                writer.writerow(['', 'No datasets found'])
             writer.writerow([])
             
             # Perguntas e respostas da perspectiva
-            writer.writerow(['PERGUNTAS E RESPOSTAS DA PERSPECTIVA:'])
+            writer.writerow(['PERSPECTIVE QUESTIONS AND ANSWERS:'])
             if item.get('perspective_questions_answers'):
                 qa_data = item['perspective_questions_answers']
                 if qa_data.get('questions') and qa_data.get('answers'):
@@ -701,15 +701,15 @@ class AnnotatorReportExportView(APIView):
                     
                     # Mostrar cada pergunta e suas respostas
                     for question_id, answers in answers_by_question.items():
-                        question_text = questions_map.get(question_id, f"Pergunta {question_id}")
-                        writer.writerow(['', f'Pergunta: {question_text}'])
+                        question_text = questions_map.get(question_id, f"Question {question_id}")
+                        writer.writerow(['', f'Question: {question_text}'])
                         for answer in answers:
-                            writer.writerow(['', '', f'Resposta: {answer}'])
+                            writer.writerow(['', '', f'Answer: {answer}'])
                         writer.writerow([''])
                 else:
-                    writer.writerow(['', 'Nenhuma pergunta/resposta encontrada'])
+                    writer.writerow(['', 'No questions/answers found'])
             else:
-                writer.writerow(['', 'Nenhuma pergunta/resposta da perspectiva'])
+                writer.writerow(['', 'No perspective questions/answers'])
             
             # Linha separadora entre anotadores
             writer.writerow([])
@@ -816,7 +816,7 @@ class AnnotatorReportExportView(APIView):
             elements = []
             
             # Cabeçalho principal
-            elements.append(Paragraph("RELATÓRIO SOBRE ANOTADORES", styles['MainTitle']))
+            elements.append(Paragraph("ANNOTATORS REPORT", styles['MainTitle']))
             elements.append(Spacer(1, 10))
             
             # Obter informações do projeto
@@ -1650,7 +1650,7 @@ class AnnotationReportExportView(APIView):
     def _export_csv(self, report_data):
         """Exportar relatório em formato CSV melhorado"""
         response = HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = 'attachment; filename="relatorio_anotacoes.csv"'
+        response['Content-Disposition'] = 'attachment; filename="annotations_report.csv"'
         
         # Adicionar BOM para UTF-8
         response.write('\ufeff')
@@ -1663,11 +1663,11 @@ class AnnotationReportExportView(APIView):
             project_name = report_data['data'][0].get('project_name', "")
         
         # Adicionar cabeçalho com informações do projeto
-        writer.writerow(['Relatório de Anotações'])
-        writer.writerow(['Projeto:', project_name])
+        writer.writerow(['Annotations Report'])
+        writer.writerow(['Project:', project_name])
         
         # Adicionar informações sobre os filtros utilizados
-        writer.writerow(['Filtros aplicados:'])
+        writer.writerow(['Applied filters:'])
         
         # Recuperar os filtros da query string original
         query_params = getattr(self, 'request', None)
@@ -1683,9 +1683,9 @@ class AnnotationReportExportView(APIView):
                 user_ids = [int(uid.strip()) for uid in query_params['user_ids'].split(',') if uid.strip()]
                 users = User.objects.filter(id__in=user_ids)
                 user_names = [user.username for user in users]
-                writer.writerow(['Utilizadores:', ', '.join(user_names)])
+                writer.writerow(['Users:', ', '.join(user_names)])
             except Exception:
-                writer.writerow(['Utilizadores:', query_params['user_ids']])
+                writer.writerow(['Users:', query_params['user_ids']])
         
         # Labels - converter IDs para nomes
         if 'label_ids' in query_params and query_params['label_ids']:
@@ -1724,21 +1724,21 @@ class AnnotationReportExportView(APIView):
                         text = str(example.text)
                         example_names.append(text[:50] + ('...' if len(text) > 50 else ''))
                     else:
-                        example_names.append(f"Exemplo {example.id}")
+                        example_names.append(f"Example {example.id}")
                 
-                writer.writerow(['Exemplos:', ', '.join(example_names)])
+                writer.writerow(['Examples:', ', '.join(example_names)])
             except Exception:
-                writer.writerow(['Exemplos:', query_params['example_ids']])
+                writer.writerow(['Examples:', query_params['example_ids']])
         
         writer.writerow([])  # Linha em branco
         
         # Cabeçalho da tabela
         writer.writerow([
-            'Exemplo',
-            'Utilizador',
+            'Example',
+            'User',
             'Label',
-            'Data Criação',
-            'Detalhes'
+            'Creation Date',
+            'Details'
         ])
         
         # Dados
@@ -1842,7 +1842,7 @@ class AnnotationReportExportView(APIView):
             elements = []
             
             # Título do relatório
-            elements.append(Paragraph("Relatório sobre Anotações", styles['TitleStyle']))
+            elements.append(Paragraph("ANNOTATIONS REPORT", styles['TitleStyle']))
             elements.append(Spacer(1, 10))
             
             # Obter informações do projeto

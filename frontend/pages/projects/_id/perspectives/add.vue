@@ -94,12 +94,6 @@ export default Vue.extend({
 
   middleware: ['check-auth', 'auth', 'setCurrentProject'],
 
-  head() {
-    return {
-      title: 'Create Perspective'
-    }
-  },
-
   data() {
     return {
       editedItem: {
@@ -129,6 +123,12 @@ export default Vue.extend({
       sucessMessage: '',
       items: [] as PerspectiveDTO[],
       saving: false
+    }
+  },
+
+  head() {
+    return {
+      title: 'Create Perspective'
     }
   },
 
