@@ -73,14 +73,16 @@
                     label="Digite um número inteiro" 
                     type="number"
                     step="1"
+                    min="0"
                     outlined 
                     dense
                     prepend-inner-icon="mdi-numeric"
                     :rules="[
                       v => v !== undefined && v !== null && v !== '' || 'Campo obrigatório',
-                      v => Number.isInteger(Number(v)) || 'Deve ser um número inteiro'
+                      v => Number.isInteger(Number(v)) || 'Deve ser um número inteiro',
+                      v => Number(v) >= 0 || 'O número deve ser positivo ou zero'
                     ]"
-                    hint="Ex: 42, -10, 0"
+                    hint="Ex: 42, 15, 0"
                     persistent-hint
                     class="answer-input"
                   />

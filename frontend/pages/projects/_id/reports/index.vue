@@ -2124,12 +2124,13 @@ export default Vue.extend({
     // Métodos para remover filtros específicos
     removePerspectiveQuestion(question: any) {
       const questionId = typeof question === 'object' ? question.id : question
-      this.filters.perspective_questions = this.filters.perspective_questions.filter((id) => id !== questionId)
+      this.annotationFilters.perspective_questions = this.annotationFilters.perspective_questions.filter((id) => id !== questionId)
     },
 
-    removePerspectiveAnswer(answer: any) {
-      const answerId = typeof answer === 'object' ? answer.id : answer
-      this.filters.perspective_answers = this.filters.perspective_answers.filter((id) => id !== answerId)
+    removePerspectiveAnswer(answerId: any) {
+      // No v-autocomplete com item-value="id", o valor passado já é o ID
+      const idToRemove = typeof answerId === 'object' ? answerId.id : answerId
+      this.annotationFilters.perspective_answers = this.annotationFilters.perspective_answers.filter((id) => id !== idToRemove)
     },
 
     removeAnnotationExportFormat(format: string) {
@@ -2179,13 +2180,28 @@ export default Vue.extend({
       console.log('[DEBUG] Respostas filtradas:', this.filteredPerspectiveAnswers)
     },
 
-    getSelectedAnswerText(answer: any) {
-      if (typeof answer === 'object') {
-        return answer.text;
-      } else if (typeof answer === 'string') {
-        return answer;
+    getSelectedAnswerText(answerIdOrObject: any) {
+      // Se recebemos um objeto, usar o texto diretamente
+      if (typeof answerIdOrObject === 'object' && answerIdOrObject.text) {
+        return answerIdOrObject.text;
       }
-      return '';
+      
+      // Se recebemos um ID, procurar o texto na lista de respostas disponíveis
+      const answerId = typeof answerIdOrObject === 'object' ? answerIdOrObject.id : answerIdOrObject
+      const foundAnswer = this.filteredPerspectiveAnswers.find(answer => answer.id === answerId)
+      
+      if (foundAnswer) {
+        return foundAnswer.text
+      }
+      
+      // Fallback: procurar na lista completa de respostas disponíveis
+      const allAnswer = this.availablePerspectiveAnswers.find(answer => answer.id === answerId)
+      if (allAnswer) {
+        return allAnswer.text
+      }
+      
+      // Último fallback
+      return typeof answerIdOrObject === 'string' ? answerIdOrObject : `Answer #${answerId}`
     },
 
     getSelectedPerspectiveQuestionText(question: any) {

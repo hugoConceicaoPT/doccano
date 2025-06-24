@@ -1028,7 +1028,7 @@ class AnnotationReportService:
                         continue
                 elif discrepancy_filter == 'without_discrepancy':
                     if examples_with_discrepancy:
-                        type_filter &= Q(example_id__in=examples_with_discrepancy).negate()
+                        type_filter &= ~Q(example_id__in=examples_with_discrepancy)
                     # Se não há exemplos com discrepâncias, todos os exemplos são válidos
                     
             # Obter anotações para este tipo
